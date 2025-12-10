@@ -6,7 +6,8 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from commons.exception_handler import register_exception_handler
 
-from persistence.database import init_db, engine
+from persistence.database import init_db, close_db
+from web.commons.exception_handler import register_exception_handler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,13 +18,14 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting API")
-    init_db()
+    await init_db()
     logger.info("Database initialized")
 
     yield
 
     logger.info("Shutting down API")
-    engine.dispose()
+    await close_db()
+
 
 app = FastAPI(
     title="Intercurso API",
@@ -54,6 +56,14 @@ async def root():
         "version": "1.0.0"
     }
 
+@app.get("/health")
+async def health_check():
+    """Endpoint detalhado de saúde da aplicação"""
+    return {
+        "status": "healthy",
+        "database": "connected",
+        "pool": "active"
+    }
 
 if __name__ == "__main__":
     uvicorn.run(

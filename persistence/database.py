@@ -1,58 +1,107 @@
 import os
-from typing import Generator
+from typing import AsyncGenerator
+from contextlib import asynccontextmanager
 
-from sqlalchemy import create_engine, StaticPool
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    async_sessionmaker,
+    AsyncEngine
+)
+
+from sqlalchemy.pool import NullPool
 
 from persistence.model.abstract_entity import Base
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@localhost:5432/dbname")
 
-engine = create_engine(
+async_engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
     pool_recycle=3600,
+    pool_timeout=30, #segundos
     echo=False
 )
 
-SessionLocal = sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
+    async_engine,
+    class_=AsyncSession,
     autocommit=False,
     autoflush=False,
-    bind=engine
+    expire_on_commit= False,
 )
 
-def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as db:
+        try:
+            yield db
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+        finally:
+            await db.close()
 
-def init_db() -> None:
-    Base.metadata.create_all(bind=engine)
+async def init_db() -> None:
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-def drop_db() -> None:
-    Base.metadata.drop_all(bind=engine)
+async def drop_db() -> None:
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
-def get_test_db() -> Generator[Session, None, None]:
-    test_engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool
+async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
+    from sqlalchemy.ext.asyncio import create_async_engine
+    test_engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=NullPool,
     )
 
-    Base.metadata.create_all(bind=test_engine)
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-    TestSessionLocal = sessionmaker(
-        autocommit=False,
-        autoflush=False,
-        bind=test_engine
+    async_session = async_sessionmaker(
+        test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
     )
 
-    db = TestSessionLocal()
+    async with async_session() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
-    try:
-        yield db
-    finally:db.close()
+    await test_engine.dispose()
+
+async def close_db() -> None:
+    """
+    Fecha todas as conexões do pool.
+    Deve ser chamado no shutdown da aplicação.
+    """
+    await async_engine.dispose()
+
+
+@asynccontextmanager
+async def get_transaction():
+    """
+    Context manager para controle manual de transações.
+
+    Uso:
+    async with get_transaction() as session:
+        # suas operações aqui
+        # commit/rollback automático no final
+    """
+    async with AsyncSessionLocal() as session:
+        async with session.begin():
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise

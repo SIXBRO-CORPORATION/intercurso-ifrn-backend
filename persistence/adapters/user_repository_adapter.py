@@ -1,7 +1,8 @@
 from typing import Optional, List
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.user import User
@@ -10,41 +11,40 @@ from persistence.model.user_entity import UserEntity
 
 
 class UserRepositoryAdapter(UserRepositoryPort):
-    def __init__(self, session: Session, mapper: UserMapper):
+    def __init__(self, session: AsyncSession, mapper: UserMapper):
         self.session = session
         self.mapper = mapper
 
-    def get(self, user_id: UUID) -> Optional[User]:
-        entity = self.session.query(UserEntity).filter(
-            UserEntity.id == user_id
-        ).first()
+    async def get(self, user_id: UUID) -> Optional[User]:
+        selecionar = select(UserEntity).where(UserEntity.id == user_id)
+        result = await self.session.execute(selecionar)
+        entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
 
-    def save(self, user: User) -> User:
+    async def save(self, user: User) -> User:
         entity = self.mapper.to_entity(user)
-        self.session.add(entity)
-        self.session.commit()
-        self.session.refresh(entity)
+        await self.session.flush()
+        await self.session.refresh(entity)
         return self.mapper.to_domain(entity)
 
-    def find_by_email(self, email: str) -> Optional[User]:
-        entity = self.session.query(UserEntity).filter(
-            UserEntity.email == email
-        ).first()
+    async def find_by_email(self, email: str) -> Optional[User]:
+        selecionar = select(UserEntity).where(UserEntity.email == email)
+        result = await self.session.execute(selecionar)
+        entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
 
-    def exists_by_email(self, email: str) -> bool:
-        return self.session.query(UserEntity).filter(
-            UserEntity.email == email
-        ).count() > 0
+    async def exists_by_email(self, email: str) -> bool:
+        selecionar = select(UserEntity.id).where(UserEntity.email == email)
+        result = await self.session.execute(selecionar)
+        return result.scalar_one_or_none() is not None
 
-    def exists_by_matricula(self, matricula: int) -> bool:
-        return self.session.query(UserEntity).filter(
-            UserEntity.matricula == matricula
-        ).count() > 0
+    async def exists_by_matricula(self, matricula: int) -> bool:
+        selecionar = select(UserEntity.id).where(UserEntity.matricula == matricula)
+        result = await self.session.execute(selecionar)
+        return result.scalar_one_or_none() is not None
 
-    def find_by_matricula(self, matricula: int) -> Optional[User]:
-        entity = self.session.query(UserEntity).filter(
-            UserEntity.matricula == matricula
-        ).first()
+    async def find_by_matricula(self, matricula: int) -> Optional[User]:
+        selecionar = select(UserEntity).where(UserEntity.matricula == matricula)
+        result = await self.session.execute(selecionar)
+        entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None

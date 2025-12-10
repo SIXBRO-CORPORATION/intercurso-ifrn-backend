@@ -6,5 +6,5 @@ R = TypeVar('R')
 
 class Command(ABC, Generic[R]):
     @abstractmethod
-    def execute(self, context: Context) -> R:
+    async def execute(self, context: Context) -> R:
         pass

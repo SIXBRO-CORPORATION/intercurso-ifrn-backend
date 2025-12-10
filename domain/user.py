@@ -8,3 +8,4 @@ class User(AbstractDomain):
     email: str = None
     cpf: int = None
     matricula: int = None
+    atleta: bool = None

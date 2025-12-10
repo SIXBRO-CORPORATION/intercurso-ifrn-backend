@@ -6,9 +6,9 @@ T = TypeVar('T')
 
 class ReadRepositoryPort(ABC, Generic[T]):
     @abstractmethod
-    def get(self, entity_id: UUID) -> Optional[T]:
+    async def get(self, entity_id: UUID) -> Optional[T]:
         pass
 
     @abstractmethod
-    def find_all(self) -> List[T]:
+    async def find_all(self) -> List[T]:
         pass
