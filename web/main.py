@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from commons.exception_handler import register_exception_handler
 
 from persistence.database import init_db, engine
 
@@ -42,9 +43,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-register_exception_handlers(app)
-
-app.include_router(user_router, prefix="/api", tags=["users"])
+register_exception_handler(app)
 
 app.get("/")
 async def root():

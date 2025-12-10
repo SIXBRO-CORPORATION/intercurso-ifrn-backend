@@ -10,7 +10,7 @@ class UserEntity(AbstractEntity):
     id = Column(
         UUID,
         primary_key=True,
-        default=uuid.uuid4()
+        default=lambda: uuid.uuid4()
     )
 
     name = Column(

@@ -12,14 +12,14 @@ class AbstractEntity(Base):
     created_at = Column(
         DateTime,
         nullable=False,
-        default=datetime.now(),
+        default=lambda: datetime.now(),
     )
 
     modified_at = Column(
         DateTime,
         nullable=False,
-        default=datetime.now(),
-        onupdate=datetime.now(),
+        default=lambda: datetime.now(),
+        onupdate=lambda: datetime.now(),
     )
 
     active = Column(
