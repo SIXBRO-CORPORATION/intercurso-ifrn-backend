@@ -9,7 +9,7 @@ class CreateUserAdapter(CreateUserPort):
     def __init__(self, repository: UserRepositoryPort):
         self.repository = repository
 
-    def execute(self, context: Context) -> User:
+    async def execute(self, context: Context) -> User:
         user = context.get_data(User)
 
         if user is None:

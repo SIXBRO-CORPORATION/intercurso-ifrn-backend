@@ -10,7 +10,7 @@ class GetUserProfileAdapter(GetUserProfilePort):
     def __init__(self, repository: UserRepositoryPort):
         self.repository = repository
 
-    def execute(self, context: Context) -> User:
+    async def execute(self, context: Context) -> User:
         userId = context.get_property("userId", UUID)
 
         if userId is None:
