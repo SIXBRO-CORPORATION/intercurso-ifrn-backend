@@ -18,7 +18,8 @@ class UserMapper:
             matricula=entity.matricula,
             created_at=entity.created_at,
             modified_at=entity.modified_at,
-            active=entity.active
+            active=entity.active,
+            atleta=entity.atleta
         )
 
     def to_entity(self, user: User) -> UserEntity:
@@ -29,7 +30,8 @@ class UserMapper:
             matricula=user.matricula,
             created_at=user.created_at,
             modified_at=user.modified_at,
-            active=user.active
+            active=user.active,
+            atleta=user.atleta
         )
 
         if user.id:
