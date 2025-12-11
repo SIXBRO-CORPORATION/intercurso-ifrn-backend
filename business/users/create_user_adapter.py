@@ -2,6 +2,7 @@ from core.business.users.create_user_port import CreateUserPort
 from core.context import Context
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.user import User
+from datetime import datetime
 
 
 class CreateUserAdapter(CreateUserPort):
@@ -28,6 +29,9 @@ class CreateUserAdapter(CreateUserPort):
             email=user.email,
             cpf=user.cpf,
             matricula=user.matricula,
+            created_at=datetime.now(),
+            modified_at=None,
+            atleta=False,
             active=True
         )
 
