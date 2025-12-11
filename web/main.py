@@ -4,7 +4,6 @@ import uvicorn
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from commons.exception_handler import register_exception_handler
 
 from persistence.database import init_db, close_db
 from web.commons.exception_handler import register_exception_handler
@@ -58,7 +57,6 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Endpoint detalhado de saúde da aplicação"""
     return {
         "status": "healthy",
         "database": "connected",

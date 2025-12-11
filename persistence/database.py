@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -13,7 +14,9 @@ from sqlalchemy.pool import NullPool
 
 from persistence.model.abstract_entity import Base
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@localhost:5432/dbname")
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 async_engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
