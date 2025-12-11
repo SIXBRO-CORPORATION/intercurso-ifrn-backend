@@ -36,6 +36,12 @@ class UserEntity(AbstractEntity):
         unique=True,
         index=True
     )
+    
+    atleta = Column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
 
 
 
