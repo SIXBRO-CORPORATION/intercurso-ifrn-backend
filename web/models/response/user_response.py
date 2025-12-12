@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
@@ -7,7 +9,7 @@ class UserResponse(BaseModel):
         from_attributes=True,
     )
 
-    id: str = Field()
+    id: UUID = Field()
     name: str = Field()
     email: str = Field()
     matricula: int = Field()
