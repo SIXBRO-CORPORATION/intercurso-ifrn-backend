@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-
+from core.persistence.commons.base_repository_port import BaseRepositoryPort
 from domain.auth_token import SUAPUserData
 
 
-class OAuthProviderPort(ABC):
+class OAuthProviderPort(BaseRepositoryPort, ABC):
     """
     Port (interface) para provedores OAuth2
 

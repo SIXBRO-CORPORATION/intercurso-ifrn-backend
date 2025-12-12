@@ -2,11 +2,12 @@ from abc import ABC, abstractmethod
 from datetime import timedelta
 from typing import Optional
 from uuid import UUID
+from core.persistence.commons.base_repository_port import BaseRepositoryPort
 
 from domain.auth_token import AuthToken
 
 
-class TokenServicePort(ABC):
+class TokenServicePort(BaseRepositoryPort, ABC):
 
     @abstractmethod
     def create_access_token(
