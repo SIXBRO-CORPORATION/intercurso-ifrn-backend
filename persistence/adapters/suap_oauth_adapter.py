@@ -7,16 +7,7 @@ from domain.auth_token import SUAPUserData
 from domain.exceptions.business_exception import BusinessException
 
 
-class SUAPOAuthService:
-    """
-    Serviço para integração OAuth2 com SUAP
-
-    Responsabilidades:
-    - Gerar URL de autorização
-    - Trocar código por token
-    - Buscar dados do usuário no SUAP
-    """
-
+class SUAPOAuthAdapter:
     def __init__(self):
         self.client_id = settings.suap_client_id
         self.client_secret = settings.suap_client_secret
@@ -26,15 +17,6 @@ class SUAPOAuthService:
         self.user_info_url = settings.suap_user_info_url
 
     def get_authorization_url(self, state: Optional[str] = None) -> str:
-        """
-        Gera a URL para redirecionar o usuário ao SUAP
-
-        Args:
-            state: String aleatória para prevenir CSRF (recomendado)
-
-        Returns:
-            URL completa para redirecionamento
-        """
         params = {
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
@@ -48,21 +30,6 @@ class SUAPOAuthService:
         return f"{self.authorization_url}?{urlencode(params)}"
 
     async def exchange_code_for_token(self, code: str) -> str:
-        """
-        Troca o código de autorização por um access_token
-
-        Este é o passo 2 do OAuth2: depois que o usuário autoriza no SUAP,
-        ele retorna com um 'code'. Você troca esse code por um token.
-
-        Args:
-            code: Código retornado pelo SUAP após autorização
-
-        Returns:
-            access_token do SUAP
-
-        Raises:
-            BusinessException: Se falhar ao trocar o código
-        """
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
@@ -91,18 +58,6 @@ class SUAPOAuthService:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")
 
     async def get_user_info(self, access_token: str) -> SUAPUserData:
-        """
-        Busca informações do usuário no SUAP usando o access_token
-
-        Args:
-            access_token: Token obtido do SUAP
-
-        Returns:
-            Dados do usuário parseados
-
-        Raises:
-            BusinessException: Se falhar ao buscar dados
-        """
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
@@ -135,19 +90,6 @@ class SUAPOAuthService:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")
 
     async def authenticate_with_code(self, code: str) -> SUAPUserData:
-        """
-        Fluxo completo: troca código por token e busca dados do usuário
-
-        Este é um método conveniente que faz os dois passos:
-        1. Troca code por token
-        2. Usa o token para buscar dados do usuário
-
-        Args:
-            code: Código retornado pelo SUAP
-
-        Returns:
-            Dados completos do usuário
-        """
         # Passo 1: Troca código por token
         access_token = await self.exchange_code_for_token(code)
 
