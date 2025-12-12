@@ -1,24 +1,16 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from business.auth.jwt_service import JWTService
-from business.auth.suap_oauth_service import SUAPOAuthService
+from core.business.auth.oauth_provider_port import OAuthProviderPort
+from core.business.auth.jwt_provider_port import TokenServicePort
 from core.context import Context
+from core.persistence.user_repository_port import UserRepositoryPort
 from domain.auth_token import AuthToken
 from domain.user import User
-from persistence.adapters.user_repository_adapter import UserRepositoryAdapter
-from persistence.mappers.user_mapper import UserMapper
-
 
 class LoginWithSUAPAdapter:
 
-    def __init__(self, session: AsyncSession):
-        self.session = session
-        self.suap_service = SUAPOAuthService()
-        self.jwt_service = JWTService()
-        self.user_repository = UserRepositoryAdapter(
-            session,
-            UserMapper()
-        )
+    def __init__(self, oauth_provider: OAuthProviderPort, token_service: TokenServicePort, user_repository: UserRepositoryPort ):
+        self.oauth_provider = oauth_provider
+        self.token_service = token_service
+        self.user_repository = user_repository
 
     async def execute(self, authorization_code: str) -> AuthToken:
         suap_user_data = await self.suap_service.authenticate_with_code(
