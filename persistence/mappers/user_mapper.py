@@ -24,6 +24,7 @@ class UserMapper:
 
     def to_entity(self, user: User) -> UserEntity:
         entity = UserEntity(
+            id=user.id,
             name=user.name,
             email=user.email,
             cpf=user.cpf,
@@ -33,8 +34,5 @@ class UserMapper:
             active=user.active,
             atleta=user.atleta
         )
-
-        if user.id:
-            entity.id = user.id
 
         return entity

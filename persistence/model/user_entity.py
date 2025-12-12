@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, UUID
+from sqlalchemy import Column, String, Integer, Boolean
 import uuid
 from persistence.model.abstract_entity import AbstractEntity
 
@@ -6,12 +6,6 @@ from persistence.model.abstract_entity import AbstractEntity
 class UserEntity(AbstractEntity):
 
     __tablename__ = "users"
-
-    id = Column(
-        UUID,
-        primary_key=True,
-        default=lambda: uuid.uuid4()
-    )
 
     name = Column(
         String(255),
