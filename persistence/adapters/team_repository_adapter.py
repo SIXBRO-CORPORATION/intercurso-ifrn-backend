@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from core.persistence.team_repository_port import TeamRepositoryPort
+from domain.enums.team_status import TeamStatus
 from domain.team import Team
 from persistence.mappers.team_mapper import TeamMapper
 from persistence.model.team_entity import TeamEntity
@@ -63,6 +64,21 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
             )
             .where(
                 TeamMemberEntity.user_id == user_id
+            )
+        )
+        result = await self.session.execute(selecionar)
+        team_entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in team_entities]
+
+    async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
+        selecionar = (
+            select(TeamEntity)
+            .join(
+                TeamMemberEntity,
+                TeamMemberEntity.team_id == TeamEntity.id
+            )
+            .where(
+                TeamMemberEntity.status == status
             )
         )
         result = await self.session.execute(selecionar)

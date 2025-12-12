@@ -14,6 +14,7 @@ class TeamMapper:
             name=entity.name,
             photo=entity.photo,
             modality=entity.modality,
+            status=entity.status,
             created_at=entity.created_at,
             modified_at=entity.modified_at,
             active=entity.active
@@ -25,6 +26,7 @@ class TeamMapper:
             name=team.name,
             photo=team.photo,
             modality=team.modality,
+            status=team.status,
             created_at=team.created_at,
             modified_at=team.modified_at,
             active=team.active

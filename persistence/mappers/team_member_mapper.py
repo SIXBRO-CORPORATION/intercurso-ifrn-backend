@@ -16,7 +16,7 @@ class TeamMemberMapper:
             member_matricula=entity.member_matricula,
             member_name=entity.member_name,
             member_cpf=entity.member_cpf,
-            active=entity.active
+            status=entity.status
         )
 
     def to_entity(self, team_member: TeamMember) -> TeamMemberEntity:
@@ -27,7 +27,7 @@ class TeamMemberMapper:
             member_matricula=team_member.member_matricula,
             member_name=team_member.member_name,
             member_cpf=team_member.member_cpf,
-            active=team_member.active
+            status=team_member.status
         )
 
         return entity

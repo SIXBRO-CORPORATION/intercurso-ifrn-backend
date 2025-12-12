@@ -1,5 +1,8 @@
+from enum import Enum
+
 from sqlalchemy import Column, ForeignKey, String, Boolean
 
+from domain.enums.team_member_status import TeamMemberStatus
 from persistence.model.abstract_entity import Base
 
 
@@ -32,8 +35,7 @@ class TeamMemberEntity(Base):
         nullable=False
     )
 
-    active = Column(
-        Boolean,
-        nullable=False,
-        default=False
+    status = Column(
+        Enum(TeamMemberStatus),
+        nullable=False
     )

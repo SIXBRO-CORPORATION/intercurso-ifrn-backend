@@ -3,6 +3,7 @@ from enum import Enum
 from sqlalchemy import Column, String
 
 from domain.enums.modality import ModalityType
+from domain.enums.team_status import TeamStatus
 from persistence.model.abstract_entity import AbstractEntity
 
 
@@ -21,5 +22,10 @@ class TeamEntity(AbstractEntity):
 
     modality = Column(
         Enum(ModalityType),
+        nullable=False
+    )
+
+    status = Column(
+        Enum(TeamStatus),
         nullable=False
     )
