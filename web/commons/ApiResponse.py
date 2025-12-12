@@ -5,30 +5,37 @@ from pydantic import BaseModel, Field
 
 T = TypeVar('T')
 
+
 class ApiResponse(BaseModel, Generic[T]):
 
     success: bool = Field(
-        default=True
+        default=True,
+        description="Indica se a operação foi bem-sucedida"
     )
 
     data: Optional[T] = Field(
-        default=None
+        default=None,
+        description="Dados de resposta"
     )
 
     message: Optional[str] = Field(
-        default=None
+        default=None,
+        description="Mensagem descritiva"
     )
 
     error: Optional[str] = Field(
-        default=None
+        default=None,
+        description="Mensagem de erro"
     )
 
     code: Optional[str] = Field(
-        default=None
+        default=None,
+        description="Código de erro"
     )
 
     timestamp: datetime = Field(
-        default_factory=datetime.now()
+        default_factory=datetime.now,  # ← CORRETO: função sem ()
+        description="Timestamp da resposta"
     )
 
     class Config:
@@ -45,7 +52,7 @@ class ApiResponse(BaseModel, Generic[T]):
     def success(
             cls,
             data: Optional[T] = None,
-            message: Optional[T] = None
+            message: Optional[str] = None
     ) -> "ApiResponse[T]":
         return cls(
             success=True,
@@ -58,11 +65,13 @@ class ApiResponse(BaseModel, Generic[T]):
     def error(
             cls,
             error: str,
-            code: Optional[str] = None
+            code: Optional[str] = None,
+            data: Optional[T] = None
     ) -> "ApiResponse[T]":
         return cls(
             success=False,
             error=error,
             code=code,
+            data=data,
             timestamp=datetime.now()
         )
