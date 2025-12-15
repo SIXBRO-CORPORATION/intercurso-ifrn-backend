@@ -16,7 +16,7 @@ class GetUserProfileAdapter(GetUserProfilePort):
         if userId is None:
             raise RuntimeError("User ID is required")
 
-        user = self.repository.get(userId)
+        user = await self.repository.get(userId)
         if user is None:
             raise RuntimeError("User not found")
 

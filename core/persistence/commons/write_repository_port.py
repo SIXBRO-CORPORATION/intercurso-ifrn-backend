@@ -5,5 +5,5 @@ T = TypeVar('T')
 
 class WriteRepositoryPort(ABC, Generic[T]):
     @abstractmethod
-    def save(self, model: T):
+    async def save(self, model: T):
         pass

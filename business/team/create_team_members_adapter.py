@@ -25,7 +25,7 @@ class CreateTeamMembersAdapter(CreateTeamMembersPort):
             if not member_data.get("matricula"):
                 raise BusinessException("Matrícula do membro é obrigatória")
 
-            if not member_data.get("name") or member_data.get("cpf").strip() == "":
+            if not member_data.get("cpf") or member_data.get("cpf").strip() == "":
                 raise BusinessException("CPF do membro é obrigatório")
 
             cpf = member_data.get("cpf").strip()

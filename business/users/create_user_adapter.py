@@ -21,7 +21,7 @@ class CreateUserAdapter(CreateUserPort):
         if user.cpf is None:
             raise RuntimeError("CPF is required")
 
-        if self.repository.exists_by_matricula(user.matricula):
+        if await self.repository.exists_by_matricula(user.matricula):
             raise RuntimeError("Matricula already exists") # Trocar para Business Exception (aparece para usuário)
 
         new_user = User(
@@ -35,7 +35,7 @@ class CreateUserAdapter(CreateUserPort):
             active=True
         )
 
-        saved_user = self.repository.save(new_user)
+        saved_user = await self.repository.save(new_user)
 
         context.put_property("user_created", True)
         context.put_property("user_id", saved_user.id)

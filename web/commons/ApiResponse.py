@@ -28,7 +28,7 @@ class ApiResponse(BaseModel, Generic[T]):
     )
 
     timestamp: datetime = Field(
-        default_factory=datetime.now()
+        default_factory=datetime.now
     )
 
     class Config:
@@ -45,7 +45,7 @@ class ApiResponse(BaseModel, Generic[T]):
     def success(
             cls,
             data: Optional[T] = None,
-            message: Optional[T] = None
+            message: Optional[str] = None
     ) -> "ApiResponse[T]":
         return cls(
             success=True,
