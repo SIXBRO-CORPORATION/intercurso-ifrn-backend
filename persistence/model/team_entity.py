@@ -1,6 +1,4 @@
-from enum import Enum
-
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Enum
 
 from domain.enums.modality import ModalityType
 from domain.enums.team_status import TeamStatus

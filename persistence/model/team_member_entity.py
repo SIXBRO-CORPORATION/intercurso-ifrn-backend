@@ -1,6 +1,4 @@
-from enum import Enum
-
-from sqlalchemy import Column, ForeignKey, String, Boolean
+from sqlalchemy import Column, ForeignKey, String, Enum, Integer
 
 from domain.enums.team_member_status import TeamMemberStatus
 from persistence.model.abstract_entity import Base
@@ -20,8 +18,8 @@ class TeamMemberEntity(Base):
     )
 
     member_matricula = Column(
+        Integer,
         ForeignKey('users.matricula'),
-        String(255),
         primary_key=True
     )
 

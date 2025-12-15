@@ -21,10 +21,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 async_engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-    pool_recycle=3600,
-    pool_timeout=30, #segundos
     echo=False
 )
 

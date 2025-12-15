@@ -7,6 +7,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from persistence.database import init_db, close_db
 from web.commons.exception_handler import register_exception_handler
+from web.controllers.team_controller import router as team_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,6 +47,7 @@ app.add_middleware(
 )
 
 register_exception_handler(app)
+app.include_router(team_router)
 
 app.get("/")
 async def root():
