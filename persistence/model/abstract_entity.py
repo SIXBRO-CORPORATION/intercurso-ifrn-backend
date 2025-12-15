@@ -1,6 +1,7 @@
-from sqlalchemy import Column, DateTime, Boolean
+from sqlalchemy import Column, DateTime, Boolean, UUID
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 from datetime import datetime
+import uuid
 
 class Base(DeclarativeBase):
     pass
@@ -8,6 +9,12 @@ class Base(DeclarativeBase):
 class AbstractEntity(Base):
 
     __abstract__ = True
+
+    id = Column(
+        UUID,
+        primary_key=True,
+        default=lambda: uuid.uuid4()
+    )
 
     created_at = Column(
         DateTime,

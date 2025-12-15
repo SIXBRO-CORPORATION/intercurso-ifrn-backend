@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -15,13 +16,13 @@ from persistence.model.abstract_entity import Base
 # PostgreSQL: postgresql+asyncpg://user:password@localhost:5432/dbname
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./database.db")
 
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 async_engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-    pool_recycle=3600,
-    pool_timeout=30, #segundos
     echo=False
 )
 

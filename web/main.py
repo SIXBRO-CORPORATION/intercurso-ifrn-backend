@@ -47,6 +47,7 @@ app.add_middleware(
 )
 
 register_exception_handler(app)
+app.include_router(team_router)
 
 from web.controllers.auth_controller import router as auth_router
 app.include_router(auth_router)
