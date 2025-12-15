@@ -27,9 +27,11 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install dependencies # Talvez trocaremos gerenciamento de ambiente para UV, trocar se necessário
+      - name: Install Dependencies # Talvez trocaremos gerenciamento de ambiente para UV, trocar se necessário
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # rodar tests pytest quando implementados
+      - name: Run Tests
+        run: |
+          pytest
