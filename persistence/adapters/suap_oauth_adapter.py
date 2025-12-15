@@ -32,6 +32,7 @@ class SUAPOAuthAdapter:
     async def exchange_code_for_token(self, code: str) -> str:
         async with httpx.AsyncClient() as client:
             try:
+                print(self.redirect_uri)
                 response = await client.post(
                     self.token_url,
                     data={
@@ -76,14 +77,12 @@ class SUAPOAuthAdapter:
 
                 # Parse dos dados do SUAP
                 return SUAPUserData(
-                    matricula=str(data.get("matricula", "")),
+                    matricula=str(data.get("identificacao", "")),
                     nome_usual=data.get("nome_usual", ""),
                     email=data.get("email", ""),
                     cpf=str(data.get("cpf", "")).replace(".", "").replace("-", ""),
                     tipo_usuario=data.get("tipo_usuario"),
                     campus=data.get("campus"),
-                    curso=data.get("vinculo", {}).get("curso") if data.get("vinculo") else None,
-                    vinculo=data.get("vinculo")
                 )
 
             except httpx.HTTPError as e:
