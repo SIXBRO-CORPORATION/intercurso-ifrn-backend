@@ -2,14 +2,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """
-    Configurações da aplicação carregadas do .env
-
-    O pydantic_settings automaticamente:
-    - Carrega do arquivo .env
-    - Valida os tipos
-    - Converte para os tipos corretos
-    """
 
     model_config = SettingsConfigDict(
         env_file=".env",
