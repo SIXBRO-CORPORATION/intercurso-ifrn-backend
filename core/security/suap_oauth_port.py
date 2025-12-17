@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from domain.auth_token import SUAPUserData
 
-
-class OAuthProviderPort(ABC):
+class SuapOAuthPort(ABC):
 
     @abstractmethod
     def get_authorization_url(self, state: Optional[str] = None) -> str:

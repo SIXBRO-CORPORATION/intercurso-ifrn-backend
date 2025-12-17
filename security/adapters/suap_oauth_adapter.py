@@ -2,12 +2,13 @@ import httpx
 from typing import Optional
 from urllib.parse import urlencode
 
+from core.security.suap_oauth_port import SuapOAuthPort
 from security.config import settings
 from domain.user import User
 from domain.exceptions.business_exception import BusinessException
 
 
-class SUAPOAuthAdapter:
+class SUAPOAuthAdapter(SuapOAuthPort):
     def __init__(self):
         self.client_id = settings.suap_client_id
         self.client_secret = settings.suap_client_secret

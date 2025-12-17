@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import RedirectResponse
 
 from security.adapters.login_suap_adapter import LoginWithSUAPAdapter
-from core.security.oauth_provider_port import OAuthProviderPort
+from core.security.suap_oauth_port import OAuthProviderPort
 from core.security.jwt_provider_port import JWTProviderPort
 from security.config import settings
 from core.persistence.user_repository_port import UserRepositoryPort

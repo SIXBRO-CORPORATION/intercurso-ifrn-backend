@@ -4,13 +4,13 @@ from uuid import UUID
 
 from jose import JWTError, jwt
 
-from core.security.jwt_provider_port import TokenServicePort
+from core.security.jwt_provider_port import JWTProviderPort
 from security.config import settings
 from domain.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException
 
 
-class JWTProviderAdapter(TokenServicePort):
+class JWTProviderAdapter(JWTProviderPort):
     def __init__(self):
         self.secret_key = settings.jwt_secret_key
         self.algorithm = settings.jwt_algorithm
