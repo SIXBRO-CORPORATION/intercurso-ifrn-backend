@@ -6,7 +6,7 @@ from uuid import UUID
 from domain.auth_token import AuthToken
 
 
-class TokenServicePort(ABC):
+class JWTProviderPort(ABC):
 
     @abstractmethod
     def create_access_token(

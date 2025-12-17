@@ -1,24 +1,22 @@
-from typing import Optional
+from typing import Optional, Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.security.jwt_provider_port import TokenServicePort
+from core.security.jwt_provider_port import JWTProviderPort
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.exceptions.business_exception import BusinessException
 from domain.user import User
-from security.adapters.jwt_token_adapter import JWTTokenAdapter
-from persistence.adapters.user_repository_adapter import UserRepositoryAdapter
+from security.adapters.jwt_provider_adapter import JWTProviderAdapter
 from persistence.database import get_db
-from persistence.mappers.user_mapper import UserMapper
 
 security = HTTPBearer()
 
 
-def get_token_service() -> TokenServicePort:
-    return JWTTokenAdapter()
+def get_jwt_provider_port() -> JWTProviderPort:
+    return JWTProviderAdapter()
 
 
 def get_user_repository(
@@ -29,7 +27,7 @@ def get_user_repository(
 
 async def get_current_user_id(
         credentials: HTTPAuthorizationCredentials = Depends(security),
-        token_service: TokenServicePort = Depends(get_token_service)
+        token_service: JWTProviderPort = Depends(get_jwt_provider_port)
 ) -> UUID:
     try:
         token = credentials.credentials
@@ -75,7 +73,7 @@ async def get_optional_current_user(
         return None
 
     try:
-        token_service = get_token_service()
+        token_service = get_jwt_provider_port()
         user_id = token_service.get_user_id_from_token(credentials.credentials)
 
         user = await user_repository.get(user_id)

@@ -1,5 +1,5 @@
 from core.security.oauth_provider_port import OAuthProviderPort
-from core.security.jwt_provider_port import TokenServicePort
+from core.security.jwt_provider_port import JWTProviderPort
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.auth_token import AuthToken
 from domain.user import User
@@ -20,7 +20,7 @@ def _safe_int_conversion(value) -> Optional[int]:
 
 class LoginWithSUAPAdapter:
 
-    def __init__(self, oauth_provider: OAuthProviderPort, token_service: TokenServicePort, user_repository: UserRepositoryPort ):
+    def __init__(self, oauth_provider: OAuthProviderPort, token_service: JWTProviderPort, user_repository: UserRepositoryPort ):
         self.oauth_provider = oauth_provider
         self.token_service = token_service
         self.user_repository = user_repository

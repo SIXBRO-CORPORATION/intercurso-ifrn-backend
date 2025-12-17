@@ -10,7 +10,7 @@ from domain.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException
 
 
-class JWTTokenAdapter(TokenServicePort):
+class JWTProviderAdapter(TokenServicePort):
     def __init__(self):
         self.secret_key = settings.jwt_secret_key
         self.algorithm = settings.jwt_algorithm

@@ -3,18 +3,19 @@ from fastapi.responses import RedirectResponse
 
 from security.adapters.login_suap_adapter import LoginWithSUAPAdapter
 from core.security.oauth_provider_port import OAuthProviderPort
-from core.security.jwt_provider_port import TokenServicePort
+from core.security.jwt_provider_port import JWTProviderPort
 from security.config import settings
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.user import User
 from security.adapters.suap_oauth_adapter import SUAPOAuthAdapter
 from web.commons.ApiResponse import ApiResponse
-from web.dependencies.auth import (
+from web.dependencies import (
     get_current_user,
-    get_token_service,
+    get_jwt_provider_port,
     get_user_repository
 )
 from web.models.response.user_response import UserResponse
+from web.mappers.user_model_mapper import UserModelMapper
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -35,7 +36,7 @@ async def login_with_suap(
 async def auth_callback(
         code: str = Query(..., description="Authorization code from SUAP"),
         oauth_provider: OAuthProviderPort = Depends(get_oauth_provider),
-        token_service: TokenServicePort = Depends(get_token_service),
+        token_service: JWTProviderPort = Depends(get_jwt_provider_port),
         user_repository: UserRepositoryPort = Depends(get_user_repository)
 ):
     # Instancia o caso de uso com as dependências injetadas
@@ -45,10 +46,8 @@ async def auth_callback(
         user_repository=user_repository
     )
 
-    # Executa o caso de uso
     token = await login_use_case.execute(code)
 
-    # Redireciona para frontend
     frontend_url = settings.frontend_url
     redirect_url = f"{frontend_url}/auth/callback?token={token.access_token}"
 
@@ -62,8 +61,6 @@ async def auth_callback(
 async def get_current_user_info(
         user: User = Depends(get_current_user)
 ):
-    from web.mappers.user_model_mapper import UserModelMapper
-
     mapper = UserModelMapper()
     user_response = mapper.to_response(user)
 
@@ -76,7 +73,7 @@ async def get_current_user_info(
 @router.post("/refresh")
 async def refresh_token(
         user: User = Depends(get_current_user),
-        token_service: TokenServicePort = Depends(get_token_service)
+        token_service: JWTProviderPort = Depends(get_jwt_provider_port)
 ):
     new_token = token_service.create_access_token(
         user_id=user.id,
