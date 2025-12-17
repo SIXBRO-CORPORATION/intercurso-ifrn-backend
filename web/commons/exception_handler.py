@@ -14,7 +14,7 @@ def register_exception_handler(app: FastAPI) -> None:
             request: Request,
             exc: BusinessException
     ) -> JSONResponse:
-        response = ApiResponse.error(
+        response = ApiResponse.failure(
             error=str(exc),
             code="BUSINESS_ERROR"
         )
@@ -34,7 +34,7 @@ def register_exception_handler(app: FastAPI) -> None:
             field = ".".join(str(loc) for loc in error["loc"])
             errors[field] = error["msg"]
 
-        response = ApiResponse.error(
+        response = ApiResponse.failure(
             error="Validation failed",
             code="VALIDATION_ERROR"
         )
@@ -51,7 +51,7 @@ def register_exception_handler(app: FastAPI) -> None:
             request: Request,
             exc: ValueError
     ) -> JSONResponse:
-        response = ApiResponse.error(
+        response = ApiResponse.failure(
             error=str(exc),
             code="INVALID_VALUE"
         )
@@ -71,7 +71,7 @@ def register_exception_handler(app: FastAPI) -> None:
             else "An unexpected error occurred"
         )
 
-        response = ApiResponse.error(
+        response = ApiResponse.failure(
             error=error_message,
             code="INTERNAL_ERROR"
         )

@@ -1,45 +1,45 @@
 from typing import TypeVar, Generic, Optional
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar('T')
 
+
 class ApiResponse(BaseModel, Generic[T]):
+    model_config = ConfigDict(
+        ignored_types=(classmethod, staticmethod)
+    )
 
     success: bool = Field(
-        default=True
+        default=True,
+        description="Indica se a operação foi bem-sucedida"
     )
 
     data: Optional[T] = Field(
-        default=None
+        default=None,
+        description="Dados de resposta"
     )
 
     message: Optional[str] = Field(
-        default=None
+        default=None,
+        description="Mensagem descritiva"
     )
 
     error: Optional[str] = Field(
-        default=None
+        default=None,
+        description="Mensagem de erro"
     )
 
     code: Optional[str] = Field(
-        default=None
+        default=None,
+        description="Código de erro"
     )
 
     timestamp: datetime = Field(
-        default_factory=datetime.now
+        default_factory=datetime.now,  # ← CORRETO: função sem ()
+        description="Timestamp da resposta"
     )
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "success": True,
-                "data": {"id": "123", "name": "John Doe"},
-                "message": "Operation successful",
-                "timestamp": "2024-01-01T00:00:00"
-            }
-        }
 
     @classmethod
     def success(
@@ -51,18 +51,32 @@ class ApiResponse(BaseModel, Generic[T]):
             success=True,
             data=data,
             message=message,
-            timestamp=datetime.now()
+            timestamp=datetime.now().isoformat()
         )
 
     @classmethod
-    def error(
+    def success(
+            cls,
+            data: Optional[T] = None,
+            message: Optional[str] = None
+    ) -> "ApiResponse[T]":
+        return cls(
+            success=True,
+            data=data,
+            message=message
+        )
+
+    @classmethod
+    def failure(
             cls,
             error: str,
-            code: Optional[str] = None
+            code: Optional[str] = None,
+            data: Optional[T] = None
     ) -> "ApiResponse[T]":
         return cls(
             success=False,
             error=error,
             code=code,
-            timestamp=datetime.now()
+            data=data
+            # ❌ NÃO passe timestamp
         )

@@ -13,10 +13,8 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool
 
 from persistence.model.abstract_entity import Base
-
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+# PostgreSQL: postgresql+asyncpg://user:password@localhost:5432/dbname
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./database.db")
 
 async_engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
