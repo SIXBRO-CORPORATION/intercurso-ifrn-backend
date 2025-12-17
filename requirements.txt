@@ -1,0 +1,8 @@
+sqlalchemy[asyncio]==2.0.43
+asyncpg==0.29.0
+aiosqlite==0.20.0  # Para testes com SQLite
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.10.0
+python-dotenv==1.1.0
+pytest==9.0.2
