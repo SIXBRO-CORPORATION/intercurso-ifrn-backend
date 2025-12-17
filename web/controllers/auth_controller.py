@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import RedirectResponse
 
-from business.auth.login_suap_adapter import LoginWithSUAPAdapter
-from core.business.auth.oauth_provider_port import OAuthProviderPort
-from core.business.auth.jwt_provider_port import TokenServicePort
-from core.config import settings
+from security.adapters.login_suap_adapter import LoginWithSUAPAdapter
+from core.security.oauth_provider_port import OAuthProviderPort
+from core.security.jwt_provider_port import TokenServicePort
+from security.config import settings
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.user import User
-from persistence.adapters.jwt_token_adapter import JWTTokenAdapter
-from persistence.adapters.suap_oauth_adapter import SUAPOAuthAdapter
+from security.adapters.suap_oauth_adapter import SUAPOAuthAdapter
 from web.commons.ApiResponse import ApiResponse
 from web.dependencies.auth import (
     get_current_user,

@@ -4,13 +4,13 @@ from uuid import UUID
 
 from jose import JWTError, jwt
 
-from core.config import settings
+from core.security.jwt_provider_port import TokenServicePort
+from security.config import settings
 from domain.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException
 
 
-class JWTService:
-
+class JWTTokenAdapter(TokenServicePort):
     def __init__(self):
         self.secret_key = settings.jwt_secret_key
         self.algorithm = settings.jwt_algorithm
@@ -23,8 +23,6 @@ class JWTService:
             email: Optional[str] = None,
             expires_delta: Optional[timedelta] = None
     ) -> AuthToken:
-
-        # Define expiração
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
@@ -32,16 +30,14 @@ class JWTService:
                 minutes=self.expire_minutes
             )
 
-        # Payload do JWT (dados que estarão no token)
         payload = {
-            "sub": str(user_id),  # quem é o dono do token
+            "sub": str(user_id),
             "matricula": matricula,
             "email": email,
-            "exp": expire,  # Quando expira
-            "iat": datetime.utcnow(),  # Quando foi criado
+            "exp": expire,
+            "iat": datetime.utcnow(),
         }
 
-        # Gera o token
         encoded_jwt = jwt.encode(
             payload,
             self.secret_key,

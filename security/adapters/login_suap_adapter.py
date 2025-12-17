@@ -1,6 +1,5 @@
-from core.business.auth.oauth_provider_port import OAuthProviderPort
-from core.business.auth.jwt_provider_port import TokenServicePort
-from core.context import Context
+from core.security.oauth_provider_port import OAuthProviderPort
+from core.security.jwt_provider_port import TokenServicePort
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.auth_token import AuthToken
 from domain.user import User
@@ -77,7 +76,7 @@ class LoginWithSUAPAdapter:
             new_user = User(
                 name=suap_data.nome_usual,
                 email=suap_data.email,
-                cpf=cpf_int,  # Aplique a conversão segura
+                cpf=cpf_int,
                 matricula=matricula_int,
                 active=True
             )

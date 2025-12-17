@@ -5,11 +5,11 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.business.auth.jwt_provider_port import TokenServicePort
+from core.security.jwt_provider_port import TokenServicePort
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.exceptions.business_exception import BusinessException
 from domain.user import User
-from persistence.adapters.jwt_token_adapter import JWTTokenAdapter
+from security.adapters.jwt_token_adapter import JWTTokenAdapter
 from persistence.adapters.user_repository_adapter import UserRepositoryAdapter
 from persistence.database import get_db
 from persistence.mappers.user_mapper import UserMapper

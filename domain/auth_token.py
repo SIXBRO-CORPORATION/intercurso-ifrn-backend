@@ -10,20 +10,3 @@ class AuthToken:
     token_type: str = "bearer"
     expires_at: Optional[datetime] = None
     user_id: Optional[UUID] = None
-
-
-@dataclass
-class SUAPUserData:
-    # Campos principais
-    matricula: str
-    nome_usual: str
-    email: str
-    cpf: str
-
-    # Campos adicionais (podem variar)
-    tipo_usuario: Optional[str] = None  # "Aluno", "Servidor", etc.
-    campus: Optional[str] = None
-    curso: Optional[str] = None
-
-    # Vinculo original do SUAP
-    vinculo: Optional[dict] = None

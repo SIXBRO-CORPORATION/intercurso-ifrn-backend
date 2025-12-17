@@ -4,10 +4,9 @@ import pytest
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 from datetime import datetime, timedelta
-from business.auth.login_suap_adapter import LoginWithSUAPAdapter
+from security.adapters.login_suap_adapter import LoginWithSUAPAdapter
 from domain.auth_token import SUAPUserData, AuthToken
 from domain.user import User
-from domain.exceptions.business_exception import BusinessException
 
 
 @pytest.fixture

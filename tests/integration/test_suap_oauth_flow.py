@@ -1,7 +1,6 @@
 
 import pytest
-from persistence.adapters.suap_oauth_adapter import SUAPOAuthAdapter
-from core.config import settings
+from security.adapters.suap_oauth_adapter import SUAPOAuthAdapter
 
 
 @pytest.mark.integration

@@ -2,8 +2,8 @@ import httpx
 from typing import Optional
 from urllib.parse import urlencode
 
-from core.config import settings
-from domain.auth_token import SUAPUserData
+from security.config import settings
+from domain.user import User
 from domain.exceptions.business_exception import BusinessException
 
 
@@ -58,7 +58,7 @@ class SUAPOAuthAdapter:
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")
 
-    async def get_user_info(self, access_token: str) -> SUAPUserData:
+    async def get_user_info(self, access_token: str) -> User:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(
@@ -74,21 +74,14 @@ class SUAPOAuthAdapter:
                     )
 
                 data = response.json()
+                user = User.from_suap_dict(data)
+                return user
 
-                # Parse dos dados do SUAP
-                return SUAPUserData(
-                    matricula=str(data.get("identificacao", "")),
-                    nome_usual=data.get("nome_usual", ""),
-                    email=data.get("email", ""),
-                    cpf=str(data.get("cpf", "")).replace(".", "").replace("-", ""),
-                    tipo_usuario=data.get("tipo_usuario"),
-                    campus=data.get("campus"),
-                )
 
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")
 
-    async def authenticate_with_code(self, code: str) -> SUAPUserData:
+    async def authenticate_with_code(self, code: str) -> User:
         # Passo 1: Troca código por token
         access_token = await self.exchange_code_for_token(code)
 
