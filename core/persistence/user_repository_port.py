@@ -8,17 +8,17 @@ from domain.user import User
 class UserRepositoryPort(BaseRepositoryPort[User]):
 
     @abstractmethod
-    def find_by_email(self, email: str) -> Optional[User]:
+    async def find_by_email(self, email: str) -> Optional[User]:
         pass
 
     @abstractmethod
-    def exists_by_email(self, email: str) -> bool:
+    async def exists_by_email(self, email: str) -> bool:
         pass
 
     @abstractmethod
-    def exists_by_matricula(self, matricula: int) -> bool:
+    async def exists_by_matricula(self, matricula: int) -> bool:
         pass
 
     @abstractmethod
-    def find_by_matricula(self, matricula: int) -> Optional[User]:
+    async def find_by_matricula(self, matricula: int) -> Optional[User]:
         pass

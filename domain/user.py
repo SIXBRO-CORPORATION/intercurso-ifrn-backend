@@ -7,7 +7,7 @@ class User(AbstractDomain):
 
     name: str = None
     email: str = None
-    cpf: int = None
+    cpf: str = None
     matricula: int = None
     atleta: bool = None
     tipo_usuario: Optional[str] = None
