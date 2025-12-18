@@ -1,4 +1,3 @@
-
 import pytest
 from httpx import AsyncClient
 from web.main import app  # Sua aplicação FastAPI/Flask

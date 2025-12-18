@@ -40,6 +40,9 @@ jobs:
         run: |
           uv pip install -r requirements.txt
 
+      - name: Install project + dev deps
+        run: uv pip install .[dev]
+
       - name: Run tests
         run: |
           uv run pytest
