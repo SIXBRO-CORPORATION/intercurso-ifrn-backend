@@ -34,7 +34,7 @@ jobs:
 
       - name: Install dependencies (uv)
         run: |
-          uv add --dev -r requirements.txt
+          uv pip install -r requirements.txt
   
       - name: Install dependencies (uv + lockfile)
         run: |
