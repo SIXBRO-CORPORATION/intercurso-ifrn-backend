@@ -23,6 +23,16 @@ dev = [
     "httpx==0.27.2",
 ]
 
+[tool.setuptools]
+packages = [
+    "web",
+    "core",
+    "domain",
+    "business",
+    "security",
+    "persistence",
+]
+
 [tool.taskipy.tasks]
 run = "uv run uvicorn web/main.py --reload"
 test = "uv run pytest"
