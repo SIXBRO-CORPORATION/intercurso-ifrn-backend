@@ -6,3 +6,4 @@ uvicorn[standard]==0.32.0
 pydantic==2.10.0
 python-dotenv==1.1.0
 pytest==9.0.2
+takipy>=1.14.1

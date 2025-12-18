@@ -32,14 +32,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv
 
-      - name: Install dependencies (uv)
+      - name: Create virtualenv
+        run: |
+          uv venv
+
+      - name: Install dependencies
         run: |
           uv pip install -r requirements.txt
-  
-      - name: Install dependencies (uv + lockfile)
-        run: |
-          uv pip sync uv.lock
 
       - name: Run tests
         run: |
-          pytest
+          uv pip run pytest
