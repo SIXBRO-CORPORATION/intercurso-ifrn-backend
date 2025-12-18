@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
+from domain.auth_token import SUAPUserData
 
 class SuapOAuthPort(ABC):
 

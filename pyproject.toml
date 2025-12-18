@@ -17,6 +17,7 @@ dev = [
     "sqlalchemy[asyncio]==2.0.43",
     "taskipy>=1.14.1",
     "uvicorn[standard]==0.32.0",
+    "httpx==0.27",
 ]
 
 [tool.taskipy.tasks]
