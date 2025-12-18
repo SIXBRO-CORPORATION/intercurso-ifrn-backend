@@ -16,8 +16,11 @@ from web.models.response.team_register_response import TeamRegisterResponse
 from web.dependencies import (
     get_create_team_port,
     get_approve_team_port,
-    get_confirm_donation_port
+    get_confirm_donation_port,
+    require_authenticated_user
 )
+from domain.user import User
+
 
 router = APIRouter(prefix="/api/teams", tags=["teams"])
 
@@ -28,7 +31,8 @@ router = APIRouter(prefix="/api/teams", tags=["teams"])
 )
 async def create_team(
         request: TeamRegisterRequest,
-        create_team_port: Annotated[CreateTeamPort, Depends(get_create_team_port)]
+        create_team_port: Annotated[CreateTeamPort, Depends(get_create_team_port)],
+        current_user: User = Depends(require_authenticated_user)
 ):
 
     team_domain = Team(
@@ -39,6 +43,7 @@ async def create_team(
 
     context = Context(data=team_domain)
     context.put_property("members", [member.model_dump() for member in request.members])
+    context.put_property("creator_user_id", current_user.id)
 
     saved_team = await create_team_port.execute(context)
 
@@ -59,10 +64,12 @@ async def create_team(
 )
 async def approve_team(
         team_id: UUID,
-        approve_team_port: Annotated[ApproveTeamPort, Depends(get_approve_team_port)]
+        approve_team_port: Annotated[ApproveTeamPort, Depends(get_approve_team_port)],
+        current_user: User = Depends(require_authenticated_user)
 ):
     context = Context()
     context.put_property("team_id", team_id)
+    context.put_property("approved_by_user_id", current_user.id)
 
     approved_team = await approve_team_port.execute(context)
 
@@ -84,12 +91,14 @@ async def approve_team(
 async def confirm_donation(
         team_id: UUID,
         matricula: int,
-        confirm_donation_port: Annotated[ConfirmDonationPort, Depends(get_confirm_donation_port)]
+        confirm_donation_port: Annotated[ConfirmDonationPort, Depends(get_confirm_donation_port)],
+        current_user: User = Depends(require_authenticated_user)
 ):
 
     context = Context()
     context.put_property("team_id", team_id)
     context.put_property("matricula", matricula)
+    context.put_property("confirmed_by_user_id", current_user.id)
 
     updated_member = await confirm_donation_port.execute(context)
 

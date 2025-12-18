@@ -1,4 +1,4 @@
-from core.security.suap_oauth_port import OAuthProviderPort
+from core.security.oauth_provider_port import OAuthProviderPort
 from core.security.jwt_provider_port import JWTProviderPort
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.auth_token import AuthToken

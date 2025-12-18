@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional
+from domain.user import User
 
-class SuapOAuthPort(ABC):
+
+class OAuthProviderPort(ABC):
 
     @abstractmethod
     def get_authorization_url(self, state: Optional[str] = None) -> str:
@@ -12,9 +14,9 @@ class SuapOAuthPort(ABC):
         pass
 
     @abstractmethod
-    async def get_user_info(self, access_token: str) -> SUAPUserData:
+    async def get_user_info(self, access_token: str) -> User:
         pass
 
     @abstractmethod
-    async def authenticate_with_code(self, code: str) -> SUAPUserData:
+    async def authenticate_with_code(self, code: str) -> User:
         pass
