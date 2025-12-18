@@ -42,4 +42,4 @@ jobs:
 
       - name: Run tests
         run: |
-          uv pip run pytest
+          uv run pytest
