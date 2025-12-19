@@ -2,13 +2,14 @@ import httpx
 from typing import Optional
 from urllib.parse import urlencode
 
-from core.security.oauth_provider_port import SuapOAuthPort
+from core.security.oauth_provider_port import OAuthProviderPort
 from security.config import settings
 from domain.user import User
 from domain.exceptions.business_exception import BusinessException
+from security.mappers.suap_user_mapper import SuapUserMapper
 
 
-class SUAPOAuthAdapter(SuapOAuthPort):
+class SUAPOAuthAdapter(OAuthProviderPort):
     def __init__(self):
         self.client_id = settings.suap_client_id
         self.client_secret = settings.suap_client_secret
@@ -73,11 +74,8 @@ class SUAPOAuthAdapter(SuapOAuthPort):
                     raise BusinessException(
                         f"Erro ao buscar dados do usuário no SUAP: {response.text}"
                     )
-
                 data = response.json()
-                user = User.from_suap_dict(data)
-                return user
-
+                return SuapUserMapper.to_domain(data)
 
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")
