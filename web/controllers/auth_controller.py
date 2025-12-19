@@ -12,11 +12,11 @@ from web.commons.ApiResponse import ApiResponse
 from web.dependencies import (
     get_current_user,
     get_jwt_provider,
-    get_user_repository
+    get_user_repository,
+    get_refresh_token_service
 )
 from web.models.response.user_response import UserResponse
 from web.mappers.user_model_mapper import UserModelMapper
-
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
@@ -47,7 +47,14 @@ async def auth_callback(
 
     token = await login_use_case.execute(code)
 
-    # Redireciona para frontend
+    user = await user_repository.get(token.user_id)
+
+    access_token, refresh_token = await refresh_token_service.create_tokens_for_user(
+        user_id=user.id,
+        matricula=str(user.matricula),
+        email=user.email
+    )
+
     frontend_url = settings.frontend_url
     redirect_url = f"{frontend_url}/auth/callback?token={token.access_token}"
 
