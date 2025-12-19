@@ -18,14 +18,14 @@ class UserEntity(AbstractEntity):
     )
 
     cpf = Column(
-        Integer,
+        String(255),
         nullable=False,
         unique=True,
         index=True
     )
 
     matricula = Column(
-        Integer,
+        String(255),
         nullable=False,
         unique=True,
         index=True
