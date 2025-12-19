@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
-  group: pr-${{ github.head_ref  }}--verify
+  group: pr-${{ github.head_ref }}--verify
   cancel-in-progress: true
 
 jobs:
@@ -21,20 +21,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
       - name: Set Up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
-      - name: Create virtualenv
-        run: uv venv
-
-      - name: Install project
-        run: uv pip install .
-
-      - name: Install dev dependencies
-        run: uv pip install --group dev
+      - name: Install project dependencies
+        run: uv sync
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --cov --cov-report=xml
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
