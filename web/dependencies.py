@@ -1,7 +1,7 @@
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +17,7 @@ from core.business.team.create_team_port import CreateTeamPort
 from core.business.team.create_team_members_port import CreateTeamMembersPort
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.business.team.confirm_donation_port import ConfirmDonationPort
+from core.security.oauth_provider_port import OAuthProviderPort
 
 # ============ IMPORTS - DOMAIN ============
 from domain.user import User
@@ -24,6 +25,7 @@ from domain.exceptions.business_exception import BusinessException
 
 # ============ IMPORTS - SECURITY ============
 from security.adapters.jwt_provider_adapter import JWTProviderAdapter
+from security.adapters.suap_oauth_adapter import SUAPOAuthAdapter
 from security.utils import (
     extract_token_from_credentials,
     verify_and_extract_user_id,
@@ -49,7 +51,7 @@ from business.team.create_team_adapter import CreateTeamAdapter
 from business.team.create_team_members_adapter import CreateTeamMembersAdapter
 from business.team.approve_team_adapter import ApproveTeamAdapter
 from business.team.confirm_donation_adapter import ConfirmDonationAdapter
-
+from business.auth.auth_service import AuthService
 
 # ============================================================================
 # PERSISTENCE - Repositórios
@@ -61,7 +63,6 @@ def get_user_repository(
 ) -> UserRepositoryPort:
     mapper = UserMapper()
     return UserRepositoryAdapter(session, mapper)
-
 
 def get_team_repository(
     session: Annotated[AsyncSession, Depends(get_db)],
@@ -87,6 +88,12 @@ def get_jwt_provider() -> JWTProviderPort:
     return JWTProviderAdapter()
 
 
+def get_auth_service() -> AuthService:
+    return AuthService(
+        token_provider=JWTProviderAdapter(),
+        oauth_provider=SUAPOAuthAdapter(),
+    )
+
 async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
     jwt_provider: JWTProviderPort = Depends(get_jwt_provider),
@@ -99,15 +106,23 @@ async def get_current_user_id(
 
 
 async def get_current_user(
-    user_id: UUID = Depends(get_current_user_id),
-    user_repository: UserRepositoryPort = Depends(get_user_repository),
+        request: Request,
+        auth_service: AuthService = Depends(get_auth_service)
 ) -> User:
-    user = await user_repository.get(user_id)
+    auth_header = request.headers.get("Authorization")
 
-    validate_user_active(user)
+    if not auth_header:
+        raise HTTPException(401, "Authorization header ausente")
 
-    return user
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(401, "Formato inválido")
 
+    token = auth_header.replace("Bearer ", "")
+
+    try:
+        return await auth_service.get_authenticated_user(token)
+    except BusinessException as e:
+        raise HTTPException(status_code=401, detail=str(e))
 
 async def get_optional_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(
