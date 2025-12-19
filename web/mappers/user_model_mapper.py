@@ -17,5 +17,5 @@ class UserModelMapper:
             cpf=user.cpf,
             created_at=user.created_at,
             modified_at=user.modified_at,
-            active=user.active
+            active=user.active,
         )

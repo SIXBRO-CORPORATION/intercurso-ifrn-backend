@@ -43,9 +43,7 @@ class SUAPOAuthAdapter(SuapOAuthPort):
                         "client_id": self.client_id,
                         "client_secret": self.client_secret,
                     },
-                    headers={
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    }
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
                 )
 
                 if response.status_code != 200:
@@ -64,9 +62,7 @@ class SUAPOAuthAdapter(SuapOAuthPort):
             try:
                 response = await client.get(
                     self.user_info_url,
-                    headers={
-                        "Authorization": f"Bearer {access_token}"
-                    }
+                    headers={"Authorization": f"Bearer {access_token}"},
                 )
 
                 if response.status_code != 200:
@@ -77,7 +73,6 @@ class SUAPOAuthAdapter(SuapOAuthPort):
                 data = response.json()
                 user = User.from_suap_dict(data)
                 return user
-
 
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")

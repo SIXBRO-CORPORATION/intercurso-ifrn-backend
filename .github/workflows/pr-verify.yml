@@ -27,10 +27,14 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install Dependencies
-        run: |
-          uv pip install .[dev]
+      - name: Create virtualenv
+        run: uv venv
 
-      - name: Run Tests
-        run: |
-          pytest
+      - name: Install project
+        run: uv pip install .
+
+      - name: Install dev dependencies
+        run: uv pip install --group dev
+
+      - name: Run tests
+        run: uv run pytest

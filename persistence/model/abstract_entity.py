@@ -3,18 +3,15 @@ from sqlalchemy.orm import DeclarativeBase, declared_attr
 from datetime import datetime
 import uuid
 
+
 class Base(DeclarativeBase):
     pass
 
-class AbstractEntity(Base):
 
+class AbstractEntity(Base):
     __abstract__ = True
 
-    id = Column(
-        UUID,
-        primary_key=True,
-        default=lambda: uuid.uuid4()
-    )
+    id = Column(UUID, primary_key=True, default=lambda: uuid.uuid4())
 
     created_at = Column(
         DateTime,
@@ -38,5 +35,6 @@ class AbstractEntity(Base):
     @declared_attr
     def __tablename__(cls) -> str:
         import re
-        name = cls.__name__.replace('Entity', '')
-        return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower() + 's'
+
+        name = cls.__name__.replace("Entity", "")
+        return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower() + "s"

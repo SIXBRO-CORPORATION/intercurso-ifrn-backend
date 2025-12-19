@@ -10,8 +10,14 @@ from persistence.mappers.team_member_mapper import TeamMemberMapper
 from persistence.mappers.user_mapper import UserMapper
 from persistence.model.team_member_entity import TeamMemberEntity
 
+
 class TeamMemberRepositoryAdapter(TeamMemberRepositoryPort):
-    def __init__(self, session: AsyncSession, team_member_mapper: TeamMemberMapper, user_mapper: UserMapper):
+    def __init__(
+        self,
+        session: AsyncSession,
+        team_member_mapper: TeamMemberMapper,
+        user_mapper: UserMapper,
+    ):
         self.session = session
         self.team_member_mapper = team_member_mapper
         self.user_mapper = user_mapper
@@ -23,25 +29,21 @@ class TeamMemberRepositoryAdapter(TeamMemberRepositoryPort):
         return self.team_member_mapper.to_domain(entity)
 
     async def find_members_by_team_id(self, team_id: UUID) -> List[TeamMember]:
-        selecionar = (
-            select(TeamMemberEntity)
-            .where(
-                TeamMemberEntity.team_id == team_id
-            )
-        )
+        selecionar = select(TeamMemberEntity).where(TeamMemberEntity.team_id == team_id)
 
         result = await self.session.execute(selecionar)
         team_member_entities = result.scalars().all()
 
-        return [self.team_member_mapper.to_domain(entity) for entity in team_member_entities]
+        return [
+            self.team_member_mapper.to_domain(entity) for entity in team_member_entities
+        ]
 
-    async def find_member_by_matricula_and_team_id(self, matricula: int, team_id: UUID) -> Optional[TeamMember]:
-        selecionar = (
-            select(TeamMemberEntity)
-            .where(
-                TeamMemberEntity.member_matricula == matricula,
-                TeamMemberEntity.team_id == team_id
-            )
+    async def find_member_by_matricula_and_team_id(
+        self, matricula: int, team_id: UUID
+    ) -> Optional[TeamMember]:
+        selecionar = select(TeamMemberEntity).where(
+            TeamMemberEntity.member_matricula == matricula,
+            TeamMemberEntity.team_id == team_id,
         )
 
         result = await self.session.execute(selecionar)

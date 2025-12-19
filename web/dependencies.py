@@ -1,5 +1,3 @@
-
-
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -30,7 +28,7 @@ from security.utils import (
     extract_token_from_credentials,
     verify_and_extract_user_id,
     validate_user_active,
-    security_scheme
+    security_scheme,
 )
 
 # ============ IMPORTS - PERSISTENCE ============
@@ -40,7 +38,9 @@ from persistence.mappers.team_mapper import TeamMapper
 from persistence.mappers.team_member_mapper import TeamMemberMapper
 from persistence.adapters.user_repository_adapter import UserRepositoryAdapter
 from persistence.adapters.team_repository_adapter import TeamRepositoryAdapter
-from persistence.adapters.team_member_repository_adapter import TeamMemberRepositoryAdapter
+from persistence.adapters.team_member_repository_adapter import (
+    TeamMemberRepositoryAdapter,
+)
 
 # ============ IMPORTS - BUSINESS ============
 from business.users.create_user_adapter import CreateUserAdapter
@@ -55,22 +55,23 @@ from business.team.confirm_donation_adapter import ConfirmDonationAdapter
 # PERSISTENCE - Repositórios
 # ============================================================================
 
+
 def get_user_repository(
-        session: Annotated[AsyncSession, Depends(get_db)]
+    session: Annotated[AsyncSession, Depends(get_db)],
 ) -> UserRepositoryPort:
     mapper = UserMapper()
     return UserRepositoryAdapter(session, mapper)
 
 
 def get_team_repository(
-        session: Annotated[AsyncSession, Depends(get_db)]
+    session: Annotated[AsyncSession, Depends(get_db)],
 ) -> TeamRepositoryPort:
     mapper = TeamMapper()
     return TeamRepositoryAdapter(session, mapper)
 
 
 def get_team_member_repository(
-        session: Annotated[AsyncSession, Depends(get_db)]
+    session: Annotated[AsyncSession, Depends(get_db)],
 ) -> TeamMemberRepositoryPort:
     team_member_mapper = TeamMemberMapper()
     user_mapper = UserMapper()
@@ -81,13 +82,14 @@ def get_team_member_repository(
 # SECURITY - Autenticação e Autorização
 # ============================================================================
 
+
 def get_jwt_provider() -> JWTProviderPort:
     return JWTProviderAdapter()
 
 
 async def get_current_user_id(
-        credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
-        jwt_provider: JWTProviderPort = Depends(get_jwt_provider)
+    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+    jwt_provider: JWTProviderPort = Depends(get_jwt_provider),
 ) -> UUID:
     token = extract_token_from_credentials(credentials)
 
@@ -97,8 +99,8 @@ async def get_current_user_id(
 
 
 async def get_current_user(
-        user_id: UUID = Depends(get_current_user_id),
-        user_repository: UserRepositoryPort = Depends(get_user_repository)
+    user_id: UUID = Depends(get_current_user_id),
+    user_repository: UserRepositoryPort = Depends(get_user_repository),
 ) -> User:
     user = await user_repository.get(user_id)
 
@@ -108,11 +110,11 @@ async def get_current_user(
 
 
 async def get_optional_current_user(
-        credentials: Optional[HTTPAuthorizationCredentials] = Depends(
-            lambda: security_scheme(auto_error=False)
-        ),
-        jwt_provider: JWTProviderPort = Depends(get_jwt_provider),
-        user_repository: UserRepositoryPort = Depends(get_user_repository)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
+        lambda: security_scheme(auto_error=False)
+    ),
+    jwt_provider: JWTProviderPort = Depends(get_jwt_provider),
+    user_repository: UserRepositoryPort = Depends(get_user_repository),
 ) -> Optional[User]:
     if not credentials:
         return None
@@ -130,9 +132,7 @@ async def get_optional_current_user(
         return None
 
 
-def require_authenticated_user(
-        current_user: User = Depends(get_current_user)
-) -> User:
+def require_authenticated_user(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
@@ -140,52 +140,59 @@ def require_authenticated_user(
 # BUSINESS - Casos de Uso
 # ============================================================================
 
+
 def get_create_user_port(
-        user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)]
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
 ) -> CreateUserPort:
     return CreateUserAdapter(user_repository)
 
 
 def get_user_profile_port(
-        user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)]
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
 ) -> GetUserProfilePort:
     return GetUserProfileAdapter(user_repository)
 
 
 def get_create_team_members_port(
-        team_member_repository: Annotated[TeamMemberRepositoryPort, Depends(get_team_member_repository)],
-        user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)]
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
 ) -> CreateTeamMembersPort:
     return CreateTeamMembersAdapter(team_member_repository, user_repository)
 
 
 def get_create_team_port(
-        team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
-        team_member_repository: Annotated[TeamMemberRepositoryPort, Depends(get_team_member_repository)],
-        user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
-        create_team_members_port: Annotated[CreateTeamMembersPort, Depends(get_create_team_members_port)]
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    create_team_members_port: Annotated[
+        CreateTeamMembersPort, Depends(get_create_team_members_port)
+    ],
 ) -> CreateTeamPort:
     return CreateTeamAdapter(
         team_repository,
         team_member_repository,
         user_repository,
-        create_team_members_port
+        create_team_members_port,
     )
 
 
 def get_approve_team_port(
-        team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)]
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
 ) -> ApproveTeamPort:
     return ApproveTeamAdapter(team_repository)
 
 
 def get_confirm_donation_port(
-        team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
-        team_member_repository: Annotated[TeamMemberRepositoryPort, Depends(get_team_member_repository)],
-        user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)]
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
 ) -> ConfirmDonationPort:
     return ConfirmDonationAdapter(
-        team_repository,
-        team_member_repository,
-        user_repository
+        team_repository, team_member_repository, user_repository
     )

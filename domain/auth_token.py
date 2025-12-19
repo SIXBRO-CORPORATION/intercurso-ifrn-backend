@@ -10,3 +10,7 @@ class AuthToken:
     token_type: str = "bearer"
     expires_at: Optional[datetime] = None
     user_id: Optional[UUID] = None
+
+
+class SUAPUserData:
+    pass

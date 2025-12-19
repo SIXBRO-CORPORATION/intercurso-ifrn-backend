@@ -1,6 +1,7 @@
 from typing import Any, Optional, Type, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class Context:
     def __init__(self, data: Any = None):

@@ -17,7 +17,7 @@ class TeamMapper:
             status=entity.status,
             created_at=entity.created_at,
             modified_at=entity.modified_at,
-            active=entity.active
+            active=entity.active,
         )
 
     def to_entity(self, team: Team) -> TeamEntity:
@@ -29,7 +29,7 @@ class TeamMapper:
             status=team.status,
             created_at=team.created_at,
             modified_at=team.modified_at,
-            active=team.active
+            active=team.active,
         )
 
         return entity

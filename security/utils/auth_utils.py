@@ -11,7 +11,7 @@ security_scheme = HTTPBearer()
 
 
 def extract_token_from_credentials(
-        credentials: Optional[HTTPAuthorizationCredentials]
+    credentials: Optional[HTTPAuthorizationCredentials],
 ) -> str:
     if not credentials:
         raise HTTPException(
@@ -30,10 +30,7 @@ def extract_token_from_credentials(
     return credentials.credentials
 
 
-def verify_and_extract_user_id(
-        token: str,
-        jwt_provider: JWTProviderPort
-) -> UUID:
+def verify_and_extract_user_id(token: str, jwt_provider: JWTProviderPort) -> UUID:
     try:
         user_id = jwt_provider.get_user_id_from_token(token)
         return user_id
@@ -56,12 +53,11 @@ def verify_and_extract_user_id(
 def validate_user_active(user) -> None:
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado"
         )
 
     if not user.active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuário inativo. Entre em contato com o suporte."
+            detail="Usuário inativo. Entre em contato com o suporte.",
         )

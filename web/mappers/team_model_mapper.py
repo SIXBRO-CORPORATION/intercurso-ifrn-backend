@@ -8,9 +8,7 @@ from web.models.response.team_register_response import TeamRegisterResponse
 
 class TeamModelMapper:
     def to_register_response(
-            self,
-            team: Team,
-            members: List[TeamMember]
+        self, team: Team, members: List[TeamMember]
     ) -> TeamRegisterResponse:
         member_responses = [
             TeamMemberResponse(
@@ -19,7 +17,7 @@ class TeamModelMapper:
                 cpf=member.member_cpf,
                 status=member.status.value,
                 user_id=member.user_id,
-                is_registered=member.user_id is not None
+                is_registered=member.user_id is not None,
             )
             for member in members
         ]
@@ -32,5 +30,5 @@ class TeamModelMapper:
             photo=team.photo,
             members_count=len(members),
             members=member_responses,
-            message="Time cadastrado com sucesso! Aguardando aprovação do monitor."
+            message="Time cadastrado com sucesso! Aguardando aprovação do monitor.",
         )

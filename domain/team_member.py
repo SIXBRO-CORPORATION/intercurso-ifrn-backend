@@ -7,7 +7,6 @@ from domain.enums.team_member_status import TeamMemberStatus
 
 @dataclass
 class TeamMember:
-
     team_id: UUID
     user_id: Optional[UUID]
     member_matricula: int

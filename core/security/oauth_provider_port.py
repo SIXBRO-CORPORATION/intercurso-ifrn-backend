@@ -4,7 +4,6 @@ from domain.user import User
 
 
 class OAuthProviderPort(ABC):
-
     @abstractmethod
     def get_authorization_url(self, state: Optional[str] = None) -> str:
         pass
@@ -20,3 +19,6 @@ class OAuthProviderPort(ABC):
     @abstractmethod
     async def authenticate_with_code(self, code: str) -> User:
         pass
+
+class SuapOAuthPort:
+    pass

@@ -14,7 +14,6 @@ class ApproveTeamAdapter(ApproveTeamPort):
     def __init__(self, repository: TeamRepositoryPort):
         self.repository = repository
 
-
     async def execute(self, context: Context) -> Team:
         team_id = context.get_property("team_id", UUID)
 

@@ -8,4 +8,5 @@ class LoginWithSUAPPort(Command[AuthToken]):
 
     Define o contrato que LoginWithSUAPAdapter deve implementar.
     """
+
     pass

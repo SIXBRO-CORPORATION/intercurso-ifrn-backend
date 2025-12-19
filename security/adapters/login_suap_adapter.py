@@ -18,13 +18,17 @@ def _safe_int_conversion(value) -> Optional[int]:
 
     return None
 
-class LoginWithSUAPAdapter:
 
-    def __init__(self, oauth_provider: OAuthProviderPort, token_service: JWTProviderPort, user_repository: UserRepositoryPort ):
+class LoginWithSUAPAdapter:
+    def __init__(
+        self,
+        oauth_provider: OAuthProviderPort,
+        token_service: JWTProviderPort,
+        user_repository: UserRepositoryPort,
+    ):
         self.oauth_provider = oauth_provider
         self.token_service = token_service
         self.user_repository = user_repository
-
 
     async def execute(self, authorization_code: str) -> AuthToken:
         suap_user_data = await self.oauth_provider.authenticate_with_code(
@@ -36,9 +40,7 @@ class LoginWithSUAPAdapter:
         user = await self._get_or_create_user(suap_user_data)
 
         token = self.token_service.create_access_token(
-            user_id=user.id,
-            matricula=str(user.matricula),
-            email=user.email
+            user_id=user.id, matricula=str(user.matricula), email=user.email
         )
 
         return token
@@ -78,7 +80,7 @@ class LoginWithSUAPAdapter:
                 email=suap_data.email,
                 cpf=cpf_int,
                 matricula=matricula_int,
-                active=True
+                active=True,
             )
 
             return await self.user_repository.save(new_user)

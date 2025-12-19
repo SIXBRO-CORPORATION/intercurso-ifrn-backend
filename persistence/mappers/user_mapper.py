@@ -19,7 +19,7 @@ class UserMapper:
             created_at=entity.created_at,
             modified_at=entity.modified_at,
             active=entity.active,
-            atleta=entity.atleta
+            atleta=entity.atleta,
         )
 
     def to_entity(self, user: User) -> UserEntity:
@@ -32,7 +32,7 @@ class UserMapper:
             created_at=user.created_at,
             modified_at=user.modified_at,
             active=user.active,
-            atleta=user.atleta
+            atleta=user.atleta,
         )
 
         return entity

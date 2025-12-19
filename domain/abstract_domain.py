@@ -7,7 +7,6 @@ from uuid import UUID
 
 @dataclass
 class AbstractDomain(ABC):
-
     id: Optional[UUID] = None
     created_at: Optional[datetime] = None
     modified_at: Optional[datetime] = None
