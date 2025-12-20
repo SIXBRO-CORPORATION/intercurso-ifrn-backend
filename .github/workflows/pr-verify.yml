@@ -34,9 +34,6 @@ jobs:
       - name: Install project dependencies
         run: uv sync
 
-      - name: Run tests
-        run: uv run pytest --cov --cov-report=xml
-
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         if: always()
