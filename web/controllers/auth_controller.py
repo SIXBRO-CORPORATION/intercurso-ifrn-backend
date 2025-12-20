@@ -9,7 +9,11 @@ from core.persistence.user_repository_port import UserRepositoryPort
 from domain.user import User
 from security.adapters.suap_oauth_adapter import SUAPOAuthAdapter
 from web.commons.ApiResponse import ApiResponse
-from web.dependencies import get_current_user, get_jwt_provider, get_user_repository
+from web.dependencies import (
+    get_current_user,
+    get_jwt_provider,
+    get_user_repository
+)
 from web.models.response.user_response import UserResponse
 from web.mappers.user_model_mapper import UserModelMapper
 
@@ -22,7 +26,7 @@ def get_oauth_provider() -> OAuthProviderPort:
 
 @router.get("/login/suap")
 async def login_with_suap(
-    oauth_provider: OAuthProviderPort = Depends(get_oauth_provider),
+        oauth_provider: OAuthProviderPort = Depends(get_oauth_provider)
 ):
     authorization_url = oauth_provider.get_authorization_url()
     return RedirectResponse(url=authorization_url)
@@ -30,15 +34,15 @@ async def login_with_suap(
 
 @router.get("/callback")
 async def auth_callback(
-    code: str = Query(..., description="Authorization code from SUAP"),
-    oauth_provider: OAuthProviderPort = Depends(get_oauth_provider),
-    token_service: JWTProviderPort = Depends(get_jwt_provider),
-    user_repository: UserRepositoryPort = Depends(get_user_repository),
+        code: str = Query(..., description="Authorization code from SUAP"),
+        oauth_provider: OAuthProviderPort = Depends(get_oauth_provider),
+        token_service: JWTProviderPort = Depends(get_jwt_provider),
+        user_repository: UserRepositoryPort = Depends(get_user_repository)
 ):
     login_use_case = LoginWithSUAPAdapter(
         oauth_provider=oauth_provider,
         token_service=token_service,
-        user_repository=user_repository,
+        user_repository=user_repository
     )
 
     token = await login_use_case.execute(code)
@@ -50,35 +54,49 @@ async def auth_callback(
     return RedirectResponse(url=redirect_url)
 
 
-@router.get("/me", response_model=ApiResponse[UserResponse])
-async def get_current_user_info(user: User = Depends(get_current_user)):
+@router.get(
+    "/me",
+    response_model=ApiResponse[UserResponse]
+)
+async def get_current_user_info(
+        user: User = Depends(get_current_user)
+):
+
+
     mapper = UserModelMapper()
     user_response = mapper.to_response(user)
 
     return ApiResponse.success(
-        data=user_response, message="User retrieved successfully"
+        data=user_response,
+        message="User retrieved successfully"
     )
 
 
 @router.post("/refresh")
 async def refresh_token(
-    user: User = Depends(get_current_user),
-    token_service: JWTProviderPort = Depends(get_jwt_provider),
+        user: User = Depends(get_current_user),
+        token_service: JWTProviderPort = Depends(get_jwt_provider)
 ):
     new_token = token_service.create_access_token(
-        user_id=user.id, matricula=str(user.matricula), email=user.email
+        user_id=user.id,
+        matricula=str(user.matricula),
+        email=user.email
     )
 
     return ApiResponse.success(
         data={
             "access_token": new_token.access_token,
             "token_type": new_token.token_type,
-            "expires_at": new_token.expires_at,
+            "expires_at": new_token.expires_at
         },
-        message="Token refreshed successfully",
+        message="Token refreshed successfully"
     )
 
 
 @router.post("/logout")
-async def logout(user: User = Depends(get_current_user)):
-    return ApiResponse.success(message="Logged out successfully")
+async def logout(
+        user: User = Depends(get_current_user)
+):
+    return ApiResponse.success(
+        message="Logged out successfully"
+    )

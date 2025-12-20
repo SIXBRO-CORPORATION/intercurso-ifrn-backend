@@ -17,16 +17,18 @@ class JWTProviderAdapter(JWTProviderPort):
         self.expire_minutes = settings.jwt_access_token_expire_minutes
 
     def create_access_token(
-        self,
-        user_id: UUID,
-        matricula: str,
-        email: Optional[str] = None,
-        expires_delta: Optional[timedelta] = None,
+            self,
+            user_id: UUID,
+            matricula: str,
+            email: Optional[str] = None,
+            expires_delta: Optional[timedelta] = None
     ) -> AuthToken:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=self.expire_minutes)
+            expire = datetime.utcnow() + timedelta(
+                minutes=self.expire_minutes
+            )
 
         payload = {
             "sub": str(user_id),
@@ -36,18 +38,26 @@ class JWTProviderAdapter(JWTProviderPort):
             "iat": datetime.utcnow(),
         }
 
-        encoded_jwt = jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+        encoded_jwt = jwt.encode(
+            payload,
+            self.secret_key,
+            algorithm=self.algorithm
+        )
 
         return AuthToken(
             access_token=encoded_jwt,
             token_type="bearer",
             expires_at=expire,
-            user_id=user_id,
+            user_id=user_id
         )
 
     def verify_token(self, token: str) -> dict:
         try:
-            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            payload = jwt.decode(
+                token,
+                self.secret_key,
+                algorithms=[self.algorithm]
+            )
 
             if payload.get("sub") is None:
                 raise BusinessException("Token inválido")
@@ -67,5 +77,5 @@ class JWTProviderAdapter(JWTProviderPort):
         return self.create_access_token(
             user_id=UUID(payload["sub"]),
             matricula=payload["matricula"],
-            email=payload.get("email"),
+            email=payload.get("email")
         )
