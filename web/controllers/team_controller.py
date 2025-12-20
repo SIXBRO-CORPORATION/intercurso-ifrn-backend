@@ -17,28 +17,26 @@ from web.dependencies import (
     get_create_team_port,
     get_approve_team_port,
     get_confirm_donation_port,
-    require_authenticated_user
+    require_authenticated_user,
 )
 from domain.user import User
 
 
 router = APIRouter(prefix="/api/teams", tags=["teams"])
 
+
 @router.post(
     "/",
     response_model=ApiResponse[TeamRegisterResponse],
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_team(
-        request: TeamRegisterRequest,
-        create_team_port: Annotated[CreateTeamPort, Depends(get_create_team_port)],
-        current_user: User = Depends(require_authenticated_user)
+    request: TeamRegisterRequest,
+    create_team_port: Annotated[CreateTeamPort, Depends(get_create_team_port)],
+    current_user: User = Depends(require_authenticated_user),
 ):
-
     team_domain = Team(
-        name = request.name,
-        photo = request.photo,
-        modality = request.modality
+        name=request.name, photo=request.photo, modality=request.modality
     )
 
     context = Context(data=team_domain)
@@ -52,20 +50,18 @@ async def create_team(
     mapper = TeamModelMapper()
     response_data = mapper.to_register_response(saved_team, team_members)
 
-    return ApiResponse(
-        data=response_data,
-        message="Time cadastrado com sucesso!"
-    )
+    return ApiResponse(data=response_data, message="Time cadastrado com sucesso!")
+
 
 @router.patch(
     "/{team_id}/approve",
     response_model=ApiResponse[dict],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
 )
 async def approve_team(
-        team_id: UUID,
-        approve_team_port: Annotated[ApproveTeamPort, Depends(get_approve_team_port)],
-        current_user: User = Depends(require_authenticated_user)
+    team_id: UUID,
+    approve_team_port: Annotated[ApproveTeamPort, Depends(get_approve_team_port)],
+    current_user: User = Depends(require_authenticated_user),
 ):
     context = Context()
     context.put_property("team_id", team_id)
@@ -78,23 +74,25 @@ async def approve_team(
             "team_id": str(approved_team.id),
             "name": approved_team.name,
             "status": approved_team.status.value,
-            "modality": approved_team.modality.value
+            "modality": approved_team.modality.value,
         },
-        message="Time aprovado com sucesso!"
+        message="Time aprovado com sucesso!",
     )
+
 
 @router.patch(
     "/{team_id}/members/{matricula}/confirm-donation",
     response_model=ApiResponse[dict],
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
 )
 async def confirm_donation(
-        team_id: UUID,
-        matricula: int,
-        confirm_donation_port: Annotated[ConfirmDonationPort, Depends(get_confirm_donation_port)],
-        current_user: User = Depends(require_authenticated_user)
+    team_id: UUID,
+    matricula: int,
+    confirm_donation_port: Annotated[
+        ConfirmDonationPort, Depends(get_confirm_donation_port)
+    ],
+    current_user: User = Depends(require_authenticated_user),
 ):
-
     context = Context()
     context.put_property("team_id", team_id)
     context.put_property("matricula", matricula)
@@ -109,7 +107,7 @@ async def confirm_donation(
             "member_matricula": updated_member.member_matricula,
             "member_name": updated_member.member_name,
             "status": updated_member.status.value,
-            "user_updated": user_updated
+            "user_updated": user_updated,
         },
-        message="Doação confirmada com sucesso!"
+        message="Doação confirmada com sucesso!",
     )

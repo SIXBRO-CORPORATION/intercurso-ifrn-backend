@@ -2,7 +2,8 @@ from typing import TypeVar, Generic, Optional, List
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class ReadRepositoryPort(ABC, Generic[T]):
     @abstractmethod

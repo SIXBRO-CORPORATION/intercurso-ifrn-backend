@@ -12,7 +12,9 @@ from domain.team_member import TeamMember
 
 
 class CreateTeamMembersAdapter(CreateTeamMembersPort):
-    def __init__(self, repository: TeamMemberRepositoryPort, user_repository: UserRepositoryPort):
+    def __init__(
+        self, repository: TeamMemberRepositoryPort, user_repository: UserRepositoryPort
+    ):
         self.repository = repository
         self.user_repository = user_repository
 
@@ -32,7 +34,9 @@ class CreateTeamMembersAdapter(CreateTeamMembersPort):
             if not cpf.isdigit() or len(cpf) != 11:
                 raise BusinessException("CPF inválido. Deve conter 11 dígitos")
 
-            existing_user = await self.user_repository.find_by_matricula(member_data.get("matricula"))
+            existing_user = await self.user_repository.find_by_matricula(
+                member_data.get("matricula")
+            )
             user_id = existing_user.id if existing_user else None
 
             team_member = TeamMember(
@@ -41,7 +45,7 @@ class CreateTeamMembersAdapter(CreateTeamMembersPort):
                 member_matricula=member_data.get("matricula"),
                 member_name=member_data.get("name").strip(),
                 member_cpf=cpf,
-                status=TeamMemberStatus.PENDING_DONATION
+                status=TeamMemberStatus.PENDING_DONATION,
             )
 
             saved_member = await self.repository.save(team_member)

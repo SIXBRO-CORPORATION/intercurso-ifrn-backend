@@ -5,35 +5,16 @@ from persistence.model.abstract_entity import Base
 
 
 class TeamMemberEntity(Base):
-
     __tablename__ = "team_members"
 
-    team_id = Column(
-        ForeignKey('teams.id'),
-        primary_key=True
-    )
+    team_id = Column(ForeignKey("teams.id"), primary_key=True)
 
-    user_id = Column(
-        ForeignKey('users.id')
-    )
+    user_id = Column(ForeignKey("users.id"))
 
-    member_matricula = Column(
-        Integer,
-        ForeignKey('users.matricula'),
-        primary_key=True
-    )
+    member_matricula = Column(Integer, ForeignKey("users.matricula"), primary_key=True)
 
-    member_name = Column(
-        String(255),
-        nullable=False
-    )
+    member_name = Column(String(255), nullable=False)
 
-    member_cpf = Column(
-        String(14),
-        nullable=False
-    )
+    member_cpf = Column(String(14), nullable=False)
 
-    status = Column(
-        Enum(TeamMemberStatus),
-        nullable=False
-    )
+    status = Column(Enum(TeamMemberStatus), nullable=False)

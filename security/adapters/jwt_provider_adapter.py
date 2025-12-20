@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from typing import Optional, Tuple
+from typing import Optional
 from uuid import UUID
-import secrets
+
 from jose import JWTError, jwt
 
 from core.security.jwt_provider_port import JWTProviderPort
@@ -51,13 +51,6 @@ class JWTProviderAdapter(JWTProviderPort):
             user_id=user_id
         )
 
-    def create_refresh_token(self, user_id: UUID) -> str:
-        random_token = secrets.token_urlsafe(32)
-
-        refresh_token = f"rt_{user_id}_{random_token}"
-
-        return refresh_token
-
     def verify_token(self, token: str) -> dict:
         try:
             payload = jwt.decode(
@@ -78,19 +71,11 @@ class JWTProviderAdapter(JWTProviderPort):
         payload = self.verify_token(token)
         return UUID(payload["sub"])
 
-    def create_token_pair(
-            self,
-            user_id: UUID,
-            matricula: str,
-            email: Optional[str] = None
-    ) -> Tuple[AuthToken, str]:
+    def refresh_token(self, old_token: str) -> AuthToken:
+        payload = self.verify_token(old_token)
 
-        access_token = self.create_access_token(
-            user_id=user_id,
-            matricula=matricula,
-            email=email
+        return self.create_access_token(
+            user_id=UUID(payload["sub"]),
+            matricula=payload["matricula"],
+            email=payload.get("email")
         )
-
-        refresh_token = self.create_refresh_token(user_id)
-
-        return access_token, refresh_token

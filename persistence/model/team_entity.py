@@ -6,24 +6,12 @@ from persistence.model.abstract_entity import AbstractEntity
 
 
 class TeamEntity(AbstractEntity):
-
     __tablename__ = "teams"
 
-    name = Column(
-        String(255),
-        nullable=False
-    )
+    name = Column(String(255), nullable=False)
 
-    photo = Column(
-        String()
-    )
+    photo = Column(String())
 
-    modality = Column(
-        Enum(ModalityType),
-        nullable=False
-    )
+    modality = Column(Enum(ModalityType), nullable=False)
 
-    status = Column(
-        Enum(TeamStatus),
-        nullable=False
-    )
+    status = Column(Enum(TeamStatus), nullable=False)

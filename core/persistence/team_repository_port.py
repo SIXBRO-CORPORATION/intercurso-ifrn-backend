@@ -8,7 +8,6 @@ from domain.team import Team
 
 
 class TeamRepositoryPort(BaseRepositoryPort[Team]):
-
     @abstractmethod
     async def exists_by_id(self, team_id: UUID) -> bool:
         pass
@@ -24,4 +23,3 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
     @abstractmethod
     async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
         pass
-

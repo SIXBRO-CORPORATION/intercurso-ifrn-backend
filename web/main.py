@@ -7,14 +7,13 @@ from starlette.middleware.cors import CORSMiddleware
 
 from persistence.database import init_db, close_db
 from web.commons.exception_handler import register_exception_handler
-from web.controllers.user_controller import router as user_router
 from web.controllers.team_controller import router as team_router
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -51,29 +50,20 @@ register_exception_handler(app)
 app.include_router(team_router)
 
 from web.controllers.auth_controller import router as auth_router
+
 app.include_router(auth_router)
 
 app.get("/")
 async def root():
-    return {
-        "status": "ok",
-        "message": "API is running",
-        "version": "1.0.0"
-    }
+    return {"status": "ok", "message": "API is running", "version": "1.0.0"}
+
 
 @app.get("/health")
 async def health_check():
-    return {
-        "status": "healthy",
-        "database": "connected",
-        "pool": "active"
-    }
+    return {"status": "healthy", "database": "connected", "pool": "active"}
+
 
 if __name__ == "__main__":
     uvicorn.run(
-        "web.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        "web.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info"
     )

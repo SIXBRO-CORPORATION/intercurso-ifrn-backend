@@ -7,7 +7,6 @@ from domain.enums.team_status import TeamStatus
 
 @dataclass
 class Team(AbstractDomain):
-
     name: str = None
     photo: str = None
     modality: ModalityType = None

@@ -2,14 +2,13 @@ import httpx
 from typing import Optional
 from urllib.parse import urlencode
 
-from core.security.oauth_provider_port import OAuthProviderPort
+from core.security.oauth_provider_port import SuapOAuthPort
 from security.config import settings
 from domain.user import User
 from domain.exceptions.business_exception import BusinessException
-from security.mappers.suap_user_mapper import SuapUserMapper
 
 
-class SUAPOAuthAdapter(OAuthProviderPort):
+class SUAPOAuthAdapter(SuapOAuthPort):
     def __init__(self):
         self.client_id = settings.suap_client_id
         self.client_secret = settings.suap_client_secret
@@ -44,9 +43,7 @@ class SUAPOAuthAdapter(OAuthProviderPort):
                         "client_id": self.client_id,
                         "client_secret": self.client_secret,
                     },
-                    headers={
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    }
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
                 )
 
                 if response.status_code != 200:
@@ -65,17 +62,17 @@ class SUAPOAuthAdapter(OAuthProviderPort):
             try:
                 response = await client.get(
                     self.user_info_url,
-                    headers={
-                        "Authorization": f"Bearer {access_token}"
-                    }
+                    headers={"Authorization": f"Bearer {access_token}"},
                 )
 
                 if response.status_code != 200:
                     raise BusinessException(
                         f"Erro ao buscar dados do usuário no SUAP: {response.text}"
                     )
+
                 data = response.json()
-                return SuapUserMapper.to_domain(data)
+                user = User.from_suap_dict(data)
+                return user
 
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")

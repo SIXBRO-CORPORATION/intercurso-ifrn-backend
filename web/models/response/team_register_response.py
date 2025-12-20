@@ -7,9 +7,7 @@ from web.models.response.team_member_response import TeamMemberResponse
 
 
 class TeamRegisterResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     team_id: UUID = Field()
     name: str = Field()

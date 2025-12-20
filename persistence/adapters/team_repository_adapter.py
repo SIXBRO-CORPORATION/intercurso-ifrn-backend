@@ -18,7 +18,7 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         self.mapper = mapper
 
     async def get(self, team_id: UUID) -> Optional[Team]:
-        selecionar = select(TeamEntity).where(TeamEntity.id ==team_id)
+        selecionar = select(TeamEntity).where(TeamEntity.id == team_id)
         result = await self.session.execute(selecionar)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
@@ -43,13 +43,8 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
     async def find_teams_by_matricula(self, matricula: int) -> List[Team]:
         selecionar = (
             select(TeamEntity)
-            .join(
-                TeamMemberEntity,
-                TeamMemberEntity.team_id == TeamEntity.id
-            )
-            .where(
-                TeamMemberEntity.member_matricula == matricula
-            )
+            .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
+            .where(TeamMemberEntity.member_matricula == matricula)
         )
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
@@ -58,13 +53,8 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
     async def find_teams_by_user_id(self, user_id: UUID) -> List[Team]:
         selecionar = (
             select(TeamEntity)
-            .join(
-                TeamMemberEntity,
-                TeamMemberEntity.team_id == TeamEntity.id
-            )
-            .where(
-                TeamMemberEntity.user_id == user_id
-            )
+            .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
+            .where(TeamMemberEntity.user_id == user_id)
         )
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
@@ -73,13 +63,8 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
     async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
         selecionar = (
             select(TeamEntity)
-            .join(
-                TeamMemberEntity,
-                TeamMemberEntity.team_id == TeamEntity.id
-            )
-            .where(
-                TeamMemberEntity.status == status
-            )
+            .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
+            .where(TeamMemberEntity.status == status)
         )
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()

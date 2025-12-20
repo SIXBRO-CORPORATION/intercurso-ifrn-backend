@@ -6,7 +6,6 @@ from domain.user import User
 
 
 class UserRepositoryPort(BaseRepositoryPort[User]):
-
     @abstractmethod
     async def find_by_email(self, email: str) -> Optional[User]:
         pass

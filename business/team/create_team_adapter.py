@@ -14,11 +14,11 @@ from domain.team import Team
 
 class CreateTeamAdapter(CreateTeamPort):
     def __init__(
-            self,
-            team_repository: TeamRepositoryPort,
-            team_member_repository: TeamMemberRepositoryPort,
-            user_repository: UserRepositoryPort,
-            create_team_members_port: CreateTeamMembersPort
+        self,
+        team_repository: TeamRepositoryPort,
+        team_member_repository: TeamMemberRepositoryPort,
+        user_repository: UserRepositoryPort,
+        create_team_members_port: CreateTeamMembersPort,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
@@ -41,7 +41,9 @@ class CreateTeamAdapter(CreateTeamPort):
         if team_data.modality is None:
             raise BusinessException("Modalidade é obrigatória")
 
-        await self._validate_members_not_in_same_modality(members_data, team_data.modality)
+        await self._validate_members_not_in_same_modality(
+            members_data, team_data.modality
+        )
 
         new_team = Team(
             name=team_data.name.strip(),
@@ -50,7 +52,7 @@ class CreateTeamAdapter(CreateTeamPort):
             status=TeamStatus.PENDING,
             created_at=datetime.now(),
             modified_at=None,
-            active=True
+            active=True,
         )
 
         saved_team = await self.team_repository.save(new_team)
@@ -65,16 +67,16 @@ class CreateTeamAdapter(CreateTeamPort):
         return saved_team
 
     async def _validate_members_not_in_same_modality(
-            self,
-            members_data: List[dict],
-            modality
+        self, members_data: List[dict], modality
     ) -> None:
         for member_data in members_data:
             matricula = member_data.get("matricula")
             if not matricula:
                 continue
 
-            existing_teams = await self.team_repository.find_teams_by_matricula(matricula)
+            existing_teams = await self.team_repository.find_teams_by_matricula(
+                matricula
+            )
 
             for team in existing_teams:
                 if team.modality == modality:

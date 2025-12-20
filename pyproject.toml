@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "intercurso-ifrn-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "aiosqlite==0.20.0",
+    "asyncpg==0.29.0",
+    "fastapi==0.115.0",
+    "jose>=1.0.0",
+    "pydantic==2.10.0",
+    "pytest==9.0.2",
+    "python-dotenv==1.1.0",
+    "ruff>=0.14.10",
+    "sqlalchemy[asyncio]==2.0.43",
+    "taskipy>=1.14.1",
+    "uvicorn[standard]==0.32.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[tool.setuptools]
+packages = [
+  "web",
+  "core",
+  "domain",
+  "business",
+  "security",
+  "persistence"
+]
+
+[tool.taskipy.tasks]
+
+# 🔥 Ambiente
+install = "uv venv && uv pip install . && uv pip install --group dev"
+
+# 🚀 Aplicação
+run = "uv run uvicorn web.main:app --reload"
+
+# 🧪 Testes
+test = "uv run pytest"
+test_unit = "uv run pytest tests/unit"
+test_integration = "uv run pytest tests/integration"
+test_e2e = "uv run pytest tests/e2e"
+
+# 📊 Cobertura
+coverage = "uv run pytest --cov=core --cov=domain --cov=business --cov=security --cov=persistence --cov-report=term-missing"
+
+# 🧹 Qualidade de código
+lint = "uv run ruff check ."
+format = "uv run ruff format ."
+
+# 🔍 Tudo de uma vez (local / CI)
+check = "task lint && task test"
+
+# 🧨 Limpeza
+clean = "rm -rf .venv .pytest_cache .ruff_cache dist build *.egg-info"
