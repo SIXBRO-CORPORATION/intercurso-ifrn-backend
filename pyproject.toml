@@ -55,7 +55,6 @@ coverage = "uv run pytest --cov=core --cov=domain --cov=business --cov=security 
 
 # 🧹 Qualidade de código
 lint = "uv run ruff check ."
-format = "uv run ruff format ."
 
 # 🔍 Tudo de uma vez (local / CI)
 check = "task lint && task test"
