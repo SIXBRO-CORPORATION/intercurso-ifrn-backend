@@ -20,5 +20,6 @@ class OAuthProviderPort(ABC):
     async def authenticate_with_code(self, code: str) -> User:
         pass
 
+
 class SuapOAuthPort:
     pass

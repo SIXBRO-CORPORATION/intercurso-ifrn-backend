@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, false, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.refresh_token_repository_port import RefreshTokenRepositoryPort
@@ -12,7 +12,6 @@ from persistence.model.refresh_token_entity import RefreshTokenEntity
 
 
 class RefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
-
     def __init__(self, session: AsyncSession, mapper: RefreshTokenMapper):
         self.session = session
         self.mapper = mapper
@@ -25,29 +24,27 @@ class RefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
         return self.mapper.to_domain(entity)
 
     async def get(self, token_id: UUID) -> Optional[RefreshToken]:
-        query = select(RefreshTokenEntity).where(
-            RefreshTokenEntity.id == token_id
-        )
+        query = select(RefreshTokenEntity).where(RefreshTokenEntity.id == token_id)
         result = await self.session.execute(query)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
 
     async def find_by_token(self, token: str) -> Optional[RefreshToken]:
-        query = select(RefreshTokenEntity).where(
-            RefreshTokenEntity.token == token
-        )
+        query = select(RefreshTokenEntity).where(RefreshTokenEntity.token == token)
         result = await self.session.execute(query)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
 
     async def find_active_by_user(self, user_id: UUID) -> List[RefreshToken]:
-        query = select(RefreshTokenEntity).where(
-            RefreshTokenEntity.user_id == user_id,
-            RefreshTokenEntity.revoked == False,
-            RefreshTokenEntity.active == True,
-            RefreshTokenEntity.expires_at > datetime.now()
-        ).order_by(
-            RefreshTokenEntity.created_at.desc()
+        query = (
+            select(RefreshTokenEntity)
+            .where(
+                RefreshTokenEntity.user_id == user_id,
+                RefreshTokenEntity.revoked.is_(false()),
+                RefreshTokenEntity.active.is_(true()),
+                RefreshTokenEntity.expires_at > datetime.now(),
+            )
+            .order_by(RefreshTokenEntity.created_at.desc())
         )
 
         result = await self.session.execute(query)
@@ -59,13 +56,9 @@ class RefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
             update(RefreshTokenEntity)
             .where(
                 RefreshTokenEntity.user_id == user_id,
-                RefreshTokenEntity.revoked == False
+                RefreshTokenEntity.revoked.is_(false()),
             )
-            .values(
-                revoked=True,
-                revoked_at=datetime.now(),
-                modified_at=datetime.now()
-            )
+            .values(revoked=True, revoked_at=datetime.now(), modified_at=datetime.now())
         )
 
         result = await self.session.execute(query)
@@ -95,9 +88,9 @@ class RefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
 
         query = select(func.count(RefreshTokenEntity.id)).where(
             RefreshTokenEntity.user_id == user_id,
-            RefreshTokenEntity.revoked == False,
-            RefreshTokenEntity.active == True,
-            RefreshTokenEntity.expires_at > datetime.now()
+            RefreshTokenEntity.revoked.is_(false()),
+            RefreshTokenEntity.active.is_(true()),
+            RefreshTokenEntity.expires_at > datetime.now(),
         )
 
         result = await self.session.execute(query)
@@ -107,14 +100,9 @@ class RefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
         query = (
             update(RefreshTokenEntity)
             .where(
-                RefreshTokenEntity.id == token_id,
-                RefreshTokenEntity.revoked == False
+                RefreshTokenEntity.id == token_id, RefreshTokenEntity.revoked.is_(false()),
             )
-            .values(
-                revoked=True,
-                revoked_at=datetime.now(),
-                modified_at=datetime.now()
-            )
+            .values(revoked=True, revoked_at=datetime.now(), modified_at=datetime.now())
         )
 
         result = await self.session.execute(query)

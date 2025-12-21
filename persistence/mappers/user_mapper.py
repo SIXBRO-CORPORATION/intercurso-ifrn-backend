@@ -1,4 +1,3 @@
-from threading import active_count
 from typing import Optional
 
 from domain.user import User

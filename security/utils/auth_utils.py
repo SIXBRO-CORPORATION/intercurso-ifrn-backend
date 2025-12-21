@@ -42,7 +42,7 @@ def verify_and_extract_user_id(token: str, jwt_provider: JWTProviderPort) -> UUI
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido ou expirado",
