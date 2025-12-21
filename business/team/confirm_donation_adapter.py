@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from core.business.team.confirm_donation_port import ConfirmDonationPort
-from core.command import R
 from core.context import Context
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort

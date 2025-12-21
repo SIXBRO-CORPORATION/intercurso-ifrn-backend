@@ -12,10 +12,10 @@ from domain.refresh_token import RefreshToken
 
 class RefreshTokenService:
     def __init__(
-            self,
-            jwt_provider: JWTProviderPort,
-            refresh_token_repository: RefreshTokenRepositoryPort,
-            user_repository: UserRepositoryPort
+        self,
+        jwt_provider: JWTProviderPort,
+        refresh_token_repository: RefreshTokenRepositoryPort,
+        user_repository: UserRepositoryPort,
     ):
         self.jwt_provider = jwt_provider
         self.refresh_token_repository = refresh_token_repository
@@ -23,15 +23,10 @@ class RefreshTokenService:
         self.refresh_token_expire_days = 30
 
     async def create_tokens_for_user(
-            self,
-            user_id: UUID,
-            matricula: str,
-            email: str
+        self, user_id: UUID, matricula: str, email: str
     ) -> Tuple[AuthToken, str, RefreshToken]:
         access_token, refresh_token_plain = self.jwt_provider.create_token_pair(
-            user_id=user_id,
-            matricula=matricula,
-            email=email
+            user_id=user_id, matricula=matricula, email=email
         )
 
         token_hash = self.jwt_provider.hash_token(refresh_token_plain)
@@ -39,10 +34,7 @@ class RefreshTokenService:
         expires_at = datetime.utcnow() + timedelta(days=self.refresh_token_expire_days)
 
         refresh_token_entity = RefreshToken(
-            user_id=user_id,
-            token=token_hash,
-            expires_at=expires_at,
-            revoked=False
+            user_id=user_id, token=token_hash, expires_at=expires_at, revoked=False
         )
 
         await self.refresh_token_repository.save(refresh_token_entity)
@@ -50,8 +42,7 @@ class RefreshTokenService:
         return access_token, refresh_token_plain, refresh_token_entity
 
     async def refresh_access_token(
-            self,
-            refresh_token: str
+        self, refresh_token: str
     ) -> Tuple[AuthToken, str, RefreshToken]:
         token_hash = self.jwt_provider.hash_token(refresh_token)
 
@@ -68,12 +59,12 @@ class RefreshTokenService:
         if not user.active:
             raise BusinessException("Usuário inativo")
 
-        new_access_token, new_refresh_token_plain, new_token_entity = (
-            await self.create_tokens_for_user(
-                user_id=user.id,
-                matricula=str(user.matricula),
-                email=user.email
-            )
+        (
+            new_access_token,
+            new_refresh_token_plain,
+            new_token_entity,
+        ) = await self.create_tokens_for_user(
+            user_id=user.id, matricula=str(user.matricula), email=user.email
         )
 
         stored_token.rotate(new_token_entity.id)

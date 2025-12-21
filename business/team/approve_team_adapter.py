@@ -2,7 +2,6 @@ from datetime import datetime
 from uuid import UUID
 
 from core.business.team.approve_team_port import ApproveTeamPort
-from core.command import R
 from core.context import Context
 from core.persistence.team_repository_port import TeamRepositoryPort
 from domain.enums.team_status import TeamStatus

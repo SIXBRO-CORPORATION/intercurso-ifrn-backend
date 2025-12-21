@@ -47,4 +47,3 @@ class RefreshToken(AbstractDomain):
 
     def rotate(self, new_token_id: UUID) -> None:
         self.revoke(replaced_by=new_token_id)
-

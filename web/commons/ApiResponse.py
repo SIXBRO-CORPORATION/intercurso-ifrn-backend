@@ -9,7 +9,7 @@ T = TypeVar("T")
 class ApiResponse(BaseModel, Generic[T]):
     model_config = ConfigDict(ignored_types=(classmethod, staticmethod))
 
-    success: bool = Field(
+    success_bool: bool = Field(
         default=True, description="Indica se a operação foi bem-sucedida"
     )
 
@@ -36,12 +36,6 @@ class ApiResponse(BaseModel, Generic[T]):
             message=message,
             timestamp=datetime.now().isoformat(),
         )
-
-    @classmethod
-    def success(
-        cls, data: Optional[T] = None, message: Optional[str] = None
-    ) -> "ApiResponse[T]":
-        return cls(success=True, data=data, message=message)
 
     @classmethod
     def failure(

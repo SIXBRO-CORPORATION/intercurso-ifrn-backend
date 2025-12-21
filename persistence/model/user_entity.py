@@ -1,5 +1,4 @@
 from sqlalchemy import Column, String, Integer, Boolean
-import uuid
 from persistence.model.abstract_entity import AbstractEntity
 
 

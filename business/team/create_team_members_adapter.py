@@ -1,7 +1,6 @@
 from typing import List
 
 from core.business.team.create_team_members_port import CreateTeamMembersPort
-from core.command import R
 from core.context import Context
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.user_repository_port import UserRepositoryPort

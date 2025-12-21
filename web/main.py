@@ -8,6 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 from persistence.database import init_db, close_db
 from web.commons.exception_handler import register_exception_handler
 from web.controllers.team_controller import router as team_router
+from web.controllers.auth_controller import router as auth_router
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -49,11 +50,11 @@ app.add_middleware(
 register_exception_handler(app)
 app.include_router(team_router)
 
-from web.controllers.auth_controller import router as auth_router
-
 app.include_router(auth_router)
 
-app.get("/")
+@app.get("/")
+
+
 async def root():
     return {"status": "ok", "message": "API is running", "version": "1.0.0"}
 
