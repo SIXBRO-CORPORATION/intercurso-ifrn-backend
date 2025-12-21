@@ -52,7 +52,7 @@ app.include_router(team_router)
 
 app.include_router(auth_router)
 
-app.get("/")
+@app.get("/")
 
 
 async def root():

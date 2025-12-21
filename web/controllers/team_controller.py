@@ -16,7 +16,7 @@ from web.models.response.team_register_response import TeamRegisterResponse
 from web.dependencies import (
     get_create_team_port,
     get_approve_team_port,
-    get_confirm_donation_port,
+    get_confirm_donation_team_port,
     require_authenticated_user,
 )
 from domain.user import User
@@ -89,7 +89,7 @@ async def confirm_donation(
     team_id: UUID,
     matricula: int,
     confirm_donation_port: Annotated[
-        ConfirmDonationPort, Depends(get_confirm_donation_port)
+        ConfirmDonationPort, Depends(get_confirm_donation_team_port)
     ],
     current_user: User = Depends(require_authenticated_user),
 ):
