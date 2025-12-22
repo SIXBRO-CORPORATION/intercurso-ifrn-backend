@@ -34,7 +34,7 @@ def get_team_repository(
 
 
 def get_team_member_repository(
-    session: Annotated[Session, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db)],
 ) -> TeamMemberRepositoryPort:
     team_member_mapper = TeamMemberMapper()
     user_mapper = UserMapper()
