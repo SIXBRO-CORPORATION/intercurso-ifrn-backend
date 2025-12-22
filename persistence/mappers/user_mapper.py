@@ -5,7 +5,7 @@ from persistence.model.user_entity import UserEntity
 
 
 class UserMapper:
-    def to_domain(self, entity: Optional[UserEntity]) -> Optional[User]:
+    def to_domain(entity: Optional[UserEntity]) -> Optional[User]:
         if entity is None:
             return None
 
