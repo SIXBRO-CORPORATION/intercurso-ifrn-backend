@@ -1,7 +1,7 @@
 # Especificação de Caso de Uso: Confirmar Doações
 
 ## 1. Descrição
-Este caso de uso permite que o monitor confirme individualmente as doações de alimentos de cada membro de um time. A confirmação de todas as doações é pré-requisito para aprovação do time.
+Este caso de uso permite que o monitor confirme individualmente as doações de alimentos de cada membro de um time após a submissão. A confirmação de todas as doações é pré-requisito para aprovação do time.
 
 ## 2. Pré-condições
 - O ator deve estar autenticado com permissão de **Monitor**;
@@ -40,24 +40,30 @@ Este caso de uso permite que o monitor confirme individualmente as doações de 
 1. O monitor tenta confirmar doação de usuário que não é membro;
 2. O sistema bloqueia a operação e exibe mensagem de erro.
 
-### Fluxo Alternativo 4: Time em Status Inválido
-1. O monitor tenta confirmar doação de time em DRAFT ou REJECTED;
-2. O sistema bloqueia a operação e exibe mensagem de erro;
-3. Sistema informa que confirmação só é válida para times submetidos.
+### Fluxo Alternativo 4: Time em Status DRAFT
+1. O monitor tenta confirmar doação de time em DRAFT;
+2. O sistema bloqueia a operação;
+3. O sistema exibe erro: "Doações só podem ser confirmadas após submissão do time.";
+4. Sistema sugere: "Aguarde o owner submeter o time para aprovação.";
 
-### Fluxo Alternativo 5: Cancelar Confirmação
+### Fluxo Alternativo 5: Time em Status REJECTED
+1. Monitor tenta confirmar doação de time REJECTED;
+2. Sistema bloqueia operação;
+3. Sistema exibe erro: "Time foi rejeitado. Doações não podem ser confirmadas.";
+
+### Fluxo Alternativo 6: Cancelar Confirmação
 1. Monitor clica em "Confirmar Doação";
 2. Sistema exibe modal de confirmação;
 3. Monitor clica em "Cancelar";
 4. Sistema fecha modal sem realizar alterações.
 
-### Fluxo Alternativo 6: Visualizar Histórico de Doações
+### Fluxo Alternativo 7: Visualizar Histórico de Doações
 1. Monitor acessa detalhes do time;
 2. Monitor clica em "Histórico de Doações";
 3. Sistema exibe lista com todas as confirmações realizadas;
 4. Para cada confirmação, sistema exibe: membro, data/hora, monitor responsável.
 
-### Fluxo Alternativo 7: Filtrar Times por Status de Doações
+### Fluxo Alternativo 8: Filtrar Times por Status de Doações
 1. Monitor acessa listagem de times;
 2. Monitor aplica filtro "Com Doações Pendentes";
 3. Sistema exibe apenas times com ao menos um membro com doação pendente;
@@ -96,7 +102,7 @@ Este caso de uso permite que o monitor confirme individualmente as doações de 
 
 ## 6. Regras de Negócio
 1. Apenas **monitor** pode confirmar doações;
-2. Time deve estar em status **PENDING_APPROVAL** ou **APPROVED**;
+2. Time deve estar em status **PENDING_APPROVAL** ou **APPROVED** (não DRAFT ou REJECTED);
 3. Membro deve ter `donation_status = PENDING_DONATION`;
 4. Membro deve pertencer ao time;
 5. Ao confirmar, `donation_status` muda para **DONATION_CONFIRMED**;
@@ -105,7 +111,7 @@ Este caso de uso permite que o monitor confirme individualmente as doações de 
 8. Confirmação é irreversível (não pode desfazer);
 9. Cada membro tem confirmação individual (não há confirmação em massa);
 10. Time só pode ser aprovado se **todas** as doações estiverem confirmadas;
-11. Doações podem ser confirmadas antes ou depois da submissão do time;
+11. **Doações só podem ser confirmadas APÓS submissão do time** (status != DRAFT);
 12. Monitor pode confirmar doações mesmo após time ser aprovado;
 13. A operação deve ser registrada para auditoria;
 14. Sistema deve atualizar indicador de progresso após cada confirmação.
@@ -151,6 +157,7 @@ Este caso de uso permite que o monitor confirme individualmente as doações de 
 | Filtro por doações pendentes               | Listagem com times variados                    | Aplica filtro                       | Sistema exibe apenas times com doações pendentes         |
 | Percentual de conclusão                    | Time com 7/10 doações confirmadas              | Visualiza progresso                 | Sistema exibe "70% completo"                             |
 | Confirmação após aprovação                 | Time APPROVED com nova doação pendente         | Confirma doação                     | Sistema permite confirmação normalmente                  |
+| Bloqueia confirmação antes de submissão    | Time DRAFT, monitor tenta confirmar            | Clica em "Confirmar Doação"         | Sistema exibe erro e sugere aguardar submissão           |
 | Auditoria de confirmação                   | Confirmação bem-sucedida                       | Verifica logs de auditoria          | Sistema registra monitor, membro, data/hora e ação       |
 
 ## 10. Artefatos Relacionados

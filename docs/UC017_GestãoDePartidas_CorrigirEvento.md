@@ -1,7 +1,7 @@
 # Especificação de Caso de Uso: Corrigir Eventos da Partida
 
 ## 1. Descrição
-Este caso de uso permite que o monitor corrija erros durante ou após uma partida, incluindo desfazer o último evento registrado ou deletar eventos específicos da timeline, garantindo a integridade dos dados da partida.
+Este caso de uso permite que o monitor corrija erros durante ou após uma partida, incluindo desfazer o último evento registrado ou deletar eventos específicos da timeline, garantindo a integridade dos dados da partida. Correções em partidas finalizadas geram alertas especiais sobre impacto no chaveamento.
 
 ## 2. Pré-condições
 - O ator deve estar autenticado com permissão de **Monitor**;
@@ -79,15 +79,39 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 4. Sistema fecha modal sem realizar alterações;
 5. Evento permanece na timeline.
 
-### Fluxo Alternativo 7: Corrigir Após Partida Finalizada
+### Fluxo Alternativo 7: Corrigir Após Partida Finalizada - Placar Alterado
 1. Partida tem status FINISHED;
 2. Monitor acessa timeline para correção;
-3. Monitor deleta evento específico;
-4. Sistema permite deleção normalmente;
-5. Sistema recalcula placar final;
-6. **Observação:** Vencedor pode mudar se placar mudar;
-7. Sistema atualiza chaveamento se necessário (V2);
-8. Sistema registra correção pós-jogo em auditoria.
+3. Monitor deleta evento de gol;
+4. Sistema recalcula placar final;
+5. **Sistema detecta que vencedor pode ter mudado**;
+6. Sistema exibe alerta grande em destaque:
+   ```
+   ⚠️ ATENÇÃO CRÍTICA: PLACAR ALTERADO EM PARTIDA FINALIZADA
+   
+   Placar anterior: Time A 2 x 1 Time B (Vencedor: Time A)
+   Placar corrigido: Time A 1 x 1 Time B (EMPATE)
+   
+   🚨 O VENCEDOR DA PARTIDA PODE TER MUDADO!
+   
+   Você deve IMEDIATAMENTE:
+   1. Verificar se o time correto avançou no chaveamento
+   2. Corrigir manualmente a próxima fase se necessário (UC012)
+   3. Notificar os alunos sobre a correção
+   4. Registrar justificativa da alteração
+   
+   Esta correção foi registrada em auditoria.
+   ```
+7. Sistema mantém `winner_id` original (não atualiza automaticamente);
+8. Sistema registra correção pós-jogo em auditoria com destaque;
+9. Monitor deve corrigir chaveamento manualmente se necessário.
+
+### Fluxo Alternativo 8: Deletar Evento de Pênalti
+1. Monitor deleta evento de tipo PENALTY_GOAL ou PENALTY_MISS;
+2. Sistema atualiza campo `penalty_result` recalculando pênaltis;
+3. **Sistema não altera placar oficial** (pênaltis são separados);
+4. Se vencedor foi definido por pênaltis, sistema exibe alerta de Fluxo Alternativo 7;
+5. Sistema registra correção para auditoria.
 
 ## 5. Bloco de Dados
 
@@ -95,11 +119,11 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
-| Tipo de Evento           | S             | GOAL, POINT, CARD_YELLOW, CARD_RED, EXPULSION         |
+| Tipo de Evento           | S             | GOAL, POINT, CARD_YELLOW, CARD_RED, EXPULSION, PENALTY_GOAL, PENALTY_MISS |
 | Jogador                  | S             | Nome do jogador envolvido                             |
 | Time                     | S             | Time do jogador                                       |
 | Tempo                    | S             | Momento em que ocorreu (minuto)                       |
-| Impacto                  | S             | O que será revertido (placar, status de expulsão)    |
+| Impacto                  | S             | O que será revertido (placar, status de expulsão, pênaltis) |
 | Pode Desfazer            | S             | Boolean indicando se tipo é permitido                 |
 
 ### Bloco de Dados 2 – Confirmação de Deleção
@@ -111,7 +135,19 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 | Aviso                    | S             | "O placar será atualizado" ou avisos específicos      |
 | Botões                   | E             | "Confirmar" e "Cancelar"                              |
 
-### Bloco de Dados 3 – Timeline de Eventos
+### Bloco de Dados 3 – Alerta de Correção Pós-Jogo
+
+| Campo                    | Entrada/Saída | Observações                                           |
+|--------------------------|---------------|-------------------------------------------------------|
+| Tipo de Alerta           | S             | CRITICAL (vencedor pode ter mudado)                   |
+| Placar Anterior          | S             | Placar antes da correção                              |
+| Placar Corrigido         | S             | Placar após correção                                  |
+| Vencedor Anterior        | S             | Time que era vencedor                                 |
+| Status Atual             | S             | Empate, nova vitória, etc                             |
+| Ações Necessárias        | S             | Lista de tarefas para o monitor                       |
+| Impacto no Chaveamento   | S             | Se time avançou incorretamente                        |
+
+### Bloco de Dados 4 – Timeline de Eventos
 
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
@@ -121,14 +157,15 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 | Tempo                    | S             | Quando ocorreu                                        |
 | Ações                    | S             | Botão "Deletar" para eventos permitidos               |
 
-### Bloco de Dados 4 – Resultado da Correção
+### Bloco de Dados 5 – Resultado da Correção
 
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
 | Evento Deletado          | S             | ID do evento removido                                 |
 | Novo Placar              | S             | Placar recalculado                                    |
 | Jogador Reativado        | S             | Se aplicável, jogador que voltou a ficar ativo        |
-| Impactos                 | S             | Outras mudanças (cartões, expulsões)                  |
+| Impactos                 | S             | Outras mudanças (cartões, expulsões, pênaltis)        |
+| Alerta Gerado            | S             | Se correção pós-jogo gerou alerta crítico             |
 
 ## 6. Regras de Negócio
 
@@ -140,7 +177,7 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 5. Sistema **recalcula placar** após deletar gol/ponto;
 6. Sistema **recalcula estatísticas** após qualquer deleção;
 7. Sistema envia **WebSocket** notificando correção;
-8. **Push Notification enviadas não podem ser removidas** dos dispositivos;
+8. **Push Notifications enviadas não podem ser removidas** dos dispositivos;
 9. A operação deve ser registrada para auditoria.
 
 ### Desfazer (Botão):
@@ -159,6 +196,7 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
     - GOAL, POINT (gols/pontos)
     - CARD_YELLOW, CARD_RED (cartões)
     - EXPULSION (expulsões)
+    - PENALTY_GOAL, PENALTY_MISS (pênaltis)
     - TIMEOUT (pedido de tempo)
 18. **NÃO podem ser desfeitos/deletados:**
     - MATCH_START, MATCH_END (início/fim de partida)
@@ -174,20 +212,28 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 
 ### Recálculo de Placar:
 25. Ao deletar GOAL/POINT: placar decrementa (`team_score--`);
-26. Sistema mantém consistência entre eventos e placar;
-27. Para vôlei: sistema atualiza pontuação do set em `metadata`.
+26. Ao deletar PENALTY_GOAL/PENALTY_MISS: atualiza apenas `penalty_result`, não placar oficial;
+27. Sistema mantém consistência entre eventos e placar;
+28. Para vôlei: sistema atualiza pontuação do set em `metadata`.
 
-### Correções Pós-Jogo:
-28. Correções após FINISHED são permitidas;
-29. Placar final pode mudar com correções;
-30. **V2:** Sistema deve atualizar vencedor e chaveamento se placar inverter resultado;
-31. Correções pós-jogo são registradas com destaque em auditoria.
+### Correções Pós-Jogo (CRÍTICO):
+29. Correções em partidas FINISHED são permitidas;
+30. Placar final pode mudar com correções;
+31. **Sistema NÃO atualiza winner_id ou chaveamento automaticamente** (V1);
+32. Sistema exibe **alerta crítico grande e detalhado** se placar mudar:
+    - Destaca mudança de vencedor em vermelho;
+    - Lista ações obrigatórias do monitor;
+    - Instrui verificação manual do chaveamento;
+    - Solicita notificação aos alunos;
+33. Monitor é **totalmente responsável** por propagar correção manualmente;
+34. Correções pós-jogo são registradas com **destaque especial** em auditoria;
+35. Sistema mantém histórico completo (evento original + deleção) para investigação.
 
 ### Integridade de Dados:
-32. Sistema garante que placar sempre reflete eventos não deletados;
-33. Sistema valida consistência após cada correção;
-34. Eventos deletados mantêm dados originais (soft delete para auditoria);
-35. Sistema previne corrupção de dados em caso de erro.
+36. Sistema garante que placar sempre reflete eventos não deletados;
+37. Sistema valida consistência após cada correção;
+38. Eventos deletados mantêm dados originais (soft delete para auditoria);
+39. Sistema previne corrupção de dados em caso de erro.
 
 ## 7. Critérios de Aceitação
 - O sistema deve permitir desfazer último evento da sessão;
@@ -195,14 +241,16 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 - O sistema deve bloquear deleção de eventos não permitidos;
 - O sistema deve marcar eventos como deleted (soft delete);
 - O sistema deve recalcular placar após deletar gol/ponto;
+- O sistema deve recalcular pênaltis separadamente do placar oficial;
 - O sistema deve remover status EXPELLED ao deletar expulsão;
 - O sistema deve reativar jogador após deletar expulsão/2º amarelo;
 - O sistema deve enviar WebSocket notificando correção;
 - O sistema deve atualizar interface instantaneamente;
 - O sistema deve permitir correções em partidas FINISHED;
+- O sistema deve exibir alerta crítico se placar de partida finalizada mudar;
 - O sistema deve exibir confirmação antes de deletar;
 - O sistema deve exibir mensagens claras de sucesso ou erro;
-- O sistema deve registrar todas as correções para auditoria;
+- O sistema deve registrar todas as correções para auditoria com destaque especial para pós-jogo;
 - O sistema deve garantir integridade entre eventos e placar.
 
 ## 8. Pós-condições
@@ -218,6 +266,13 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 - Jogador volta a ser clicável;
 - Visual atualizado (sem opacidade/cinza);
 - Jogador pode marcar gols novamente.
+
+### Correção Pós-Jogo:
+- Placar final corrigido;
+- Alerta crítico exibido ao monitor;
+- `winner_id` original mantido (não atualiza automaticamente);
+- Monitor ciente da necessidade de verificar chaveamento;
+- Correção registrada com destaque especial em auditoria.
 
 ### Notificações:
 - WebSocket enviado com `event_deleted` e `score_updated`;
@@ -239,7 +294,11 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 | Deletar vermelho direto                    | Jogador expulso por vermelho                   | Deleta cartão vermelho              | Sistema remove cartão e expulsão, reativa jogador        |
 | Jogador reativado volta clicável           | Expulsão deletada                              | Verifica interface                  | Jogador aparece normal (sem opacidade) e clicável        |
 | Recalcular placar após deletar gol         | Placar 3x2, deleta 1 gol                       | Verifica placar                     | Placar atualiza para 2x2                                 |
+| Deletar pênalti não altera placar oficial  | Pênaltis 5x4, placar oficial 2x2              | Deleta 1 PENALTY_GOAL               | Placar oficial permanece 2x2, pênaltis viram 4x4        |
 | Correção em partida finalizada             | Partida FINISHED, deleta gol                   | Confirma deleção                    | Sistema permite e recalcula placar final                 |
+| Alerta crítico - vencedor mudou            | Partida FINISHED 2x1, deleta gol, fica 1x1     | Deleta evento                       | Sistema exibe alerta vermelho crítico e detalhado        |
+| Alerta crítico - placar invertido          | Partida FINISHED 2x1, deleta 2 gols, fica 0x1  | Deleta eventos                      | Sistema alerta que vencedor inverteu                     |
+| Winner_id não atualiza automaticamente     | Correção pós-jogo muda vencedor                | Verifica winner_id                  | Mantém winner_id original, alerta monitor para correção manual |
 | Cancelar deleção                           | Modal de confirmação aberto                    | Clica "Cancelar"                    | Sistema fecha sem deletar                                |
 | Timeline atualizada                        | Evento deletado                                | Verifica timeline                   | Evento não aparece mais na lista                         |
 | WebSocket enviado                          | Evento deletado                                | Verifica conexões WebSocket         | Sistema envia event_deleted                              |
@@ -247,11 +306,13 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 | Push não é removido                        | Deletar gol que gerou Push                     | Verifica dispositivos               | Push permanece nos dispositivos dos alunos               |
 | Soft delete (dados mantidos)               | Evento deletado                                | Verifica banco de dados             | Evento marcado deleted=true, dados originais preservados |
 | Auditoria de correção                      | Evento deletado                                | Verifica logs                       | Sistema registra monitor, evento deletado e data/hora    |
-| Auditoria pós-jogo destacada               | Correção em partida FINISHED                   | Verifica logs                       | Sistema registra como correção pós-jogo                  |
+| Auditoria pós-jogo destacada               | Correção em partida FINISHED                   | Verifica logs                       | Sistema registra como correção pós-jogo com destaque     |
 | Consistência placar vs eventos             | Múltiplas correções                            | Valida placar                       | Placar sempre reflete eventos não deletados              |
+| Texto do alerta crítico                    | Correção pós-jogo, vencedor mudou              | Lê alerta exibido                   | Texto inclui placares, ações obrigatórias e avisos       |
 
 ## 10. Artefatos Relacionados
 - [UC013 - Iniciar Partida](UC013_IniciarPartida.md)
 - [UC014 - Registrar Eventos Durante Partida](UC014_RegistrarEventos.md)
 - [UC015 - Finalizar Partida](UC015_FinalizarPartida.md)
 - [UC016 - Visualizar Partida em Tempo Real](UC016_VisualizarPartida.md)
+- [UC012 - Gerenciar Chaveamento](UC012_GerenciarChaveamento.md)

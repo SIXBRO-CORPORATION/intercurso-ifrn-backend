@@ -1,7 +1,7 @@
 # Especificação de Caso de Uso: Finalizar Partida
 
 ## 1. Descrição
-Este caso de uso permite que o monitor finalize uma partida em andamento, determinando o vencedor (ou registrando empate), atualizando o chaveamento automaticamente e encerrando todas as atividades relacionadas à partida.
+Este caso de uso permite que o monitor finalize uma partida em andamento, determinando o vencedor (ou registrando empate), atualizando o chaveamento automaticamente e encerrando todas as atividades relacionadas à partida. Em caso de empate em mata-mata, o sistema permite disputa de pênaltis com registro separado do placar oficial.
 
 ## 2. Pré-condições
 - O ator deve estar autenticado com permissão de **Monitor**;
@@ -32,23 +32,29 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 
 ## 4. Fluxos Alternativos
 
-### Fluxo Alternativo 1: Finalizar Partida com Empate (Mata-Mata)
+### Fluxo Alternativo 1: Finalizar Partida com Empate (Mata-Mata) - Pênaltis
 1. O monitor clica em "Finalizar Partida";
 2. O sistema verifica o placar e identifica **empate** (ex: 2x2);
 3. O sistema verifica que `match_category = KNOCKOUT`;
-4. O sistema exibe popup: "A partida terminou empatada. Quem avança para a próxima fase?";
+4. O sistema exibe popup: "A partida terminou empatada. Iniciar disputa de pênaltis?";
 5. Monitor tem duas opções:
-   - **Opção A - Selecionar Vencedor:**
-     - Monitor seleciona um dos times;
-     - Monitor confirma;
-     - Sistema define `winner_id` com time selecionado;
+   - **Opção A - Iniciar Pênaltis:**
+     - Monitor clica em "Iniciar Pênaltis";
+     - Sistema cria período especial "PENALTY_SHOOTOUT";
+     - Sistema exibe interface simplificada de registro de pênaltis;
+     - Monitor registra cada cobrança usando botões: "Time A: Gol" / "Time A: Perdeu" / "Time B: Gol" / "Time B: Perdeu";
+     - Sistema conta pênaltis separadamente em `penalty_score`;
+     - Eventos são criados com tipo "PENALTY_GOAL" ou "PENALTY_MISS";
+     - **Pênaltis NÃO somam ao placar oficial** (`team1_score` e `team2_score` permanecem 2x2);
+     - Ao final, monitor clica "Encerrar Pênaltis";
+     - Sistema salva resultado em campo `penalty_result`: `{"team1_penalties": 5, "team2_penalties": 4}`;
+     - Sistema define vencedor baseado em pênaltis;
+     - **Placar oficial permanece 2x2**, mas `winner_id` é definido pelos pênaltis;
      - Sistema continua fluxo principal a partir do passo 6;
-   - **Opção B - Cancelar (Pênaltis):**
+   - **Opção B - Cancelar:**
      - Monitor clica em "Cancelar";
-     - Popup fecha;
      - Partida continua IN_PROGRESS;
-     - Monitor pode registrar gols de pênaltis (vão para placar oficial);
-     - Monitor clica "Finalizar" novamente quando decidir vencedor.
+     - Monitor pode registrar prorrogação se aplicável.
 
 ### Fluxo Alternativo 2: Finalizar Partida com Empate (Fase de Grupos)
 1. O monitor clica em "Finalizar Partida";
@@ -81,9 +87,9 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
-| Time 1                   | S             | Nome e placar                                         |
-| Time 2                   | S             | Nome e placar                                         |
-| Placar Final             | S             | Placar atual da partida                               |
+| Time 1                   | S             | Nome e placar oficial                                 |
+| Time 2                   | S             | Nome e placar oficial                                 |
+| Placar Final             | S             | Placar oficial da partida (tempo regulamentar)        |
 | Categoria                | S             | GROUP ou KNOCKOUT                                     |
 | Há Empate                | S             | Booleano indicando empate                             |
 | Fase/Grupo               | S             | Qual fase ou grupo pertence                           |
@@ -95,18 +101,30 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 | Status                   | S             | Atualizado de IN_PROGRESS para FINISHED               |
 | Data de Finalização      | S             | Timestamp automático                                  |
 | Vencedor                 | S             | ID do time vencedor ou NULL (empate em grupos)        |
-| Placar Final             | S             | Placar definitivo da partida                          |
+| Placar Final Oficial     | S             | Placar do tempo regulamentar (ex: 2x2)                |
+| Resultado Pênaltis       | S             | JSON com pênaltis (se aplicável): {"team1": 5, "team2": 4} |
 | Cronômetro Pausado       | S             | clock_running = false                                 |
 
-### Bloco de Dados 3 – Popup de Empate (Mata-Mata)
+### Bloco de Dados 3 – Interface de Pênaltis
 
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
-| Mensagem                 | S             | "A partida terminou empatada. Quem avança?"           |
-| Opções de Times          | E             | Time 1 ou Time 2 (botões/radio)                       |
-| Botões                   | E             | "Confirmar" e "Cancelar"                              |
+| Placar Oficial           | S             | Mantém placar do tempo regulamentar (não muda)        |
+| Pênaltis Time 1          | E/S           | Contador separado de pênaltis convertidos             |
+| Pênaltis Time 2          | E/S           | Contador separado de pênaltis convertidos             |
+| Botões de Registro       | E             | "Time A: Gol", "Time A: Perdeu", etc                  |
+| Timeline de Pênaltis     | S             | Lista de cobranças (PENALTY_GOAL, PENALTY_MISS)       |
 
-### Bloco de Dados 4 – Atualização do Chaveamento
+### Bloco de Dados 4 – Resultado Exibido (Pênaltis)
+
+| Campo                    | Entrada/Saída | Observações                                           |
+|--------------------------|---------------|-------------------------------------------------------|
+| Placar Oficial           | S             | Ex: 2x2 (tempo regulamentar)                          |
+| Placar Pênaltis          | S             | Ex: 5x4                                               |
+| Resultado Completo       | S             | Exibição: "2(5) x 2(4)" indicando pênaltis            |
+| Vencedor                 | S             | Definido pelos pênaltis                               |
+
+### Bloco de Dados 5 – Atualização do Chaveamento
 
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
@@ -129,9 +147,13 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 ### Determinação de Vencedor:
 9. **Se não há empate:** Sistema determina vencedor automaticamente pelo placar;
 10. **Se há empate em mata-mata (KNOCKOUT):**
-    - Sistema **exige** que monitor selecione vencedor via popup;
-    - Monitor pode cancelar para registrar pênaltis;
-    - Gols de pênaltis somam ao placar oficial;
+    - Sistema exibe interface de disputa de pênaltis;
+    - Monitor registra cobranças individuais;
+    - **Pênaltis NÃO somam ao placar oficial**;
+    - Placar oficial = tempo regulamentar (ex: 2x2);
+    - Pênaltis ficam em campo separado `penalty_result`;
+    - Vencedor definido pelos pênaltis;
+    - Estatísticas de artilharia **não contam gols de pênaltis**;
 11. **Se há empate em grupos (GROUP):**
     - Sistema finaliza direto sem popup;
     - `winner_id = NULL`;
@@ -151,18 +173,23 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 17. Sistema atualiza `goals_for` e `goals_against` de cada time;
 18. Classificação é calculada automaticamente baseada em pontos.
 
-### Pênaltis (V1):
-19. Gols marcados durante pênaltis **somam ao placar oficial**;
-20. Monitor registra gols normalmente durante cobrança;
-21. Placar final reflete resultado real (incluindo pênaltis);
-22. Sistema não diferencia gols de tempo normal e pênaltis (V2).
+### Pênaltis (Disputa de Desempate):
+19. Gols de pênaltis (disputa após empate) **NÃO somam ao placar oficial**;
+20. Placar oficial permanece o do tempo regulamentar (ex: 2x2);
+21. Sistema registra resultado dos pênaltis em campo separado: `penalty_result`;
+22. Formato: `{"team1_penalties": 5, "team2_penalties": 4, "winner_id": 123}`;
+23. Vencedor é definido pelos pênaltis, mas placar oficial é do tempo regulamentar;
+24. Para estatísticas: Gols de pênaltis **não contam** para artilharia individual;
+25. Timeline mostra eventos de pênaltis com tag especial "PENALTY_GOAL" ou "PENALTY_MISS";
+26. Interface exibe resultado completo como "2(5) x 2(4)" indicando pênaltis.
 
 ## 7. Critérios de Aceitação
 - O sistema deve bloquear finalização se partida não estiver IN_PROGRESS;
 - O sistema deve determinar vencedor automaticamente se não houver empate;
-- O sistema deve exibir popup em empate de mata-mata;
-- O sistema deve permitir cancelar popup para registrar pênaltis;
-- O sistema deve finalizar direto em empate de grupos (sem popup);
+- O sistema deve exibir interface de pênaltis em empate de mata-mata;
+- O sistema deve registrar pênaltis separadamente do placar oficial;
+- O sistema deve manter placar oficial inalterado durante pênaltis;
+- O sistema deve finalizar direto em empate de grupos (sem pênaltis);
 - O sistema deve atualizar status para FINISHED;
 - O sistema deve pausar cronômetro ao finalizar;
 - O sistema deve definir winner_id corretamente;
@@ -170,7 +197,7 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 - O sistema deve atualizar pontos/classificação em grupos;
 - O sistema deve criar evento MATCH_END;
 - O sistema deve enviar WebSocket e Push Notification;
-- O sistema deve registrar gols de pênaltis no placar oficial;
+- O sistema deve exibir resultado como "X(pênaltis) x Y(pênaltis)" quando aplicável;
 - O sistema deve exibir mensagens claras de sucesso ou erro;
 - O sistema deve registrar a operação para auditoria.
 
@@ -187,7 +214,8 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 ### Mata-Mata:
 - `winner_id` definido (não pode ser NULL);
 - Vencedor avançado automaticamente para próxima fase;
-- Partida TBD da próxima fase atualizada.
+- Partida TBD da próxima fase atualizada;
+- Se houve pênaltis: `penalty_result` registrado separadamente.
 
 ### Grupos:
 - `winner_id` definido ou NULL (empate);
@@ -198,23 +226,28 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 
 | Cenário                                    | Dado                                           | Quando                              | Então                                                    |
 |--------------------------------------------|------------------------------------------------|-------------------------------------|----------------------------------------------------------|
-| Finalização sem empate                     | Partida 3x1, IN_PROGRESS                       | Clica "Finalizar"                   | Sistema define vencedor e finaliza automaticamente       |
-| Finalização com empate (mata-mata)         | Partida 2x2, KNOCKOUT                          | Clica "Finalizar"                   | Sistema exibe popup "Quem avança?"                       |
-| Selecionar vencedor no popup               | Popup aberto, empate mata-mata                 | Seleciona Time A e confirma         | Sistema define Time A como vencedor e finaliza           |
-| Cancelar popup para pênaltis               | Popup aberto, empate mata-mata                 | Clica "Cancelar"                    | Partida continua IN_PROGRESS para pênaltis               |
-| Registrar pênaltis e finalizar             | Pênaltis registrados, placar 4x3               | Clica "Finalizar" novamente         | Sistema finaliza com placar 4x3 (inclui pênaltis)       |
-| Finalização com empate (grupos)            | Partida 1x1, GROUP                             | Clica "Finalizar"                   | Sistema finaliza direto sem popup, winner_id=NULL        |
+| Finalização sem empate                     | Partida 3x1, IN_PROGRESS                       | Clica em "Finalizar"                | Sistema define vencedor e finaliza automaticamente       |
+| Finalização com empate (mata-mata)         | Partida 2x2, KNOCKOUT                          | Clica em "Finalizar"                | Sistema exibe interface de pênaltis                      |
+| Registrar pênaltis                         | Interface de pênaltis aberta                   | Registra cobranças 5x4              | Sistema conta pênaltis separadamente                     |
+| Placar oficial inalterado (pênaltis)       | Pênaltis registrados, placar era 2x2           | Finaliza com pênaltis 5x4           | Placar oficial permanece 2x2                             |
+| Vencedor definido por pênaltis             | Pênaltis 5x4, placar oficial 2x2              | Verifica winner_id                  | Sistema define vencedor pelos pênaltis                   |
+| Resultado exibido com pênaltis             | Partida finalizada 2(5) x 2(4)                 | Visualiza resultado                 | Sistema exibe "2(5) x 2(4)"                              |
+| Pênaltis não contam para artilharia        | Jogador marcou 2 gols + 1 pênalti             | Verifica estatísticas               | Artilharia conta apenas 2 gols                           |
+| Timeline com eventos de pênaltis           | Pênaltis registrados                           | Verifica timeline                   | Eventos têm tag PENALTY_GOAL ou PENALTY_MISS             |
+| Cancelar disputa de pênaltis               | Interface de pênaltis, empate 2x2              | Clica "Cancelar"                    | Partida continua IN_PROGRESS                             |
+| Finalização com empate (grupos)            | Partida 1x1, GROUP                             | Clica em "Finalizar"                | Sistema finaliza direto sem pênaltis, winner_id=NULL     |
 | Partida não IN_PROGRESS                    | Partida SCHEDULED                              | Tenta finalizar                     | Sistema bloqueia e exibe erro                            |
-| Cancelar finalização                       | Modal de confirmação aberto                    | Clica "Cancelar"                    | Sistema fecha sem alterar partida                        |
+| Cancelar finalização                       | Modal de confirmação aberto                    | Clica em "Cancelar"                 | Sistema fecha sem alterar partida                        |
 | Timestamp de finalização                   | Partida finalizada                             | Verifica `finished_at`              | Sistema registra data/hora exata                         |
 | Cronômetro pausado                         | Partida finalizada                             | Verifica `clock_running`            | Sistema define como false                                |
 | Evento MATCH_END criado                    | Partida finalizada                             | Verifica timeline                   | Sistema registra evento de fim                           |
 | Vencedor avança (mata-mata)                | Partida de oitavas finalizada                  | Verifica próxima fase               | Sistema coloca vencedor nas quartas automaticamente      |
 | Pontos atualizados (grupos)                | Partida de grupo finalizada 2x0                | Verifica BracketGroupTeam           | Vencedor +3 pts, perdedor +0 pts                         |
 | Empate em grupos (pontos)                  | Partida de grupo empatada 1x1                  | Verifica BracketGroupTeam           | Ambos times +1 ponto                                     |
-| Gols de pênaltis no placar                 | Pênaltis registrados como gols normais         | Verifica placar final               | Placar reflete todos os gols (normal + pênaltis)         |
+| Penalty_result registrado                  | Pênaltis 5x4                                   | Verifica campo penalty_result       | JSON: {"team1_penalties": 5, "team2_penalties": 4}       |
 | WebSocket enviado                          | Partida finalizada                             | Verifica conexões WebSocket         | Sistema envia match_finished                             |
 | Push Notification enviado                  | Partida finalizada 3x2                         | Verifica notificações               | Alunos recebem "Fim de Jogo! Time A 3x2 Time B"          |
+| Push com pênaltis                          | Partida 2(5) x 2(4)                            | Verifica notificações               | Alunos recebem "Fim! Time A 2(5) x 2(4) Time B"          |
 | Auditoria de finalização                   | Partida finalizada                             | Verifica logs                       | Sistema registra monitor, resultado e data/hora          |
 
 ## 10. Artefatos Relacionados
@@ -222,3 +255,4 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 - [UC014 - Registrar Eventos Durante Partida](UC014_RegistrarEventos.md)
 - [UC016 - Visualizar Partida em Tempo Real](UC016_VisualizarPartida.md)
 - [UC011 - Criar Chaveamento](UC011_CriarChaveamento.md)
+- [UC017 - Corrigir Eventos da Partida](UC017_CorrigirEventos.md)
