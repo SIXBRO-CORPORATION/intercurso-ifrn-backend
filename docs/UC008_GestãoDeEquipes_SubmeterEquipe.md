@@ -7,7 +7,7 @@ Este caso de uso permite que o dono (owner) de um time submeta sua equipe para a
 - O ator deve estar autenticado como **Aluno**;
 - O ator deve ser o dono (owner) do time;
 - Time deve estar em status **DRAFT**;
-- A temporada deve estar em **REGISTRATION_OPEN**;
+- A temporada deve estar ativa (`is_active = true`) em **REGISTRATION_OPEN**;
 - Data atual deve estar dentro do período de inscrição;
 - Time deve ter ao menos o número mínimo de membros definido pela modalidade.
 
@@ -34,25 +34,31 @@ Este caso de uso permite que o dono (owner) de um time submeta sua equipe para a
 4. Owner não consegue submeter até atingir mínimo.
 
 ### Fluxo Alternativo 2: Fora do Período de Inscrição
-1. O owner tenta submeter fora do período de inscrição;
-2. O sistema bloqueia a operação e exibe mensagem de erro;
-3. Sistema informa que período de inscrição está fechado.
+1. Sistema detecta que temporada está em REGISTRATION_CLOSED ou IN_PROGRESS;
+2. Sistema bloqueia botão "Submeter";
+3. Sistema exibe mensagem: "Período de inscrições encerrado. Não é mais possível submeter times.";
 
 ### Fluxo Alternativo 3: Time Já Submetido
 1. O owner tenta submeter time que já está em PENDING_APPROVAL ou outro status;
 2. O sistema bloqueia a operação e exibe mensagem de erro;
 3. Sistema informa status atual do time.
 
-### Fluxo Alternativo 4: Temporada Não em REGISTRATION_OPEN
-1. O owner tenta submeter quando temporada não está aberta para inscrições;
-2. O sistema bloqueia a operação e exibe mensagem de erro;
-3. Sistema informa que inscrições não estão abertas.
+### Fluxo Alternativo 4: Temporada Não Ativa ou Não em REGISTRATION_OPEN
+1. Sistema detecta que temporada do time não é a ativa ou não está em REGISTRATION_OPEN;
+2. Sistema bloqueia submissão;
+3. Sistema exibe erro: "Período de inscrições não está aberto para esta temporada.";
 
 ### Fluxo Alternativo 5: Cancelar Submissão
 1. Owner clica em "Submeter para Aprovação";
 2. Sistema exibe modal de confirmação;
 3. Owner clica em "Cancelar";
 4. Sistema fecha modal sem realizar alterações.
+
+### Fluxo Alternativo 6: Temporada Encerra Durante Submissão
+1. Owner está visualizando confirmação;
+2. Sistema detecta que temporada mudou para REGISTRATION_CLOSED;
+3. Sistema bloqueia confirmação;
+4. Sistema exibe alerta: "⚠️ Período de inscrições encerrado. Não foi possível submeter o time.";
 
 ## 5. Bloco de Dados
 
@@ -66,6 +72,7 @@ Este caso de uso permite que o dono (owner) de um time submeta sua equipe para a
 | Mínimo Necessário        | S             | Mínimo de membros da modalidade                       |
 | Capitão                  | S             | Nome do capitão (se definido)                         |
 | Lista de Membros         | S             | Nomes de todos os membros para confirmação            |
+| Temporada                | S             | Nome e status da temporada                            |
 
 ### Bloco de Dados 2 – Time Submetido
 
@@ -79,27 +86,30 @@ Este caso de uso permite que o dono (owner) de um time submeta sua equipe para a
 ## 6. Regras de Negócio
 1. Apenas **owner** pode submeter o time;
 2. Time deve estar em status **DRAFT**;
-3. Temporada deve estar em **REGISTRATION_OPEN**;
-4. Data atual deve estar dentro do período de inscrição (`registration_start_date` a `registration_end_date`);
-5. Quantidade de membros deve ser >= `min_members` da modalidade;
-6. Ao submeter, status muda automaticamente para **PENDING_APPROVAL**;
-7. `invite_active` é definido como `false` (convite desativado);
-8. `submitted_at` é preenchido com timestamp da submissão;
-9. Todos os membros recebem `donation_status = PENDING_DONATION` (se ainda não estiver);
-10. Após submissão, apenas monitor pode modificar membros;
-11. Time submetido aguarda confirmação de doações e aprovação do monitor;
-12. A operação deve ser registrada para auditoria;
-13. Notificação ao monitor deve ser enviada (escopo futuro).
+3. Temporada do time deve ser a ativa (`is_active = true`);
+4. Temporada deve estar em **REGISTRATION_OPEN**;
+5. Data atual deve estar dentro do período de inscrição (`registration_start_date` a `registration_end_date`);
+6. Quantidade de membros deve ser >= `min_members` da modalidade;
+7. Ao submeter, status muda automaticamente para **PENDING_APPROVAL**;
+8. `invite_active` é definido como `false` (convite desativado);
+9. `submitted_at` é preenchido com timestamp da submissão;
+10. Todos os membros recebem `donation_status = PENDING_DONATION` (se ainda não estiver);
+11. Após submissão, apenas monitor pode modificar membros;
+12. Time submetido aguarda confirmação de doações e aprovação do monitor;
+13. A operação deve ser registrada para auditoria;
+14. Notificação ao monitor deve ser enviada (escopo futuro);
+15. Sistema valida em tempo real se período de inscrição ainda está aberto.
 
 ## 7. Critérios de Aceitação
 - O sistema deve bloquear submissão se time não tiver mínimo de membros;
 - O sistema deve bloquear submissão fora do período de inscrição;
-- O sistema deve bloquear submissão se temporada não estiver em REGISTRATION_OPEN;
+- O sistema deve bloquear submissão se temporada não estiver ativa ou não em REGISTRATION_OPEN;
 - O sistema deve bloquear submissão se time não estiver em DRAFT;
 - O sistema deve atualizar status para PENDING_APPROVAL automaticamente;
 - O sistema deve desativar convite (`invite_active = false`);
 - O sistema deve registrar data/hora da submissão;
 - O sistema deve atualizar donation_status de todos os membros;
+- O sistema deve validar temporada em tempo real durante submissão;
 - O sistema deve exibir mensagens claras de sucesso ou erro;
 - O sistema deve registrar a operação para auditoria;
 - O sistema deve exibir próximos passos ao owner após submissão.
@@ -120,9 +130,10 @@ Este caso de uso permite que o dono (owner) de um time submeta sua equipe para a
 |--------------------------------------------|------------------------------------------------|-------------------------------------|----------------------------------------------------------|
 | Submissão bem-sucedida                     | Time DRAFT, >= min_members, período aberto     | Clica em "Submeter"                 | Sistema atualiza para PENDING_APPROVAL e exibe sucesso   |
 | Time com menos que mínimo                  | Time com 3 membros, mínimo = 5                 | Acessa página do time               | Sistema exibe botão desabilitado e quantidade faltante   |
-| Fora do período de inscrição               | Data atual fora do período                     | Clica em "Submeter"                 | Sistema bloqueia e exibe erro                            |
+| Fora do período de inscrição               | Temporada em REGISTRATION_CLOSED               | Tenta submeter                      | Botão bloqueado, mensagem de período encerrado           |
 | Time já submetido                          | Time com status PENDING_APPROVAL               | Tenta submeter novamente            | Sistema bloqueia e exibe erro                            |
-| Temporada não aberta                       | Temporada em DRAFT ou FINISHED                 | Clica em "Submeter"                 | Sistema bloqueia e exibe erro                            |
+| Temporada não ativa                        | Time vinculado a temporada com is_active=false | Tenta submeter                      | Sistema bloqueia e exibe erro                            |
+| Temporada não aberta                       | Temporada ativa em DRAFT ou CLOSED             | Tenta submeter                      | Sistema bloqueia e exibe erro                            |
 | Convite desativado após submissão          | Time submetido com sucesso                     | Verifica `invite_active`            | Sistema define como `false`                              |
 | Data de submissão registrada               | Time submetido com sucesso                     | Verifica `submitted_at`             | Sistema registra timestamp da submissão                  |
 | Status de doação atualizado                | Time submetido com sucesso                     | Verifica membros                    | Todos com `donation_status = PENDING_DONATION`           |
@@ -130,10 +141,13 @@ Este caso de uso permite que o dono (owner) de um time submeta sua equipe para a
 | Bloqueio de novos membros                  | Time submetido, link de convite acessado       | Tenta entrar via convite            | Sistema bloqueia entrada                                 |
 | Bloqueio de remoção de membros             | Time submetido, owner tenta remover membro     | Clica em "Remover"                  | Sistema bloqueia operação                                |
 | Não-owner tenta submeter                   | Membro comum tenta submeter                    | Acessa opção de submeter            | Sistema não exibe opção ou bloqueia                      |
-| Auditoria de submissão                     | Time submetido com sucesso                     | Verifica logs de auditoria          | Sistema registra owner, data/hora e ação                 |
+| Temporada encerra durante submissão        | Owner no modal de confirmação                  | Temporada muda para CLOSED          | Sistema bloqueia confirmação e exibe alerta              |
+| Validação de temporada ativa               | Time de temporada inativa                      | Tenta submeter                      | Sistema valida is_active e bloqueia                      |
+| Auditoria de submissão                     | Time submetido com sucesso                     | Verifica logs de auditoria          | Sistema registra owner, temporada, data/hora e ação      |
 
 ## 10. Artefatos Relacionados
-- [UC002 - Abrir Período de Inscrições](UC002_GestaoDeTemporadas_AbrirInscricoes.md)
+- [UC001 - Criar Temporada](UC001_GestaoDeTemporadas_CriarTemporada.md)
+- [UC002 - Gerenciar Temporada](UC002_GestaoDeTemporadas_GerenciarTemporada.md)
 - [UC005 - Criar Equipe](UC005_GestaoDeEquipes_CriarEquipe.md)
 - [UC006 - Entrar em Time via Convite](UC006_GestaoDeEquipes_EntrarViaConvite.md)
 - [UC007 - Gerenciar Membros](UC007_GestaoDeEquipes_GerenciarMembros.md)

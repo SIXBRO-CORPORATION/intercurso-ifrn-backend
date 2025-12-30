@@ -1,7 +1,7 @@
 # Especificação de Caso de Uso: Gerenciar Membros
 
 ## 1. Descrição
-Este caso de uso permite que o dono (owner) de um time gerencie seus membros durante o status DRAFT, incluindo selecionar capitão, remover membros e que membros possam sair do time voluntariamente.
+Este caso de uso permite que o dono (owner) de um time gerencie seus membros durante o status DRAFT, incluindo selecionar capitão, remover membros e que membros possam sair do time voluntariamente. O owner pode acumular o papel de capitão.
 
 ## 2. Pré-condições
 - O ator deve estar autenticado como **Aluno**;
@@ -12,12 +12,12 @@ Este caso de uso permite que o dono (owner) de um time gerencie seus membros dur
 ## 3. Fluxo Principal: Selecionar Capitão
 1. O owner acessa a página de detalhes do seu time;
 2. O sistema exibe a listagem de membros do time;
-3. O owner clica em "Selecionar Capitão" em um dos membros;
+3. O owner clica em "Selecionar Capitão" em um dos membros (incluindo ele mesmo);
 4. O sistema exibe confirmação da seleção;
 5. O owner confirma a operação;
 6. O sistema valida os dados conforme Regras de Negócio;
 7. O sistema remove role CAPTAIN do membro anterior (se existir);
-8. O sistema atualiza role do membro selecionado para CAPTAIN;
+8. O sistema adiciona role CAPTAIN ao membro selecionado;
 9. O sistema atualiza `team.captain_id` para o membro selecionado;
 10. O sistema exibe mensagem de sucesso.
 
@@ -50,10 +50,12 @@ Este caso de uso permite que o dono (owner) de um time gerencie seus membros dur
 2. O sistema bloqueia a operação e exibe mensagem de erro;
 3. Sistema informa que owner deve deletar o time ao invés de sair.
 
-### Fluxo Alternativo 4: Owner Tenta Se Selecionar Como Capitão
-1. O owner tenta se selecionar como capitão;
-2. O sistema bloqueia a operação e exibe mensagem de erro;
-3. Sistema informa que owner não pode ser capitão.
+### Fluxo Alternativo 4: Owner Se Seleciona Como Capitão
+1. Owner seleciona a si mesmo como capitão;
+2. Sistema permite normalmente a operação;
+3. Owner acumula roles: OWNER e CAPTAIN;
+4. Sistema atualiza interface exibindo ambos os papéis;
+5. Sistema exibe mensagem de sucesso.
 
 ### Fluxo Alternativo 5: Operação Fora do Status DRAFT
 1. Usuário tenta realizar operação com time não em DRAFT;
@@ -76,10 +78,11 @@ Este caso de uso permite que o dono (owner) de um time gerencie seus membros dur
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
 | Nome do Membro           | S             | Nome completo do usuário                              |
-| Papel (Role)             | S             | OWNER, CAPTAIN, MEMBER                                |
+| Papel (Role)             | S             | OWNER, CAPTAIN, MEMBER (owner pode ter ambos)         |
 | Status de Doação         | S             | PENDING_DONATION, DONATION_CONFIRMED                  |
 | Data de Entrada          | S             | Quando entrou no time                                 |
-| É Capitão                | S             | Indicador visual se é o capitão                       |
+| É Owner                  | S             | Indicador visual                                      |
+| É Capitão                | S             | Indicador visual                                      |
 
 ### Bloco de Dados 2 – Operação de Gerenciamento
 
@@ -96,34 +99,41 @@ Este caso de uso permite que o dono (owner) de um time gerencie seus membros dur
 1. Apenas **owner** pode selecionar capitão;
 2. Time deve estar em status **DRAFT**;
 3. Membro selecionado deve pertencer ao time;
-4. Owner não pode ser selecionado como capitão;
+4. **Owner PODE ser selecionado como capitão** (acumula papéis);
 5. Apenas um capitão por time;
 6. Ao selecionar novo capitão, role CAPTAIN do anterior é removido;
-7. `team.captain_id` é atualizado para o novo capitão.
+7. `team.captain_id` é atualizado para o novo capitão;
+8. Owner pode acumular roles OWNER e CAPTAIN simultaneamente.
+
+### Diferença entre OWNER e CAPTAIN:
+9. **OWNER:** Gerencia o time no sistema (membros, convites, submissão, doações);
+10. **CAPTAIN:** Referência em quadra durante partidas (súmula, comunicação com monitor);
+11. Um usuário pode ser OWNER e CAPTAIN ao mesmo tempo.
 
 ### Remover Membro:
-8. Apenas **owner** pode remover membros durante DRAFT;
-9. **Monitor** pode remover membros em qualquer status;
-10. Owner não pode ser removido (deve deletar o time);
-11. Membro deve pertencer ao time;
-12. Se membro removido era capitão, `team.captain_id` é limpo;
-13. `user.is_athlete` é atualizado para `false` se usuário não estiver em outros times;
-14. Remoção por monitor deve ser registrada como operação administrativa.
+12. Apenas **owner** pode remover membros durante DRAFT;
+13. **Monitor** pode remover membros em qualquer status;
+14. Owner não pode ser removido (deve deletar o time);
+15. Membro deve pertencer ao time;
+16. Se membro removido era capitão, `team.captain_id` é limpo;
+17. `user.is_athlete` é atualizado para `false` se usuário não estiver em outros times;
+18. Remoção por monitor deve ser registrada como operação administrativa.
 
 ### Sair do Time:
-15. Qualquer membro (exceto owner) pode sair do time;
-16. Owner não pode sair do time;
-17. Time deve estar em status **DRAFT**;
-18. Se membro que sai era capitão, `team.captain_id` é limpo;
-19. `user.is_athlete` é atualizado para `false` se usuário não estiver em outros times.
+19. Qualquer membro (exceto owner) pode sair do time;
+20. Owner não pode sair do time;
+21. Time deve estar em status **DRAFT**;
+22. Se membro que sai era capitão, `team.captain_id` é limpo;
+23. `user.is_athlete` é atualizado para `false` se usuário não estiver em outros times.
 
 ### Geral:
-20. Todas as operações devem ser registradas para auditoria;
-21. Operações de monitor são permitidas em qualquer status do time.
+24. Todas as operações devem ser registradas para auditoria;
+25. Operações de monitor são permitidas em qualquer status do time.
 
 ## 7. Critérios de Aceitação
 - O sistema deve permitir apenas owner selecionar capitão;
-- O sistema deve bloquear owner de ser selecionado como capitão;
+- O sistema deve permitir owner ser selecionado como capitão;
+- O sistema deve exibir visualmente quando owner acumula papel de capitão;
 - O sistema deve atualizar role de capitão anterior ao selecionar novo;
 - O sistema deve permitir owner remover membros durante DRAFT;
 - O sistema deve permitir monitor remover membros em qualquer status;
@@ -139,9 +149,10 @@ Este caso de uso permite que o dono (owner) de um time gerencie seus membros dur
 ## 8. Pós-condições
 
 ### Selecionar Capitão:
-- Membro selecionado tem role=CAPTAIN;
-- Capitão anterior (se existia) volta para role=MEMBER;
+- Membro selecionado tem role=CAPTAIN adicionado;
+- Capitão anterior (se existia) perde role CAPTAIN;
 - `team.captain_id` atualizado;
+- Se owner foi selecionado, acumula OWNER e CAPTAIN;
 - Operação registrada para auditoria.
 
 ### Remover Membro:
@@ -160,9 +171,10 @@ Este caso de uso permite que o dono (owner) de um time gerencie seus membros dur
 
 | Cenário                                    | Dado                                           | Quando                              | Então                                                    |
 |--------------------------------------------|------------------------------------------------|-------------------------------------|----------------------------------------------------------|
-| Selecionar capitão com sucesso             | Owner, time DRAFT, membro válido               | Clica em "Selecionar Capitão"       | Sistema atualiza role e captain_id                       |
+| Selecionar capitão com sucesso             | Owner, time DRAFT, membro válido               | Clica em "Selecionar Capitão"       | Sistema adiciona role CAPTAIN e atualiza captain_id      |
 | Selecionar novo capitão                    | Time já tem capitão definido                   | Seleciona outro membro              | Sistema remove CAPTAIN do anterior e define novo         |
-| Owner tenta ser capitão                    | Owner tenta se selecionar                      | Clica em "Selecionar Capitão"       | Sistema bloqueia e exibe erro                            |
+| Owner se seleciona como capitão            | Owner seleciona a si mesmo                     | Clica em "Selecionar Capitão"       | Sistema permite e owner acumula OWNER + CAPTAIN          |
+| Interface com owner-capitão                | Owner é também capitão                         | Visualiza lista de membros          | Sistema exibe badges "Dono" e "Capitão" no mesmo usuário |
 | Selecionar capitão fora de DRAFT           | Time em PENDING_APPROVAL                       | Tenta selecionar capitão            | Sistema bloqueia e exibe erro                            |
 | Remover membro com sucesso                 | Owner, time DRAFT, membro válido               | Clica em "Remover"                  | Sistema remove membro                                    |
 | Remover capitão                            | Membro a ser removido é o capitão              | Clica em "Remover"                  | Sistema remove e limpa captain_id                        |
@@ -176,7 +188,16 @@ Este caso de uso permite que o dono (owner) de um time gerencie seus membros dur
 | Manutenção de is_athlete                   | Membro em múltiplos times removido             | Remove de um time                   | Sistema mantém `is_athlete = true`                       |
 | Auditoria de operações                     | Qualquer operação realizada                    | Verifica logs                       | Sistema registra autor, data/hora e ação                 |
 
-## 10. Artefatos Relacionados
+## 10. Nota sobre Papéis Acumulados
+
+Owner e Capitão são papéis complementares:
+- **OWNER (Dono):** "Administrador" do time no sistema
+- **CAPTAIN (Capitão):** Líder em quadra durante os jogos
+- **Comum em times escolares/universitários:** O organizador do time (owner) geralmente é também a liderança em campo (captain)
+- **Sistema permite acúmulo:** Um mesmo usuário pode ter ambos os papéis simultaneamente
+- **Interface visual:** Sistema deve exibir ambas as badges quando usuário acumula papéis
+
+## 11. Artefatos Relacionados
 - [UC005 - Criar Equipe](UC005_GestaoDeEquipes_CriarEquipe.md)
 - [UC006 - Entrar em Time via Convite](UC006_GestaoDeEquipes_EntrarViaConvite.md)
 - [UC008 - Submeter Equipe](UC008_GestaoDeEquipes_SubmeterEquipe.md)
