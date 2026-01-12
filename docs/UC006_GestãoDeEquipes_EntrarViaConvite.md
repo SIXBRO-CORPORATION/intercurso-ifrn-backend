@@ -10,13 +10,24 @@ Este caso de uso permite que um aluno entre em um time existente através de um 
 - O período de inscrição deve estar aberto;
 - O aluno não deve estar em outro time da mesma modalidade na temporada ativa.
 
-## 3. Fluxo Principal: Entrar em Time via Link
+## 3. Fluxo Principal: 
+### Entrar em Time via Link:
 1. O ator recebe e acessa o link de convite (formato: `https://app.intercurso.com/join/{token}`);
 2. O sistema valida o token e recupera informações do time;
 3. O sistema exibe informações do time conforme Bloco de Dados 1;
 4. O ator clica em "Entrar no Time";
 5. O sistema valida os dados conforme Regras de Negócio;
 6. O sistema adiciona o aluno como membro do time;
+7. O sistema atualiza `user.is_athlete = true`;
+8. O sistema exibe mensagem de sucesso com informações do time.
+
+### Entrar em Time via QR Code:
+1. O ator acessa modal de compartilhamento e seleciona "QR Code";
+2. O sistema gera um QR Code válido por tempo limitado;
+3. O sistema valida o token e recupera informações do time;
+4. O ator clica em "Entrar no Time";
+5. O sistema valida os dados conforme Regras de Negócio;
+6. O sistema adicionar o aluno como membro do time;
 7. O sistema atualiza `user.is_athlete = true`;
 8. O sistema exibe mensagem de sucesso com informações do time.
 
