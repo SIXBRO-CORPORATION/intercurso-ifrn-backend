@@ -100,14 +100,15 @@ Este caso de uso permite que o monitor crie o chaveamento de uma modalidade apó
 
 ### Bloco de Dados 3 – Partidas Geradas
 
-| Campo                    | Entrada/Saída | Observações                                           |
-|--------------------------|---------------|-------------------------------------------------------|
-| Time 1                   | S             | Time sorteado, TBD ou BYE                             |
-| Time 2                   | S             | Time sorteado, TBD ou BYE                             |
-| Grupo/Fase               | S             | A qual grupo ou fase pertence                         |
-| Categoria                | S             | GROUP ou KNOCKOUT                                     |
-| Status                   | S             | SCHEDULED (ou FINISHED se contra BYE)                 |
-| Data Agendada            | S             | Null inicialmente (monitor define depois)             |
+| Campo           | Entrada/Saída | Observações                                       |
+|-----------------|-----------|---------------------------------------------------|
+| Time 1          | S         | Time sorteado, TBD ou BYE                         |
+| Time 2          | S         | Time sorteado, TBD ou BYE                         |
+| Grupo/Fase      | S         | A qual grupo ou fase pertence                     |
+| Categoria       | S         | GROUP ou KNOCKOUT                                 |
+| Tipo de Partida | S         | REGULAR, SEMIFINAL, THIRD_PLACE, FINAL            |
+| Status          | S         | SCHEDULED (ou FINISHED se contra BYE)             |
+| Data Agendada   | S         | Null inicialmente (monitor define depois)         |
 
 ### Bloco de Dados 4 – Entry BYE (Times Ímpares)
 
@@ -146,7 +147,19 @@ Este caso de uso permite que o monitor crie o chaveamento de uma modalidade apó
       - Sistema envia notificação aos alunos: "🏆 Fase de jogos iniciada!";
     - Se temporada já está em IN_PROGRESS (chaveamentos subsequentes):
       - Sistema apenas cria o chaveamento sem alterar status da temporada;
-15. A operação deve ser registrada para auditoria.
+15. **Partidas Especiais (Semifinais, 3º Lugar e Final):**
+    - Sistema identifica automaticamente partidas especiais baseado na estrutura do bracket;
+    - **Semifinais:** As 2 partidas que antecedem a final recebem `match_type = SEMIFINAL`;
+    - **Final:** A última partida do chaveamento recebe `match_type = FINAL`;
+    - **3º Lugar:** Sistema cria automaticamente para formatos com semifinais:
+      - Formatos que **TÊM disputa de 3º lugar**: KNOCKOUT, GROUP_STAGE_KNOCKOUT;
+      - Formatos que **NÃO TÊM disputa de 3º lugar**: ROUND_ROBIN, TRIANGULAR (classificação por pontos);
+    - Partida de 3º lugar é criada com:
+      - `match_type = THIRD_PLACE`;
+      - `team1_id = TBD` (perdedor semifinal 1);
+      - `team2_id = TBD` (perdedor semifinal 2);
+      - Posicionada entre semifinais e final na estrutura;
+    - Todas as outras partidas recebem `match_type = REGULAR`.
 
 ## 7. Critérios de Aceitação
 - O sistema deve bloquear criação se período de inscrição não encerrou;
@@ -155,6 +168,10 @@ Este caso de uso permite que o monitor crie o chaveamento de uma modalidade apó
 - O sistema deve exibir opções de formato baseadas no número de times;
 - O sistema deve permitir ajuste de configuração antes do sorteio;
 - O sistema deve sortear times aleatoriamente;
+- O sistema deve criar partida de 3º lugar automaticamente em formatos com semifinais;
+- O sistema deve definir `match_type` corretamente para cada partida (REGULAR, SEMIFINAL, THIRD_PLACE, FINAL);
+- O sistema deve marcar perdedores das semifinais como TBD na partida de 3º lugar;
+- O sistema NÃO deve criar partida de 3º lugar em ROUND_ROBIN ou TRIANGULAR.
 - O sistema deve criar todas as partidas (primeira fase + fases seguintes TBD);
 - O sistema deve criar BYE automaticamente para números ímpares;
 - O sistema deve marcar partidas contra BYE como FINISHED com vencedor;

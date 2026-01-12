@@ -81,6 +81,17 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 4. Sistema fecha modal sem realizar alterações;
 5. Partida continua IN_PROGRESS.
 
+### Fluxo Alternativo 5: Finalizar Semifinal - Avançar Vencedor e Perdedor
+1. Monitor finaliza partida com `match_type = SEMIFINAL`;
+2. Sistema identifica vencedor e perdedor da semifinal;
+3. Sistema avança **vencedor** automaticamente para a FINAL;
+4. Sistema avança **perdedor** automaticamente para partida de 3º LUGAR;
+5. Sistema atualiza ambas as partidas TBD:
+   - Final: atualiza `team1_id` ou `team2_id` com vencedor;
+   - 3º Lugar: atualiza `team1_id` ou `team2_id` com perdedor;
+6. Sistema continua fluxo normal de finalização;
+7. Sistema envia notificações.
+
 ## 5. Bloco de Dados
 
 ### Bloco de Dados 1 – Partida para Finalização
@@ -182,6 +193,13 @@ Este caso de uso permite que o monitor finalize uma partida em andamento, determ
 24. Para estatísticas: Gols de pênaltis **não contam** para artilharia individual;
 25. Timeline mostra eventos de pênaltis com tag especial "PENALTY_GOAL" ou "PENALTY_MISS";
 26. Interface exibe resultado completo como "2(5) x 2(4)" indicando pênaltis.
+
+### Atualização Automática após Semifinais:
+27. Ao finalizar partida com `match_type = SEMIFINAL`:
+28. **Vencedor** avança automaticamente para partida `match_type = FINAL`;
+29. **Perdedor** avança automaticamente para partida `match_type = THIRD_PLACE`; 
+30. Sistema localiza partidas por `match_type` (não por posição no bracket); 
+31. Se não houver partida de 3º lugar (formatos sem semifinais), perdedor apenas registra derrota.
 
 ## 7. Critérios de Aceitação
 - O sistema deve bloquear finalização se partida não estiver IN_PROGRESS;

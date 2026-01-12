@@ -66,6 +66,7 @@ Este caso de uso permite que o monitor crie uma nova temporada (edição anual d
 | Data/Hora Abertura Inscrições   | E             | Quando sistema abrirá automaticamente (>= agora)      |
 | Data/Hora Encerramento Inscrições | E           | Quando sistema encerrará automaticamente (> abertura) |
 | Abrir Imediatamente             | E             | Checkbox opcional para abertura instantânea           |
+| Regulamento (PDF)               | E             | Arquivo PDF opcional com regras gerais do Intercurso  |
 | Status                          | S             | DRAFT, REGISTRATION_OPEN, REGISTRATION_CLOSED, IN_PROGRESS, FINISHED |
 | Ativa                           | S             | Indica se é a temporada ativa (booleano)              |
 | Data de Criação                 | S             | Data/hora de criação automática                       |
