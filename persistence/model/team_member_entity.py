@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, String, Enum, Integer
 
-from domain.enums.team_member_status import TeamMemberStatus
+from domain.enums.donation_status import TeamMemberStatus
 from persistence.model.abstract_entity import Base
 
 
