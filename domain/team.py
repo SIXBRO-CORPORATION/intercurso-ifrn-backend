@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from domain.abstract_domain import AbstractDomain
-from domain.enums.modality import ModalityType
 from domain.enums.team_status import TeamStatus
 from uuid import UUID
 
