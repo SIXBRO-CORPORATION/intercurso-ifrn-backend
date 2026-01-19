@@ -10,6 +10,7 @@ class AbstractDomain(ABC):
     id: Optional[UUID] = None
     created_at: Optional[datetime] = None
     modified_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
     active: bool = True
 
     def validate(self) -> None:

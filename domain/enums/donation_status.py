@@ -1,6 +1,6 @@
 from enum import Enum
 
 
-class TeamMemberStatus(Enum):
+class DonationStatus(Enum):
     PENDING_DONATION = "Aguardando doação"
     DONATION_CONFIRMED = "Doação confirmada"

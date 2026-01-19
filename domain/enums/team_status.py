@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class TeamStatus(Enum):
-    PENDING = "Pendente"
+    DRAFT = "Rascunho"
+    SUBMITTED = "Aprovação Pendente"
     APPROVED = "Aprovado"
     REJECTED = "Rejeitado"

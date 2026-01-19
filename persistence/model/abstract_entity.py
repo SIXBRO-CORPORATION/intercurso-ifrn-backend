@@ -26,6 +26,11 @@ class AbstractEntity(Base):
         onupdate=lambda: datetime.now(),
     )
 
+    deleted_at = Column(
+        DateTime,
+        nullable=True,
+    )
+
     active = Column(
         Boolean,
         nullable=False,

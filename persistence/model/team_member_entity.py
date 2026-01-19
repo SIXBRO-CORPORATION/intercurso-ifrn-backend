@@ -1,20 +1,20 @@
-from sqlalchemy import Column, ForeignKey, String, Enum, Integer
-
-from domain.enums.team_member_status import TeamMemberStatus
-from persistence.model.abstract_entity import Base
+from sqlalchemy import Column, String, DateTime, ForeignKey
+from persistence.model.abstract_entity import AbstractEntity
 
 
-class TeamMemberEntity(Base):
+class TeamMemberEntity(AbstractEntity):
     __tablename__ = "team_members"
 
-    team_id = Column(ForeignKey("teams.id"), primary_key=True)
+    team_id = Column(ForeignKey("teams.id"), nullable=False)
 
-    user_id = Column(ForeignKey("users.id"))
+    user_id = Column(ForeignKey("users.id"), nullable=False)
 
-    member_matricula = Column(Integer, ForeignKey("users.matricula"), primary_key=True)
+    role = Column(String(20), nullable=False)
 
-    member_name = Column(String(255), nullable=False)
+    donation_status = Column(String(30), nullable=False)
 
-    member_cpf = Column(String(14), nullable=False)
+    donation_confirmed_at = Column(DateTime(timezone=True), nullable=True)
 
-    status = Column(Enum(TeamMemberStatus), nullable=False)
+    donation_confirmed_by = Column(ForeignKey("users.id"), nullable=True)
+
+    joined_at = Column(DateTime(timezone=True), nullable=False)

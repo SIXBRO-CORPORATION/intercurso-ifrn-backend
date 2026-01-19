@@ -18,25 +18,34 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         self.mapper = mapper
 
     async def get(self, team_id: UUID) -> Optional[Team]:
-        selecionar = select(TeamEntity).where(TeamEntity.id == team_id)
+        selecionar = select(TeamEntity).where(
+            TeamEntity.id == team_id,
+            TeamEntity.deleted_at.is_(None)
+        )
         result = await self.session.execute(selecionar)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
 
     async def save(self, team: Team) -> Team:
         entity = self.mapper.to_entity(team)
+        self.session.add(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)
 
     async def find_all(self) -> List[Team]:
-        selecionar = select(TeamEntity)
+        selecionar = select(TeamEntity).where(
+            TeamEntity.deleted_at.is_(None)
+        ).order_by(TeamEntity.created_at.desc())
         result = await self.session.execute(selecionar)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
 
     async def exists_by_id(self, team_id: UUID) -> bool:
-        selecionar = select(TeamEntity).where(TeamEntity.id == team_id)
+        selecionar = select(TeamEntity.id).where(
+            TeamEntity.id == team_id,
+            TeamEntity.deleted_at.is_(None)
+        )
         result = await self.session.execute(selecionar)
         return result.scalar_one_or_none() is not None
 
@@ -44,7 +53,12 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         selecionar = (
             select(TeamEntity)
             .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
-            .where(TeamMemberEntity.member_matricula == matricula)
+            .where(
+                TeamMemberEntity.member_matricula == matricula,
+                TeamEntity.deleted_at.is_(None),
+                TeamMemberEntity.deleted_at.is_(None)
+            )
+            .order_by(TeamEntity.created_at.desc())
         )
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
@@ -54,7 +68,12 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         selecionar = (
             select(TeamEntity)
             .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
-            .where(TeamMemberEntity.user_id == user_id)
+            .where(
+                TeamMemberEntity.user_id == user_id,
+                TeamEntity.deleted_at.is_(None),
+                TeamMemberEntity.deleted_at.is_(None)
+            )
+            .order_by(TeamEntity.created_at.desc())
         )
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
@@ -63,8 +82,11 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
     async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
         selecionar = (
             select(TeamEntity)
-            .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
-            .where(TeamMemberEntity.status == status)
+            .where(
+                TeamEntity.status == status.value,
+                TeamEntity.deleted_at.is_(None)
+            )
+            .order_by(TeamEntity.created_at.desc())
         )
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
