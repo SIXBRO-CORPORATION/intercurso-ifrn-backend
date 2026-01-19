@@ -1,5 +1,4 @@
 from sqlalchemy import Column, String, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from persistence.model.abstract_entity import AbstractEntity
 
 

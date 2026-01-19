@@ -10,9 +10,3 @@ class TeamMemberRepositoryPort(BaseRepositoryPort[TeamMember]):
     @abstractmethod
     async def find_members_by_team_id(self, team_id: UUID) -> List[TeamMember]:
         pass
-
-    @abstractmethod
-    async def find_member_by_matricula_and_team_id(
-        self, matricula: int, team_id: UUID
-    ) -> Optional[TeamMember]:
-        pass
