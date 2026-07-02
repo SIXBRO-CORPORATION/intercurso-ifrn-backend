@@ -27,7 +27,7 @@ class SeasonModalityRepositoryAdapter(SeasonModalityRepositoryPort):
 
     async def save(self, season_modality: SeasonModality) -> SeasonModality:
         entity = self.mapper.to_entity(season_modality)
-        self.session.add(entity)
+        entity = await self.session.merge(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)

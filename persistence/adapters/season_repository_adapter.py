@@ -27,7 +27,7 @@ class SeasonRepositoryAdapter(SeasonRepositoryPort):
 
     async def save(self, season: Season) -> Season:
         entity = self.mapper.to_entity(season)
-        self.session.add(entity)
+        entity = await self.session.merge(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)

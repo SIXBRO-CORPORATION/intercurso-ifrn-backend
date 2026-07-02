@@ -26,7 +26,7 @@ class ModalityRepositoryAdapter(ModalityRepositoryPort):
 
     async def save(self, modality: Modality) -> Modality:
         entity = self.mapper.to_entity(modality)
-        self.session.add(entity)
+        entity = await self.session.merge(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)

@@ -30,7 +30,7 @@ class BracketGroupTeamRepositoryAdapter(BracketGroupTeamRepositoryPort):
 
     async def save(self, bracket_group_team: BracketGroupTeam) -> BracketGroupTeam:
         entity = self.mapper.to_entity(bracket_group_team)
-        self.session.add(entity)
+        entity = await self.session.merge(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)

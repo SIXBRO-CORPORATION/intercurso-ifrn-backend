@@ -28,7 +28,7 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
 
     async def save(self, team: Team) -> Team:
         entity = self.mapper.to_entity(team)
-        self.session.add(entity)
+        entity = await self.session.merge(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)

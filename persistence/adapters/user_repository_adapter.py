@@ -24,7 +24,7 @@ class UserRepositoryAdapter(UserRepositoryPort):
 
     async def save(self, user: User) -> User:
         entity = self.mapper.to_entity(user)
-        self.session.add(entity)
+        entity = await self.session.merge(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)

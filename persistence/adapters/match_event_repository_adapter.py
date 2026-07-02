@@ -28,7 +28,7 @@ class MatchEventRepositoryAdapter(MatchEventRepositoryPort):
 
     async def save(self, match_event: MatchEvent) -> MatchEvent:
         entity = self.mapper.to_entity(match_event)
-        self.session.add(entity)
+        entity = await self.session.merge(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)

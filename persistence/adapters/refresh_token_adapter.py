@@ -18,7 +18,7 @@ class RefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
 
     async def save(self, refresh_token: RefreshToken) -> RefreshToken:
         entity = self.mapper.to_entity(refresh_token)
-        self.session.add(entity)
+        entity = await self.session.merge(entity)
         await self.session.flush()
         await self.session.refresh(entity)
         return self.mapper.to_domain(entity)
