@@ -14,7 +14,7 @@ from web.mappers.season_model_mapper import SeasonModelMapper
 from web.models.request.season_create_request import SeasonCreateRequest
 from web.models.response.season_create_response import SeasonCreateResponse
 
-router = APIRouter(prefix="/api/seasons", tags=["seasons"])
+router = APIRouter(prefix="/api/season", tags=["season"])
 
 
 @router.post(

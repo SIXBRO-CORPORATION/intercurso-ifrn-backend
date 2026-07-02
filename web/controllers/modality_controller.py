@@ -14,7 +14,7 @@ from web.mappers.modality_model_mapper import ModalityModelMapper
 from web.models.request.modality_create_request import ModalityCreateRequest
 from web.models.response.modality_create_response import ModalityCreateResponse
 
-router = APIRouter(prefix="/api/modalities", tags=["modalities"])
+router = APIRouter(prefix="/api/modality", tags=["modality"])
 
 
 @router.post(

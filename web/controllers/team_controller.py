@@ -23,7 +23,7 @@ from web.dependencies import (
 )
 
 
-router = APIRouter(prefix="/api/teams", tags=["teams"])
+router = APIRouter(prefix="/api/team", tags=["team"])
 
 
 @router.post(
