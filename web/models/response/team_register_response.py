@@ -1,9 +1,7 @@
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
-
-from web.models.response.team_member_response import TeamMemberResponse
 
 
 class TeamRegisterResponse(BaseModel):
@@ -11,9 +9,9 @@ class TeamRegisterResponse(BaseModel):
 
     team_id: UUID = Field()
     name: str = Field()
-    modality: str = Field()
+    modality_id: UUID = Field()
     status: str = Field()
-    photo: Optional[str] = Field()
-    members_count: int = Field()
-    members: List[TeamMemberResponse] = Field()
+    photo: Optional[str] = Field(default=None)
+    invite_token: Optional[str] = Field(default=None)
+    owner_id: UUID = Field()
     message: str = Field()

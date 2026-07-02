@@ -52,8 +52,6 @@ app.include_router(team_router)
 
 app.include_router(auth_router)
 
-@app.get("/")
-
 
 async def root():
     return {"status": "ok", "message": "API is running", "version": "1.0.0"}

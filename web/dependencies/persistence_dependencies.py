@@ -8,13 +8,26 @@ from persistence.adapters.team_repository_adapter import TeamRepositoryAdapter
 from persistence.adapters.team_member_repository_adapter import (
     TeamMemberRepositoryAdapter,
 )
+from persistence.adapters.season_repository_adapter import SeasonRepositoryAdapter
+from persistence.adapters.season_modality_repository_adapter import (
+    SeasonModalityRepositoryAdapter,
+)
+from persistence.adapters.modality_repository_adapter import ModalityRepositoryAdapter
 from core.persistence.user_repository_port import UserRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.season_repository_port import SeasonRepositoryPort
+from core.persistence.season_modality_repository_port import (
+    SeasonModalityRepositoryPort,
+)
+from core.persistence.modality_repository_port import ModalityRepositoryPort
 from persistence.database import get_db
 from persistence.mappers.team_mapper import TeamMapper
 from persistence.mappers.team_member_mapper import TeamMemberMapper
 from persistence.mappers.user_mapper import UserMapper
+from persistence.mappers.season_mapper import SeasonMapper
+from persistence.mappers.season_modality_mapper import SeasonModalityMapper
+from persistence.mappers.modality_mapper import ModalityMapper
 
 
 def get_user_repository(
@@ -40,3 +53,27 @@ def get_team_member_repository(
     user_mapper = UserMapper()
 
     return TeamMemberRepositoryAdapter(session, team_member_mapper, user_mapper)
+
+
+def get_season_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> SeasonRepositoryPort:
+    mapper = SeasonMapper()
+
+    return SeasonRepositoryAdapter(session, mapper)
+
+
+def get_season_modality_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> SeasonModalityRepositoryPort:
+    mapper = SeasonModalityMapper()
+
+    return SeasonModalityRepositoryAdapter(session, mapper)
+
+
+def get_modality_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> ModalityRepositoryPort:
+    mapper = ModalityMapper()
+
+    return ModalityRepositoryAdapter(session, mapper)

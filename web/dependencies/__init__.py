@@ -19,7 +19,6 @@ from web.dependencies.business.user_dependencies import (
 
 from web.dependencies.business.team_dependencies import (
     get_create_team_port,
-    get_create_team_members_port,
     get_approve_team_port,
     get_confirm_donation_team_port,
 )
@@ -43,7 +42,6 @@ __all__ = [
 
     # Business Dependencies - Teams
     "get_create_team_port",
-    "get_create_team_members_port",
     "get_approve_team_port",
     "get_confirm_donation_team_port",
 ]
