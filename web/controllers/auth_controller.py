@@ -8,7 +8,7 @@ from security.config import settings
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.user import User
 from security.adapters.suap_oauth_adapter import SUAPOAuthAdapter
-from web.commons.ApiResponse import ApiResponse
+from web.commons.api_response import ApiResponse
 from web.dependencies import get_current_user, get_jwt_provider, get_user_repository
 from web.models.response.user_response import UserResponse
 from web.mappers.user_model_mapper import UserModelMapper

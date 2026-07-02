@@ -23,6 +23,14 @@ from web.dependencies.business.team_dependencies import (
     get_confirm_donation_team_port,
 )
 
+from web.dependencies.business.modality_dependencies import (
+    get_create_modality_port,
+)
+
+from web.dependencies.business.season_dependencies import (
+    get_create_season_port,
+)
+
 __all__ = [
     # Persistence Dependencies
     "get_user_repository",
@@ -44,4 +52,10 @@ __all__ = [
     "get_create_team_port",
     "get_approve_team_port",
     "get_confirm_donation_team_port",
+
+    # Business Dependencies - Modalities
+    "get_create_modality_port",
+
+    # Business Dependencies - Seasons
+    "get_create_season_port",
 ]

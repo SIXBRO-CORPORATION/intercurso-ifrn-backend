@@ -55,3 +55,12 @@ class ModalityRepositoryAdapter(ModalityRepositoryPort):
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
+
+    async def find_by_name(self, name: str) -> Optional[Modality]:
+        query = select(ModalityEntity).where(
+            ModalityEntity.name == name,
+            ModalityEntity.deleted_at.is_(None)
+        )
+        result = await self.session.execute(query)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None

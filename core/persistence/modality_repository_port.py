@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
@@ -13,4 +13,8 @@ class ModalityRepositoryPort(BaseRepositoryPort[Modality]):
 
     @abstractmethod
     async def exists_by_id(self, modality_id: UUID) -> bool:
+        pass
+
+    @abstractmethod
+    async def find_by_name(self, name: str) -> Optional[Modality]:
         pass

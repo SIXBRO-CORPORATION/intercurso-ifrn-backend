@@ -5,10 +5,13 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+from scheduling.configuration.scheduler import start_scheduler, stop_scheduler
 from persistence.database import init_db, close_db
 from web.commons.exception_handler import register_exception_handler
 from web.controllers.team_controller import router as team_router
 from web.controllers.auth_controller import router as auth_router
+from web.controllers.season_controller import router as season_router
+from web.controllers.modality_controller import router as modality_router
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -21,10 +24,12 @@ async def lifespan(app: FastAPI):
     logger.info("Starting API")
     await init_db()
     logger.info("Database initialized")
+    start_scheduler()
 
     yield
 
     logger.info("Shutting down API")
+    stop_scheduler()
     await close_db()
 
 
@@ -49,6 +54,8 @@ app.add_middleware(
 
 register_exception_handler(app)
 app.include_router(team_router)
+app.include_router(season_router)
+app.include_router(modality_router)
 
 app.include_router(auth_router)
 

@@ -3,7 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 
 from domain.exceptions.business_exception import BusinessException
-from web.commons.ApiResponse import ApiResponse
+from web.commons.api_response import ApiResponse
 
 
 def register_exception_handler(app: FastAPI) -> None:

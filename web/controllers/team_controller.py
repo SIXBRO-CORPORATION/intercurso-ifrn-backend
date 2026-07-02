@@ -11,7 +11,7 @@ from core.context import Context
 from domain.team import Team
 from domain.team_member import TeamMember
 from domain.user import User
-from web.commons.ApiResponse import ApiResponse
+from web.commons.api_response import ApiResponse
 from web.mappers.team_model_mapper import TeamModelMapper
 from web.models.request.team_register_request import TeamRegisterRequest
 from web.models.response.team_register_response import TeamRegisterResponse
