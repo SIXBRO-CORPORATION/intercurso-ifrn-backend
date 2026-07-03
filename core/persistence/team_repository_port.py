@@ -23,3 +23,7 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
     @abstractmethod
     async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
         pass
+
+    @abstractmethod
+    async def find_by_season_id(self, season_id: UUID) -> List[Team]:
+        pass

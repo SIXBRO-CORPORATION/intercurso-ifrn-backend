@@ -34,6 +34,10 @@ from web.dependencies.business.modality_dependencies import (
 
 from web.dependencies.business.season_dependencies import (
     get_create_season_port,
+    get_manage_season_port,
+    get_close_registration_port,
+    get_reopen_registration_port,
+    get_season_details_port,
 )
 
 __all__ = [
@@ -68,4 +72,8 @@ __all__ = [
 
     # Business Dependencies - Seasons
     "get_create_season_port",
+    "get_manage_season_port",
+    "get_close_registration_port",
+    "get_reopen_registration_port",
+    "get_season_details_port",
 ]

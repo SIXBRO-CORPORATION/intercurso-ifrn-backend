@@ -91,3 +91,16 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in team_entities]
+
+    async def find_by_season_id(self, season_id: UUID) -> List[Team]:
+        selecionar = (
+            select(TeamEntity)
+            .where(
+                TeamEntity.season_id == season_id,
+                TeamEntity.deleted_at.is_(None)
+            )
+            .order_by(TeamEntity.created_at.desc())
+        )
+        result = await self.session.execute(selecionar)
+        team_entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in team_entities]
