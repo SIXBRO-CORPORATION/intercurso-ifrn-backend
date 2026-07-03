@@ -1,6 +1,7 @@
 from typing import Optional
 from domain.abstract_domain import AbstractDomain
-from dataclasses import dataclass
+from domain.enums.user_role import UserRole
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -10,6 +11,7 @@ class User(AbstractDomain):
     cpf: str = None
     matricula: int = None
     atleta: bool = None
+    role: UserRole = field(default=UserRole.USER)
     tipo_usuario: Optional[str] = None
     campus: Optional[str] = None
     curso: Optional[str] = None

@@ -45,6 +45,11 @@ class UserRepositoryAdapter(UserRepositoryPort):
         result = await self.session.execute(selecionar)
         return result.scalar_one_or_none() is not None
 
+    async def exists_by_cpf(self, cpf: int) -> bool:
+        selecionar = select(UserEntity.id).where(UserEntity.cpf == cpf)
+        result = await self.session.execute(selecionar)
+        return result.scalar_one_or_none() is not None
+
     async def find_by_matricula(self, matricula: int) -> Optional[User]:
         selecionar = select(UserEntity).where(UserEntity.matricula == matricula)
         result = await self.session.execute(selecionar)

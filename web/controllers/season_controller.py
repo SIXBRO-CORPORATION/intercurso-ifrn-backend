@@ -8,7 +8,7 @@ from core.context import Context
 from domain.season import Season
 from domain.user import User
 from web.commons.api_response import ApiResponse
-from web.dependencies import require_authenticated_user
+from web.dependencies import require_monitor
 from web.dependencies.business.season_dependencies import get_create_season_port
 from web.mappers.season_model_mapper import SeasonModelMapper
 from web.models.request.season_create_request import SeasonCreateRequest
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/season", tags=["season"])
 async def create_season(
     request: SeasonCreateRequest,
     create_season_port: Annotated[CreateSeasonPort, Depends(get_create_season_port)],
-    current_user: User = Depends(require_authenticated_user),
+    current_user: User = Depends(require_monitor),
 ):
     season_domain = Season(
         name=request.name,

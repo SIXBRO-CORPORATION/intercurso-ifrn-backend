@@ -20,6 +20,7 @@ from web.dependencies import (
     get_approve_team_port,
     get_confirm_donation_team_port,
     require_authenticated_user,
+    require_monitor,
 )
 
 
@@ -61,7 +62,7 @@ async def create_team(
 async def approve_team(
     team_id: UUID,
     approve_team_port: Annotated[ApproveTeamPort, Depends(get_approve_team_port)],
-    current_user: User = Depends(require_authenticated_user),
+    current_user: User = Depends(require_monitor),
 ):
     context = Context()
     context.put_property("team_id", team_id)
@@ -91,7 +92,7 @@ async def confirm_donation(
     confirm_donation_port: Annotated[
         ConfirmDonationPort, Depends(get_confirm_donation_team_port)
     ],
-    current_user: User = Depends(require_authenticated_user),
+    current_user: User = Depends(require_monitor),
 ):
     context = Context()
     context.put_property("team_id", team_id)

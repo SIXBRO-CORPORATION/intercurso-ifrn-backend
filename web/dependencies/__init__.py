@@ -10,11 +10,16 @@ from web.dependencies.security_dependencies import (
     get_current_user,
     get_optional_current_user,
     require_authenticated_user,
+    require_role,
+    require_monitor,
+    require_admin,
 )
 
 from web.dependencies.business.user_dependencies import (
     create_user_port,
     get_user_profile_port,
+    get_create_user_by_admin_port,
+    get_update_user_by_admin_port,
 )
 
 from web.dependencies.business.team_dependencies import (
@@ -43,10 +48,15 @@ __all__ = [
     "get_current_user",
     "get_optional_current_user",
     "require_authenticated_user",
+    "require_role",
+    "require_monitor",
+    "require_admin",
 
     # Business Dependencies - Users
     "create_user_port",
     "get_user_profile_port",
+    "get_create_user_by_admin_port",
+    "get_update_user_by_admin_port",
 
     # Business Dependencies - Teams
     "get_create_team_port",

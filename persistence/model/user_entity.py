@@ -14,3 +14,5 @@ class UserEntity(AbstractEntity):
     matricula = Column(Integer, nullable=False, unique=True, index=True)
 
     atleta = Column(Boolean, nullable=False, default=False)
+
+    role = Column(String(20), nullable=False, default="USER", index=True)

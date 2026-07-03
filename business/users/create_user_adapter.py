@@ -1,6 +1,7 @@
 from core.business.users.create_user_port import CreateUserPort
 from core.context import Context
 from core.persistence.user_repository_port import UserRepositoryPort
+from domain.enums.user_role import UserRole
 from domain.user import User
 from datetime import datetime
 
@@ -35,6 +36,7 @@ class CreateUserAdapter(CreateUserPort):
             modified_at=None,
             atleta=False,
             active=True,
+            role=UserRole.USER,
         )
 
         saved_user = await self.repository.save(new_user)

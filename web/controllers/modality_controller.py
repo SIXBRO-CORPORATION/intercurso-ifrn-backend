@@ -8,7 +8,7 @@ from core.context import Context
 from domain.modality import Modality
 from domain.user import User
 from web.commons.api_response import ApiResponse
-from web.dependencies import require_authenticated_user
+from web.dependencies import require_monitor
 from web.dependencies.business.modality_dependencies import get_create_modality_port
 from web.mappers.modality_model_mapper import ModalityModelMapper
 from web.models.request.modality_create_request import ModalityCreateRequest
@@ -27,7 +27,7 @@ async def create_modality(
     create_modality_port: Annotated[
         CreateModalityPort, Depends(get_create_modality_port)
     ],
-    current_user: User = Depends(require_authenticated_user),
+    current_user: User = Depends(require_monitor),
 ):
     modality_domain = Modality(
         name=request.name,

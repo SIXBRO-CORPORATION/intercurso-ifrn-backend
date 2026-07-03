@@ -1,11 +1,12 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 
 from core.security.jwt_provider_port import JWTProviderPort
 from core.persistence.user_repository_port import UserRepositoryPort
+from domain.enums.user_role import UserRole
 from domain.user import User
 from security.adapters.jwt_provider_adapter import JWTProviderAdapter
 from security.utils import (
@@ -65,5 +66,34 @@ async def get_optional_current_user(
 
 def require_authenticated_user(
     current_user: User = Depends(get_current_user),
+) -> User:
+    return current_user
+
+
+def require_role(*allowed_roles: UserRole):
+
+    def _dependency(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role == UserRole.ADMIN:
+            return current_user
+
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não tem permissão para realizar essa ação",
+            )
+
+        return current_user
+
+    return _dependency
+
+
+def require_monitor(
+    current_user: User = Depends(require_role(UserRole.MONITOR)),
+) -> User:
+    return current_user
+
+
+def require_admin(
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
 ) -> User:
     return current_user

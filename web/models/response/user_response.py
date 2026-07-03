@@ -1,19 +1,16 @@
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
-from datetime import datetime
 
 
 class UserResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
-    id: UUID = Field()
+    user_id: UUID = Field()
     name: str = Field()
-    email: str = Field()
+    email: Optional[str] = Field(default=None)
     matricula: int = Field()
-    cpf: int = Field()
-    created_at: datetime = Field()
-    modified_at: datetime = Field()
+    role: str = Field()
+    atleta: bool = Field()
     active: bool = Field()

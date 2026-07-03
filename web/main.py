@@ -12,6 +12,7 @@ from web.controllers.team_controller import router as team_router
 from web.controllers.auth_controller import router as auth_router
 from web.controllers.season_controller import router as season_router
 from web.controllers.modality_controller import router as modality_router
+from web.controllers.user_controller import router as user_router
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -56,6 +57,7 @@ register_exception_handler(app)
 app.include_router(team_router)
 app.include_router(season_router)
 app.include_router(modality_router)
+app.include_router(user_router)
 
 app.include_router(auth_router)
 

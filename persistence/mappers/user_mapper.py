@@ -1,5 +1,6 @@
 from typing import Optional
 
+from domain.enums.user_role import UserRole
 from domain.user import User
 from persistence.model.user_entity import UserEntity
 
@@ -19,6 +20,7 @@ class UserMapper:
             modified_at=entity.modified_at,
             active=entity.active,
             atleta=entity.atleta,
+            role=UserRole[entity.role] if entity.role else UserRole.USER,
         )
 
     def to_entity(self, user: User) -> UserEntity:
@@ -32,6 +34,7 @@ class UserMapper:
             modified_at=user.modified_at,
             active=user.active,
             atleta=user.atleta,
+            role=(user.role or UserRole.USER).name,
         )
 
         return entity

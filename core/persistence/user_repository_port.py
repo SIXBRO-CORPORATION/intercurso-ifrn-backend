@@ -19,5 +19,9 @@ class UserRepositoryPort(BaseRepositoryPort[User]):
         pass
 
     @abstractmethod
+    async def exists_by_cpf(self, cpf: int) -> bool:
+        pass
+
+    @abstractmethod
     async def find_by_matricula(self, matricula: int) -> Optional[User]:
         pass
