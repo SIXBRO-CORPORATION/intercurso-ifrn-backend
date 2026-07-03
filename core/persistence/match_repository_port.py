@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime
-from typing import Optional, List
+from typing import List
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort

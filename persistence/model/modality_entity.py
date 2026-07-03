@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Text
+from sqlalchemy import Column, String, Integer
 from persistence.model.abstract_entity import AbstractEntity
 
 

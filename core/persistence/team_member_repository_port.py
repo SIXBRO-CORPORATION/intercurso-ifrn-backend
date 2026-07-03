@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
