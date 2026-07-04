@@ -21,6 +21,7 @@ from web.dependencies.business.season_dependencies import (
     get_reopen_registration_port,
     get_season_details_port,
 )
+from web.dependencies.mapper_dependencies import get_season_model_mapper
 from web.mappers.season_model_mapper import SeasonModelMapper
 from web.models.request.season_create_request import SeasonCreateRequest
 from web.models.request.season_edit_dates_request import SeasonEditDatesRequest
@@ -40,6 +41,7 @@ router = APIRouter(prefix="/api/season", tags=["season"])
 async def create_season(
     request: SeasonCreateRequest,
     create_season_port: Annotated[CreateSeasonPort, Depends(get_create_season_port)],
+    mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
     current_user: User = Depends(require_monitor),
 ):
     season_domain = Season(
@@ -58,7 +60,6 @@ async def create_season(
     saved_season = await create_season_port.execute(context)
     season_modalities = context.get_property("season_modalities", list) or []
 
-    mapper = SeasonModelMapper()
     response_data = mapper.to_create_response(saved_season, season_modalities)
 
     return ApiResponse(data=response_data, message="Temporada criada com sucesso!")
@@ -68,13 +69,14 @@ async def create_season(
     "/{season_id}",
     response_model=ApiResponse[SeasonDetailsResponse],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_monitor)]
 )
 async def get_season_details(
     season_id: UUID,
     season_details_port: Annotated[
         GetSeasonDetailsPort, Depends(get_season_details_port)
     ],
-    current_user: User = Depends(require_monitor),
+    mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
 ):
     context = Context()
     context.put_property("season_id", season_id)
@@ -84,10 +86,15 @@ async def get_season_details(
     total_created = context.get_property("total_teams_created", int) or 0
     total_submitted = context.get_property("total_teams_submitted", int) or 0
     total_approved = context.get_property("total_teams_approved", int) or 0
+    available_actions = context.get_property("available_actions", list) or []
 
-    mapper = SeasonModelMapper()
     response_data = mapper.to_details_response(
-        season, season_modalities, total_created, total_submitted, total_approved
+        season,
+        season_modalities,
+        total_created,
+        total_submitted,
+        total_approved,
+        available_actions,
     )
 
     return ApiResponse(data=response_data)
@@ -102,6 +109,7 @@ async def edit_season_dates(
     season_id: UUID,
     request: SeasonEditDatesRequest,
     manage_season_port: Annotated[ManageSeasonPort, Depends(get_manage_season_port)],
+    mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -117,7 +125,6 @@ async def edit_season_dates(
 
     updated_season = await manage_season_port.execute(context)
 
-    mapper = SeasonModelMapper()
     response_data = mapper.to_status_response(
         updated_season, "Datas da temporada atualizadas com sucesso!"
     )
@@ -135,6 +142,7 @@ async def close_season_registration(
     close_registration_port: Annotated[
         CloseRegistrationPort, Depends(get_close_registration_port)
     ],
+    mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -143,7 +151,6 @@ async def close_season_registration(
 
     updated_season = await close_registration_port.execute(context)
 
-    mapper = SeasonModelMapper()
     response_data = mapper.to_status_response(
         updated_season, "Inscrições encerradas antecipadamente com sucesso!"
     )
@@ -162,6 +169,7 @@ async def reopen_season_registration(
     reopen_registration_port: Annotated[
         ReopenRegistrationPort, Depends(get_reopen_registration_port)
     ],
+    mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -173,7 +181,6 @@ async def reopen_season_registration(
 
     updated_season = await reopen_registration_port.execute(context)
 
-    mapper = SeasonModelMapper()
     response_data = mapper.to_status_response(
         updated_season, "Inscrições reabertas com sucesso!"
     )

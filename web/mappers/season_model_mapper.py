@@ -1,22 +1,10 @@
 from typing import List
 
-from domain.enums.season_status import SeasonStatus
 from domain.season import Season
 from domain.season_modality import SeasonModality
 from web.models.response.season_create_response import SeasonCreateResponse
 from web.models.response.season_details_response import SeasonDetailsResponse
 from web.models.response.season_status_response import SeasonStatusResponse
-
-_AVAILABLE_ACTIONS_BY_STATUS = {
-    SeasonStatus.DRAFT: ["edit_registration_dates", "postpone_opening"],
-    SeasonStatus.REGISTRATION_OPEN: [
-        "edit_registration_end_date",
-        "close_registration_early",
-    ],
-    SeasonStatus.REGISTRATION_CLOSED: ["reopen_registration"],
-    SeasonStatus.IN_PROGRESS: [],
-    SeasonStatus.FINISHED: [],
-}
 
 
 class SeasonModelMapper:
@@ -56,6 +44,7 @@ class SeasonModelMapper:
         total_teams_created: int,
         total_teams_submitted: int,
         total_teams_approved: int,
+        available_actions: List[str],
     ) -> SeasonDetailsResponse:
         return SeasonDetailsResponse(
             season_id=season.id,
@@ -73,5 +62,5 @@ class SeasonModelMapper:
             total_teams_created=total_teams_created,
             total_teams_submitted=total_teams_submitted,
             total_teams_approved=total_teams_approved,
-            available_actions=_AVAILABLE_ACTIONS_BY_STATUS.get(season.status, []),
+            available_actions=available_actions,
         )

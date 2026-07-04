@@ -7,9 +7,21 @@ from core.persistence.season_modality_repository_port import (
 )
 from core.persistence.season_repository_port import SeasonRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
+from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season import Season
+
+_AVAILABLE_ACTIONS_BY_STATUS = {
+    SeasonStatus.DRAFT: ["edit_registration_dates", "postpone_opening"],
+    SeasonStatus.REGISTRATION_OPEN: [
+        "edit_registration_end_date",
+        "close_registration_early",
+    ],
+    SeasonStatus.REGISTRATION_CLOSED: ["reopen_registration"],
+    SeasonStatus.IN_PROGRESS: [],
+    SeasonStatus.FINISHED: [],
+}
 
 
 class GetSeasonDetailsAdapter(GetSeasonDetailsPort):
@@ -50,5 +62,9 @@ class GetSeasonDetailsAdapter(GetSeasonDetailsPort):
         context.put_property("total_teams_created", total_teams_created)
         context.put_property("total_teams_submitted", total_teams_submitted)
         context.put_property("total_teams_approved", total_teams_approved)
+        context.put_property(
+            "available_actions",
+            _AVAILABLE_ACTIONS_BY_STATUS.get(season.status, []),
+        )
 
         return season

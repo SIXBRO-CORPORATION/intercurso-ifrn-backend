@@ -55,6 +55,10 @@ class TestGetSeasonDetailsAdapter:
         assert context.get_property("total_teams_submitted", int) == 3
         assert context.get_property("total_teams_approved", int) == 1
         assert len(context.get_property("season_modalities", list)) == 1
+        assert context.get_property("available_actions", list) == [
+            "edit_registration_dates",
+            "postpone_opening",
+        ]
 
     async def test_blocks_when_season_not_found(self):
         adapter, season_repository, *_ = make_adapter()

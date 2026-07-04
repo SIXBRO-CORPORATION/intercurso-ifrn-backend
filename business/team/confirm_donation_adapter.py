@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from core.business.team.confirm_donation_port import ConfirmDonationPort
 from core.context import Context
@@ -23,9 +24,9 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
         self.user_repository = user_repository
 
     async def execute(self, context: Context) -> TeamMember:
-        team_id = context.get_property("team_id", object)
-        matricula = context.get_property("matricula", object)
-        confirmed_by_user_id = context.get_property("confirmed_by_user_id", object)
+        team_id = context.get_property("team_id", UUID)
+        matricula = context.get_property("matricula", int)
+        confirmed_by_user_id = context.get_property("confirmed_by_user_id", UUID)
 
         if team_id is None or matricula is None:
             raise BusinessException("Time e matrícula são obrigatórios")

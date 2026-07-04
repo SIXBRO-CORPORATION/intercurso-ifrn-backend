@@ -40,6 +40,13 @@ from web.dependencies.business.season_dependencies import (
     get_season_details_port,
 )
 
+from web.dependencies.mapper_dependencies import (
+    get_user_model_mapper,
+    get_modality_model_mapper,
+    get_team_model_mapper,
+    get_season_model_mapper,
+)
+
 __all__ = [
     # Persistence Dependencies
     "get_user_repository",
@@ -76,4 +83,10 @@ __all__ = [
     "get_close_registration_port",
     "get_reopen_registration_port",
     "get_season_details_port",
+
+    # Mapper Dependencies
+    "get_user_model_mapper",
+    "get_modality_model_mapper",
+    "get_team_model_mapper",
+    "get_season_model_mapper",
 ]

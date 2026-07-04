@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.context import Context
@@ -20,8 +21,8 @@ class ApproveTeamAdapter(ApproveTeamPort):
         self.team_member_repository = team_member_repository
 
     async def execute(self, context: Context) -> Team:
-        team_id = context.get_property("team_id", object)
-        approved_by_user_id = context.get_property("approved_by_user_id", object)
+        team_id = context.get_property("team_id", UUID)
+        approved_by_user_id = context.get_property("approved_by_user_id", UUID)
 
         if team_id is None:
             raise BusinessException("Time é obrigatório")

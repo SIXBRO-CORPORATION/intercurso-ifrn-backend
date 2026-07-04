@@ -13,6 +13,8 @@ class GetSeasonDetailsPort(Command[Season]):
         - "total_teams_created": int
         - "total_teams_submitted": int
         - "total_teams_approved": int
+        - "available_actions": List[str] ações de workflow disponíveis
+          para o status atual da temporada
 
     Retorna a Season encontrada. Lança BusinessException se não existir.
     """

@@ -32,7 +32,7 @@ class CreateSeasonAdapter(CreateSeasonPort):
         open_immediately = bool(
             context.get_property("open_immediately", bool) or False
         )
-        created_by = context.get_property("created_by", object)
+        created_by = context.get_property("created_by", UUID)
 
         if season is None:
             raise BusinessException("Dados da temporada são obrigatórios")

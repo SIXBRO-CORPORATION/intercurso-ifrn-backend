@@ -19,6 +19,7 @@ from web.dependencies import (
     get_create_team_port,
     get_approve_team_port,
     get_confirm_donation_team_port,
+    get_team_model_mapper,
     require_authenticated_user,
     require_monitor,
 )
@@ -35,6 +36,7 @@ router = APIRouter(prefix="/api/team", tags=["team"])
 async def create_team(
     request: TeamRegisterRequest,
     create_team_port: Annotated[CreateTeamPort, Depends(get_create_team_port)],
+    mapper: Annotated[TeamModelMapper, Depends(get_team_model_mapper)],
     current_user: User = Depends(require_authenticated_user),
 ):
     team_domain = Team(
@@ -48,7 +50,6 @@ async def create_team(
 
     owner_member = context.get_property("owner_member", TeamMember)
 
-    mapper = TeamModelMapper()
     response_data = mapper.to_register_response(saved_team, owner_member, current_user)
 
     return ApiResponse(data=response_data, message="Time cadastrado com sucesso!")

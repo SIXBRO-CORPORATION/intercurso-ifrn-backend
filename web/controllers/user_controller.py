@@ -13,26 +13,16 @@ from web.commons.api_response import ApiResponse
 from web.dependencies import (
     get_create_user_by_admin_port,
     get_update_user_by_admin_port,
+    get_user_model_mapper,
     require_admin,
 )
+from web.mappers.user_model_mapper import UserModelMapper
 from web.models.request.admin_create_user_request import AdminCreateUserRequest
 from web.models.request.admin_update_user_request import AdminUpdateUserRequest
 from web.models.response.user_response import UserResponse
 
 
 router = APIRouter(prefix="/api/user", tags=["user"])
-
-
-def _to_response(user: User) -> UserResponse:
-    return UserResponse(
-        user_id=user.id,
-        name=user.name,
-        email=user.email,
-        matricula=user.matricula,
-        role=user.role.name,
-        atleta=bool(user.atleta),
-        active=bool(user.active),
-    )
 
 
 @router.post(
@@ -45,6 +35,7 @@ async def create_user(
     create_user_by_admin_port: Annotated[
         CreateUserByAdminPort, Depends(get_create_user_by_admin_port)
     ],
+    mapper: Annotated[UserModelMapper, Depends(get_user_model_mapper)],
     current_user: User = Depends(require_admin),
 ):
     user_domain = User(
@@ -61,7 +52,7 @@ async def create_user(
     saved_user = await create_user_by_admin_port.execute(context)
 
     return ApiResponse(
-        data=_to_response(saved_user), message="Usuário criado com sucesso!"
+        data=mapper.to_response(saved_user), message="Usuário criado com sucesso!"
     )
 
 
@@ -76,6 +67,7 @@ async def update_user(
     update_user_by_admin_port: Annotated[
         UpdateUserByAdminPort, Depends(get_update_user_by_admin_port)
     ],
+    mapper: Annotated[UserModelMapper, Depends(get_user_model_mapper)],
     current_user: User = Depends(require_admin),
 ):
     context = Context()
@@ -90,5 +82,5 @@ async def update_user(
     updated_user = await update_user_by_admin_port.execute(context)
 
     return ApiResponse(
-        data=_to_response(updated_user), message="Usuário atualizado com sucesso!"
+        data=mapper.to_response(updated_user), message="Usuário atualizado com sucesso!"
     )

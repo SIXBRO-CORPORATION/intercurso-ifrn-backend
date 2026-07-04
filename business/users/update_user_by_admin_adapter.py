@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 
 from core.business.users.update_user_by_admin_port import UpdateUserByAdminPort
 from core.context import Context
@@ -13,13 +14,13 @@ class UpdateUserByAdminAdapter(UpdateUserByAdminPort):
         self.user_repository = user_repository
 
     async def execute(self, context: Context) -> User:
-        target_user_id = context.get_property("target_user_id", object)
+        target_user_id = context.get_property("target_user_id", UUID)
         name: Optional[str] = context.get_property("name", str)
         email: Optional[str] = context.get_property("email", str)
         role: Optional[UserRole] = context.get_property("role", UserRole)
         atleta: Optional[bool] = context.get_property("atleta", bool)
         active: Optional[bool] = context.get_property("active", bool)
-        changed_by_user_id = context.get_property("changed_by_user_id", object)
+        changed_by_user_id = context.get_property("changed_by_user_id", UUID)
 
         if target_user_id is None:
             raise BusinessException("Usuário alvo é obrigatório")

@@ -1,5 +1,6 @@
 import secrets
 from datetime import datetime
+from uuid import UUID
 
 from core.business.team.create_team_port import CreateTeamPort
 from core.context import Context
@@ -38,7 +39,7 @@ class CreateTeamAdapter(CreateTeamPort):
 
     async def execute(self, context: Context) -> Team:
         team = context.get_data(Team)
-        creator_user_id = context.get_property("creator_user_id", object)
+        creator_user_id = context.get_property("creator_user_id", UUID)
 
         if team is None:
             raise BusinessException("Dados do time são obrigatórios")
