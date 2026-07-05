@@ -1,11 +1,15 @@
+import os
+from dotenv import load_dotenv
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from persistence.model.abstract_entity import Base
-from persistence.database import DATABASE_URL
 
 from alembic import context
+
+load_dotenv()
+DATABASE_URL_SYNC = os.getenv("DATABASE_URL_SYNC")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -61,7 +65,7 @@ def run_migrations_online() -> None:
     """
     config.set_main_option(
         "sqlalchemy.url",
-        DATABASE_URL
+        DATABASE_URL_SYNC
     )
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),

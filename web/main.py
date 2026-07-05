@@ -6,14 +6,13 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from scheduling.configuration.scheduler import start_scheduler, stop_scheduler
-from persistence.database import init_db, close_db
+from persistence.database import close_db
 from web.commons.exception_handler import register_exception_handler
 from web.controllers.team_controller import router as team_router
 from web.controllers.auth_controller import router as auth_router
 from web.controllers.season_controller import router as season_router
 from web.controllers.modality_controller import router as modality_router
 from web.controllers.user_controller import router as user_router
-from persistence.model.abstract_entity import Base
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -24,9 +23,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting API")
-    await init_db()
-    logger.info("Database initialized")
-    print(Base.metadata.tables.keys())
+
     start_scheduler()
 
     yield

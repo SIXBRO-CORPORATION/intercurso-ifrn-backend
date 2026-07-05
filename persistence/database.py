@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from typing import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -12,6 +13,8 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool
 
 from persistence.model.abstract_entity import Base
+
+load_dotenv()
 
 # PostgreSQL: postgresql+asyncpg://user:password@localhost:5432/dbname
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./database.db")

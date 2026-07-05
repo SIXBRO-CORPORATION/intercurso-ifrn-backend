@@ -16,4 +16,4 @@ class ModalityConfigurationEntity(AbstractEntity):
 
     has_third_place_match = Column(Boolean, default=True, nullable=False)
 
-    metadata = Column(JSONB, nullable=True)
+    metadata_json = Column(JSONB, nullable=True)

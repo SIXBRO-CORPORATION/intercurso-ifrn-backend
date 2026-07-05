@@ -16,4 +16,4 @@ class MatchEventEntity(AbstractEntity):
 
     clock_seconds = Column(Integer, nullable=False)
 
-    metadata = Column(JSONB, nullable=True)
+    metadata_json = Column(JSONB, nullable=True)

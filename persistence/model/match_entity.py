@@ -42,4 +42,4 @@ class MatchEntity(AbstractEntity):
 
     is_bye = Column(Boolean, default=False, nullable=False)
 
-    metadata = Column(JSONB, nullable=True)
+    metadata_json = Column(JSONB, nullable=True)
