@@ -21,7 +21,7 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "apscheduler>=3.10.4",
     "alembic>=1.18.5",
-    "psycopg>=3.3.4",
+    "psycopg[binary]>=3.3.4",
 ]
 
 [dependency-groups]
