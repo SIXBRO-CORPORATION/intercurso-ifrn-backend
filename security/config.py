@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     )
 
     database_url: str
+    database_url_sync: str
 
     # SUAP OAuth2
     suap_client_id: str
