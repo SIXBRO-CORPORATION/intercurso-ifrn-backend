@@ -22,7 +22,7 @@ class SUAPOAuthAdapter(OAuthProviderPort):
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
             "response_type": "code",
-            "scope": "email identificacao",  # Escopos do SUAP
+            "scope": "email identificacao",
         }
 
         if state:
@@ -77,10 +77,8 @@ class SUAPOAuthAdapter(OAuthProviderPort):
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")
 
     async def authenticate_with_code(self, code: str) -> User:
-        # Passo 1: Troca código por token
         access_token = await self.exchange_code_for_token(code)
 
-        # Passo 2: Busca dados do usuário
         user_data = await self.get_user_info(access_token)
 
         return user_data

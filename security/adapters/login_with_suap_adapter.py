@@ -76,8 +76,6 @@ class LoginWithSuapAdapter(LoginWithSuapPort):
         existing_user = await self.user_repository.find_by_matricula(matricula_int)
 
         if existing_user:
-            # Usuário desativado (ex.: banido/suspenso por um admin) não deve
-            # ser reativado automaticamente só por logar de novo no SUAP.
             if not existing_user.active:
                 raise BusinessException(
                     "Usuário desativado. Entre em contato com o suporte."

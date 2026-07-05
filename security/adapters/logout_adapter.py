@@ -14,8 +14,6 @@ class LogoutAdapter(LogoutPort):
         refresh_token = context.get_property("refresh_token", str)
 
         if refresh_token:
-            # Logout deve ser idempotente: um cookie de refresh token
-            # já expirado/inválido não pode virar erro para o usuário.
             try:
                 await self.refresh_token_service.revoke_token(refresh_token)
             except BusinessException:
