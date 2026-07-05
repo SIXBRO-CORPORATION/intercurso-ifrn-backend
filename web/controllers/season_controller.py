@@ -6,6 +6,7 @@ from fastapi.params import Depends
 
 from core.business.season.close_registration_port import CloseRegistrationPort
 from core.business.season.create_season_port import CreateSeasonPort
+from core.business.season.finish_season_port import FinishSeasonPort
 from core.business.season.get_season_details_port import GetSeasonDetailsPort
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
@@ -17,6 +18,7 @@ from web.dependencies import require_monitor
 from web.dependencies.business.season_dependencies import (
     get_close_registration_port,
     get_create_season_port,
+    get_finish_season_port,
     get_manage_season_port,
     get_reopen_registration_port,
     get_season_details_port,
@@ -25,6 +27,7 @@ from web.dependencies.mapper_dependencies import get_season_model_mapper
 from web.mappers.season_model_mapper import SeasonModelMapper
 from web.models.request.season_create_request import SeasonCreateRequest
 from web.models.request.season_edit_dates_request import SeasonEditDatesRequest
+from web.models.request.season_finish_request import SeasonFinishRequest
 from web.models.request.season_reopen_request import SeasonReopenRequest
 from web.models.response.season_create_response import SeasonCreateResponse
 from web.models.response.season_details_response import SeasonDetailsResponse
@@ -183,6 +186,32 @@ async def reopen_season_registration(
 
     response_data = mapper.to_status_response(
         updated_season, "Inscrições reabertas com sucesso!"
+    )
+
+    return ApiResponse(data=response_data, message=response_data.message)
+
+
+@router.post(
+    "/{season_id}/finish",
+    response_model=ApiResponse[SeasonStatusResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def finish_season(
+    season_id: UUID,
+    request: SeasonFinishRequest,
+    finish_season_port: Annotated[FinishSeasonPort, Depends(get_finish_season_port)],
+    mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    context.put_property("season_id", season_id)
+    context.put_property("confirmation_name", request.confirmation_name)
+    context.put_property("finished_by", current_user.id)
+
+    updated_season = await finish_season_port.execute(context)
+
+    response_data = mapper.to_status_response(
+        updated_season, "Temporada finalizada com sucesso!"
     )
 
     return ApiResponse(data=response_data, message=response_data.message)

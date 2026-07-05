@@ -34,6 +34,7 @@ class SeasonModelMapper:
             registration_start_date=season.registration_start_date,
             registration_end_date=season.registration_end_date,
             registration_closed_at=season.registration_closed_at,
+            finished_at=season.finished_at,
             message=message,
         )
 

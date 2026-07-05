@@ -4,11 +4,13 @@ from fastapi import Depends
 
 from business.season.close_registration_adapter import CloseRegistrationAdapter
 from business.season.create_season_adapter import CreateSeasonAdapter
+from business.season.finish_season_adapter import FinishSeasonAdapter
 from business.season.get_season_details_adapter import GetSeasonDetailsAdapter
 from business.season.manage_season_adapter import ManageSeasonAdapter
 from business.season.reopen_registration_adapter import ReopenRegistrationAdapter
 from core.business.season.close_registration_port import CloseRegistrationPort
 from core.business.season.create_season_port import CreateSeasonPort
+from core.business.season.finish_season_port import FinishSeasonPort
 from core.business.season.get_season_details_port import GetSeasonDetailsPort
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
@@ -64,6 +66,15 @@ def get_reopen_registration_port(
     ],
 ) -> ReopenRegistrationPort:
     return ReopenRegistrationAdapter(season_repository)
+
+
+def get_finish_season_port(
+    season_repository: Annotated[
+        SeasonRepositoryPort, Depends(get_season_repository)
+    ],
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+) -> FinishSeasonPort:
+    return FinishSeasonAdapter(season_repository, team_repository)
 
 
 def get_season_details_port(
