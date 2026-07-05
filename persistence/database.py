@@ -85,23 +85,11 @@ async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def close_db() -> None:
-    """
-    Fecha todas as conexões do pool.
-    Deve ser chamado no shutdown da aplicação.
-    """
     await async_engine.dispose()
 
 
 @asynccontextmanager
 async def get_transaction():
-    """
-    Context manager para controle manual de transações.
-
-    Uso:
-    async with get_transaction() as session:
-        # suas operações aqui
-        # commit/rollback automático no final
-    """
     async with AsyncSessionLocal() as session:
         async with session.begin():
             try:
