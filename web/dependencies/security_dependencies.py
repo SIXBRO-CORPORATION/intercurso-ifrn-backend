@@ -14,6 +14,7 @@ from security.utils import (
     extract_token_from_credentials,
     verify_and_extract_user_id,
     security_scheme,
+    optional_security_scheme,
 )
 from web.dependencies.persistence_dependencies import get_user_repository
 
@@ -45,7 +46,7 @@ async def get_current_user(
 
 async def get_optional_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(
-        lambda: security_scheme(auto_error=False)
+        optional_security_scheme
     ),
     jwt_provider: JWTProviderPort = Depends(get_jwt_provider),
     user_repository: UserRepositoryPort = Depends(get_user_repository),

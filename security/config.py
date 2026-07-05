@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Frontend
     frontend_url: str = "http://localhost:5173"
 
+    # Mobile
+    mobile_deep_link_scheme: str
+    mobile_deep_link_path: str
+
     # App
     app_name: str = "Intercurso API"
     debug: bool = False

@@ -1,4 +1,5 @@
 from typing import Optional
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Response, status
 from fastapi.responses import RedirectResponse
@@ -14,6 +15,7 @@ from security.config import settings
 from security.utils.oauth_state import (
     OAUTH_STATE_COOKIE_NAME,
     generate_oauth_state,
+    get_platform_from_state,
     is_valid_oauth_state,
 )
 from web.commons.api_response import ApiResponse
@@ -26,6 +28,7 @@ from web.dependencies import (
     get_user_model_mapper,
 )
 from web.mappers.user_model_mapper import UserModelMapper
+from web.models.request.refresh_token_request import RefreshTokenRequest
 from web.models.response.user_response import UserResponse
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -49,9 +52,12 @@ def _set_refresh_token_cookie(response: Response, refresh_token: str) -> None:
 
 @router.get("/login/suap")
 async def login_with_suap(
+    platform: str = Query(
+        "web", pattern="^(web|mobile)$", description="Plataforma de origem do login"
+    ),
     oauth_provider: OAuthProviderPort = Depends(get_oauth_provider),
 ):
-    state = generate_oauth_state()
+    state = generate_oauth_state(platform=platform)
     authorization_url = oauth_provider.get_authorization_url(state=state)
 
     response = RedirectResponse(url=authorization_url)
@@ -81,6 +87,8 @@ async def auth_callback(
             detail="State inválido ou expirado. Tente fazer login novamente.",
         )
 
+    platform = get_platform_from_state(state)
+
     context = Context()
     context.put_property("authorization_code", code)
 
@@ -90,6 +98,20 @@ async def auth_callback(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     refresh_token = context.get_property("refresh_token", str)
+
+    if platform == "mobile":
+        params = {"token": access_token.access_token}
+        if refresh_token:
+            params["refresh_token"] = refresh_token
+
+        deep_link = (
+            f"{settings.mobile_deep_link_scheme}://{settings.mobile_deep_link_path}"
+            f"?{urlencode(params)}"
+        )
+
+        response = RedirectResponse(url=deep_link)
+        response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/auth")
+        return response
 
     frontend_url = settings.frontend_url
     redirect_url = f"{frontend_url}/auth/callback?token={access_token.access_token}"
@@ -123,19 +145,22 @@ async def get_current_user_info(
 @router.post("/refresh")
 async def refresh_token(
     response: Response,
+    body: Optional[RefreshTokenRequest] = None,
     refresh_token_cookie: Optional[str] = Cookie(None, alias=REFRESH_TOKEN_COOKIE_NAME),
     refresh_access_token_port: RefreshAccessTokenPort = Depends(
         get_refresh_access_token_port
     ),
 ):
-    if not refresh_token_cookie:
+    refresh_token_value = refresh_token_cookie or (body.refresh_token if body else None)
+
+    if not refresh_token_value:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token ausente",
         )
 
     context = Context()
-    context.put_property("refresh_token", refresh_token_cookie)
+    context.put_property("refresh_token", refresh_token_value)
 
     try:
         new_access_token = await refresh_access_token_port.execute(context)
@@ -143,12 +168,14 @@ async def refresh_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     new_refresh_token = context.get_property("new_refresh_token", str)
-    if new_refresh_token:
+
+    if new_refresh_token and refresh_token_cookie:
         _set_refresh_token_cookie(response, new_refresh_token)
 
     return ApiResponse.success(
         data={
             "access_token": new_access_token.access_token,
+            "refresh_token": new_refresh_token if not refresh_token_cookie else None,
             "token_type": new_access_token.token_type,
             "expires_at": new_access_token.expires_at,
         },
@@ -159,14 +186,17 @@ async def refresh_token(
 @router.post("/logout")
 async def logout(
     response: Response,
+    body: Optional[RefreshTokenRequest] = None,
     refresh_token_cookie: Optional[str] = Cookie(None, alias=REFRESH_TOKEN_COOKIE_NAME),
     user: Optional[User] = Depends(get_optional_current_user),
     logout_port: LogoutPort = Depends(get_logout_port),
 ):
+    refresh_token_value = refresh_token_cookie or (body.refresh_token if body else None)
+
     context = Context()
 
-    if refresh_token_cookie:
-        context.put_property("refresh_token", refresh_token_cookie)
+    if refresh_token_value:
+        context.put_property("refresh_token", refresh_token_value)
     elif user:
         context.put_property("user_id", user.id)
 

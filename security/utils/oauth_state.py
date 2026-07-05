@@ -10,13 +10,14 @@ _STATE_TTL_MINUTES = 10
 _STATE_TOKEN_TYPE = "oauth_state"
 
 
-def generate_oauth_state() -> str:
+def generate_oauth_state(platform: str = "web") -> str:
     nonce = secrets.token_urlsafe(32)
     expire = datetime.utcnow() + timedelta(minutes=_STATE_TTL_MINUTES)
 
     payload = {
         "nonce": nonce,
         "typ": _STATE_TOKEN_TYPE,
+        "platform": platform,
         "exp": expire,
         "iat": datetime.utcnow(),
     }
@@ -41,3 +42,15 @@ def is_valid_oauth_state(state_from_provider: str, state_from_cookie: str) -> bo
         return False
 
     return payload.get("typ") == _STATE_TOKEN_TYPE
+
+
+def get_platform_from_state(state: str) -> str:
+    try:
+        payload = jwt.decode(
+            state,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+        return payload.get("platform", "web")
+    except JWTError:
+        return "web"

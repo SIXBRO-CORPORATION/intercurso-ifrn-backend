@@ -9,6 +9,8 @@ from domain.exceptions.business_exception import BusinessException
 
 security_scheme = HTTPBearer()
 
+optional_security_scheme = HTTPBearer(auto_error=False)
+
 
 def extract_token_from_credentials(
     credentials: Optional[HTTPAuthorizationCredentials],

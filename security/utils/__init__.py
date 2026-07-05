@@ -3,6 +3,7 @@ from security.utils.auth_utils import (
     verify_and_extract_user_id,
     validate_user_active,
     security_scheme,
+    optional_security_scheme,
 )
 
 __all__ = [
@@ -10,4 +11,5 @@ __all__ = [
     "verify_and_extract_user_id",
     "validate_user_active",
     "security_scheme",
+    "optional_security_scheme",
 ]
