@@ -20,8 +20,7 @@ dependencies = [
     "pydantic[email]==2.10.0",
     "pydantic-settings>=2.0.0",
     "apscheduler>=3.10.4",
-    "jose>=1.0.0",
-    "jwt>=1.4.0",
+    "alembic>=1.18.5",
 ]
 
 [dependency-groups]

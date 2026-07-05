@@ -13,6 +13,7 @@ from web.controllers.auth_controller import router as auth_router
 from web.controllers.season_controller import router as season_router
 from web.controllers.modality_controller import router as modality_router
 from web.controllers.user_controller import router as user_router
+from persistence.model.abstract_entity import Base
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -25,6 +26,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting API")
     await init_db()
     logger.info("Database initialized")
+    print(Base.metadata.tables.keys())
     start_scheduler()
 
     yield
