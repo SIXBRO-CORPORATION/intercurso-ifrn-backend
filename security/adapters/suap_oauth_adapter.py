@@ -2,13 +2,13 @@ import httpx
 from typing import Optional
 from urllib.parse import urlencode
 
-from core.security.oauth_provider_port import SuapOAuthPort
+from core.security.oauth_provider_port import OAuthProviderPort
 from security.config import settings
 from domain.user import User
 from domain.exceptions.business_exception import BusinessException
 
 
-class SUAPOAuthAdapter(SuapOAuthPort):
+class SUAPOAuthAdapter(OAuthProviderPort):
     def __init__(self):
         self.client_id = settings.suap_client_id
         self.client_secret = settings.suap_client_secret
@@ -33,7 +33,6 @@ class SUAPOAuthAdapter(SuapOAuthPort):
     async def exchange_code_for_token(self, code: str) -> str:
         async with httpx.AsyncClient() as client:
             try:
-                print(self.redirect_uri)
                 response = await client.post(
                     self.token_url,
                     data={

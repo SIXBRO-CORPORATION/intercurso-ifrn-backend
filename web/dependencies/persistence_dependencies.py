@@ -13,6 +13,7 @@ from persistence.adapters.season_modality_repository_adapter import (
     SeasonModalityRepositoryAdapter,
 )
 from persistence.adapters.modality_repository_adapter import ModalityRepositoryAdapter
+from persistence.adapters.refresh_token_adapter import RefreshTokenRepositoryAdapter
 from core.persistence.user_repository_port import UserRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
@@ -21,6 +22,7 @@ from core.persistence.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
 from core.persistence.modality_repository_port import ModalityRepositoryPort
+from core.persistence.refresh_token_repository_port import RefreshTokenRepositoryPort
 from persistence.database import get_db
 from persistence.mappers.team_mapper import TeamMapper
 from persistence.mappers.team_member_mapper import TeamMemberMapper
@@ -28,6 +30,7 @@ from persistence.mappers.user_mapper import UserMapper
 from persistence.mappers.season_mapper import SeasonMapper
 from persistence.mappers.season_modality_mapper import SeasonModalityMapper
 from persistence.mappers.modality_mapper import ModalityMapper
+from persistence.mappers.refresh_token_mapper import RefreshTokenMapper
 
 
 def get_user_repository(
@@ -77,3 +80,11 @@ def get_modality_repository(
     mapper = ModalityMapper()
 
     return ModalityRepositoryAdapter(session, mapper)
+
+
+def get_refresh_token_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> RefreshTokenRepositoryPort:
+    mapper = RefreshTokenMapper()
+
+    return RefreshTokenRepositoryAdapter(session, mapper)

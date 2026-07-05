@@ -2,6 +2,7 @@ from web.dependencies.persistence_dependencies import (
     get_user_repository,
     get_team_repository,
     get_team_member_repository,
+    get_refresh_token_repository,
 )
 
 from web.dependencies.security_dependencies import (
@@ -40,6 +41,13 @@ from web.dependencies.business.season_dependencies import (
     get_season_details_port,
 )
 
+from web.dependencies.business.auth_dependencies import (
+    get_oauth_provider,
+    get_login_with_suap_port,
+    get_refresh_access_token_port,
+    get_logout_port,
+)
+
 from web.dependencies.mapper_dependencies import (
     get_user_model_mapper,
     get_modality_model_mapper,
@@ -52,6 +60,7 @@ __all__ = [
     "get_user_repository",
     "get_team_repository",
     "get_team_member_repository",
+    "get_refresh_token_repository",
 
     # Security Dependencies
     "get_jwt_provider",
@@ -83,6 +92,12 @@ __all__ = [
     "get_close_registration_port",
     "get_reopen_registration_port",
     "get_season_details_port",
+
+    # Business Dependencies - Auth
+    "get_oauth_provider",
+    "get_login_with_suap_port",
+    "get_refresh_access_token_port",
+    "get_logout_port",
 
     # Mapper Dependencies
     "get_user_model_mapper",

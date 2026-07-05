@@ -1,5 +1,7 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any
+import hashlib
+import secrets
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any, Tuple
 from uuid import UUID
 
 from jose import JWTError, jwt, ExpiredSignatureError
@@ -103,39 +105,19 @@ class JWTProviderAdapter(JWTProviderPort):
         payload = self.verify_token(token)
         return UUID(payload["sub"])
 
-    def refresh_token(self, old_token: str) -> AuthToken:
-        try:
-            payload = jwt.decode(
-                old_token,
-                self.secret_key,
-                algorithms=[self.algorithm],
-                options={"verify_exp": False},
-            )
+    def create_token_pair(
+        self,
+        user_id: UUID,
+        matricula: str,
+        email: Optional[str] = None,
+    ) -> Tuple[AuthToken, str]:
+        access_token = self.create_access_token(
+            user_id=user_id, matricula=matricula, email=email
+        )
 
-            exp_timestamp = payload.get("exp")
-            if exp_timestamp:
-                exp_date = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
-                max_refresh_date = datetime.now(timezone.utc) - timedelta(days=7)
+        refresh_token_plain = secrets.token_urlsafe(64)
 
-                if exp_date < max_refresh_date:
-                    raise JWTExpiredError("Token muito antigo para ser renovado")
+        return access_token, refresh_token_plain
 
-            user_id = payload.get("sub")
-            if not user_id:
-                raise JWTDecodeError("Token não contém ID do usuário")
-
-            excluded_claims = {"sub", "exp", "iat", "type"}
-            additional_claims = {
-                k: v for k, v in payload.items() if k not in excluded_claims
-            }
-
-            return self.generate_token(
-                user_id=user_id,
-                additional_claims=additional_claims if additional_claims else None,
-            )
-
-        except (JWTDecodeError, JWTExpiredError):
-            raise
-
-        except Exception as e:
-            raise JWTDecodeError(f"Erro ao renovar token: {str(e)}")
+    def hash_token(self, token: str) -> str:
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()

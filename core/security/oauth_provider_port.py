@@ -19,7 +19,3 @@ class OAuthProviderPort(ABC):
     @abstractmethod
     async def authenticate_with_code(self, code: str) -> User:
         pass
-
-
-class SuapOAuthPort:
-    pass
