@@ -7,18 +7,27 @@ from fastapi.params import Depends
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.business.team.confirm_donation_port import ConfirmDonationPort
 from core.business.team.create_team_port import CreateTeamPort
+from core.business.team.get_team_invite_info_port import GetTeamInviteInfoPort
+from core.business.team.join_team_via_invite_port import JoinTeamViaInvitePort
 from core.context import Context
+from domain.modality import Modality
 from domain.team import Team
 from domain.team_member import TeamMember
 from domain.user import User
 from web.commons.api_response import ApiResponse
 from web.mappers.team_model_mapper import TeamModelMapper
 from web.models.request.team_register_request import TeamRegisterRequest
+from web.models.response.team_invite_preview_response import (
+    TeamInvitePreviewResponse,
+)
+from web.models.response.team_join_response import TeamJoinResponse
 from web.models.response.team_register_response import TeamRegisterResponse
 from web.dependencies import (
     get_create_team_port,
     get_approve_team_port,
     get_confirm_donation_team_port,
+    get_team_invite_info_port,
+    get_join_team_via_invite_port,
     get_team_model_mapper,
     require_authenticated_user,
     require_monitor,
@@ -114,3 +123,60 @@ async def confirm_donation(
         },
         message="Doação confirmada com sucesso!",
     )
+
+
+@router.get(
+    "/invite/{invite_token}",
+    response_model=ApiResponse[TeamInvitePreviewResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def get_team_invite_info(
+    invite_token: str,
+    invite_info_port: Annotated[
+        GetTeamInviteInfoPort, Depends(get_team_invite_info_port)
+    ],
+    mapper: Annotated[TeamModelMapper, Depends(get_team_model_mapper)],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("invite_token", invite_token)
+    context.put_property("requesting_user_id", current_user.id)
+
+    team = await invite_info_port.execute(context)
+
+    modality = context.get_property("modality", Modality)
+    members_count = context.get_property("members_count", int) or 0
+    owner_user = context.get_property("owner_user", User)
+    captain_user = context.get_property("captain_user", User)
+
+    response_data = mapper.to_invite_preview_response(
+        team, modality, members_count, owner_user, captain_user
+    )
+
+    return ApiResponse(data=response_data, message="Informações do time carregadas com sucesso!")
+
+
+@router.post(
+    "/invite/{invite_token}/join",
+    response_model=ApiResponse[TeamJoinResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def join_team_via_invite(
+    invite_token: str,
+    join_invite_port: Annotated[
+        JoinTeamViaInvitePort, Depends(get_join_team_via_invite_port)
+    ],
+    mapper: Annotated[TeamModelMapper, Depends(get_team_model_mapper)],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("invite_token", invite_token)
+    context.put_property("requesting_user_id", current_user.id)
+
+    saved_member = await join_invite_port.execute(context)
+
+    team = context.get_property("team", Team)
+
+    response_data = mapper.to_join_response(team, saved_member)
+
+    return ApiResponse(data=response_data, message="Você entrou no time com sucesso!")

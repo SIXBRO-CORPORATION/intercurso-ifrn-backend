@@ -104,3 +104,12 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in team_entities]
+
+    async def find_by_invite_token(self, invite_token: str) -> Optional[Team]:
+        selecionar = select(TeamEntity).where(
+            TeamEntity.invite_token == invite_token,
+            TeamEntity.deleted_at.is_(None)
+        )
+        result = await self.session.execute(selecionar)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None

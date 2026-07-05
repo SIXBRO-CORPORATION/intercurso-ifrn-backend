@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
@@ -26,4 +26,8 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
 
     @abstractmethod
     async def find_by_season_id(self, season_id: UUID) -> List[Team]:
+        pass
+
+    @abstractmethod
+    async def find_by_invite_token(self, invite_token: str) -> Optional[Team]:
         pass

@@ -27,6 +27,8 @@ from web.dependencies.business.team_dependencies import (
     get_create_team_port,
     get_approve_team_port,
     get_confirm_donation_team_port,
+    get_team_invite_info_port,
+    get_join_team_via_invite_port,
 )
 
 from web.dependencies.business.modality_dependencies import (
@@ -82,6 +84,8 @@ __all__ = [
     "get_create_team_port",
     "get_approve_team_port",
     "get_confirm_donation_team_port",
+    "get_team_invite_info_port",
+    "get_join_team_via_invite_port",
 
     # Business Dependencies - Modalities
     "get_create_modality_port",
