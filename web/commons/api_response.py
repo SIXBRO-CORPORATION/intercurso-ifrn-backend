@@ -22,7 +22,7 @@ class ApiResponse(BaseModel, Generic[T]):
     code: Optional[str] = Field(default=None, description="Código de erro")
 
     timestamp: datetime = Field(
-        default_factory=datetime.now,  # ← CORRETO: função sem ()
+        default_factory=datetime.now,
         description="Timestamp da resposta",
     )
 
@@ -31,10 +31,9 @@ class ApiResponse(BaseModel, Generic[T]):
         cls, data: Optional[T] = None, message: Optional[str] = None
     ) -> "ApiResponse[T]":
         return cls(
-            success=True,
+            success_bool=True,
             data=data,
             message=message,
-            timestamp=datetime.now().isoformat(),
         )
 
     @classmethod
@@ -42,9 +41,8 @@ class ApiResponse(BaseModel, Generic[T]):
         cls, error: str, code: Optional[str] = None, data: Optional[T] = None
     ) -> "ApiResponse[T]":
         return cls(
-            success=False,
+            success_bool=False,
             error=error,
             code=code,
             data=data,
-            # ❌ NÃO passe timestamp
         )

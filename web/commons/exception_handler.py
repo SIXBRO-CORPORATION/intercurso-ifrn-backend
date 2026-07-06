@@ -1,9 +1,13 @@
+import logging
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 
 from domain.exceptions.business_exception import BusinessException
 from web.commons.api_response import ApiResponse
+
+logger = logging.getLogger(__name__)
 
 
 def register_exception_handler(app: FastAPI) -> None:
@@ -14,7 +18,8 @@ def register_exception_handler(app: FastAPI) -> None:
         response = ApiResponse.failure(error=str(exc), code="BUSINESS_ERROR")
 
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=response.model_dump(mode="json"),
         )
 
     @app.exception_handler(RequestValidationError)
@@ -34,7 +39,7 @@ def register_exception_handler(app: FastAPI) -> None:
 
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content=response.model_dump(),
+            content=response.model_dump(mode="json"),
         )
 
     @app.exception_handler(ValueError)
@@ -42,18 +47,23 @@ def register_exception_handler(app: FastAPI) -> None:
         response = ApiResponse.failure(error=str(exc), code="INVALID_VALUE")
 
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content=response.model_dump()
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=response.model_dump(mode="json"),
         )
 
     @app.exception_handler(Exception)
     async def global_exception_handler(
         request: Request, exc: Exception
     ) -> JSONResponse:
+        logger.exception(
+            "Erro não tratado em %s %s", request.method, request.url.path
+        )
+
         error_message = str(exc) if app.debug else "An unexpected error occurred"
 
         response = ApiResponse.failure(error=error_message, code="INTERNAL_ERROR")
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=response.model_dump(),
+            content=response.model_dump(mode="json"),
         )
