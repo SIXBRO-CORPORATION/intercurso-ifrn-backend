@@ -18,12 +18,19 @@ class User(AbstractDomain):
 
     @classmethod
     def from_suap_dict(cls, data: dict) -> "User":
+        vinculo = data.get("vinculo") or {}
+
+        matricula = data.get("matricula") or data.get("identificacao", "")
+        campus = vinculo.get("campus") or data.get("campus")
+        curso = vinculo.get("curso") or data.get("curso")
+        tipo_usuario = data.get("tipo_vinculo") or data.get("tipo_usuario")
+
         return cls(
-            matricula=str(data.get("identificacao", "")),
-            name=data.get("nome_usual", ""),
+            matricula=str(matricula),
+            name=data.get("nome_usual") or data.get("nome", ""),
             email=data.get("email", ""),
             cpf=str(data.get("cpf", "")).replace(".", "").replace("-", ""),
-            tipo_usuario=data.get("tipo_usuario"),
-            campus=data.get("campus"),
-            curso=data.get("curso"),
+            tipo_usuario=tipo_usuario,
+            campus=campus,
+            curso=curso,
         )
