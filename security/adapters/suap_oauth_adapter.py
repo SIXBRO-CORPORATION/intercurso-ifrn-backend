@@ -1,6 +1,7 @@
 import httpx
 from typing import Optional
 from urllib.parse import urlencode
+import logging
 
 from core.security.oauth_provider_port import OAuthProviderPort
 from security.config import settings
@@ -70,6 +71,9 @@ class SUAPOAuthAdapter(OAuthProviderPort):
                     )
 
                 data = response.json()
+                logging.getLogger(__name__).info(
+                    "DEBUG SUAP user info: %s", data
+                )
                 user = User.from_suap_dict(data)
                 return user
 

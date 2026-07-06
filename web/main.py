@@ -7,6 +7,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from scheduling.configuration.scheduler import start_scheduler, stop_scheduler
 from persistence.database import close_db
+from security.config import settings
 from web.commons.exception_handler import register_exception_handler
 from web.controllers.team_controller import router as team_router
 from web.controllers.auth_controller import router as auth_router
@@ -67,7 +68,7 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "database": "connected", "pool": "active"}
+    return {"status": "healthy", "database": "connected", "pool": "active", "suap_user_info_url": settings.suap_user_info_url}
 
 
 if __name__ == "__main__":
