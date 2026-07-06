@@ -9,9 +9,9 @@ class UserEntity(AbstractEntity):
 
     email = Column(String(255), index=True)
 
-    cpf = Column(Integer, nullable=False, unique=True, index=True)
+    cpf = Column(String(11), nullable=False, unique=True, index=True)
 
-    matricula = Column(Integer, nullable=False, unique=True, index=True)
+    matricula = Column(String(14), nullable=False, unique=True, index=True)
 
     atleta = Column(Boolean, nullable=False, default=False)
 

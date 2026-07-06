@@ -68,7 +68,7 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "database": "connected", "pool": "active", "suap_user_info_url": settings.suap_user_info_url}
+    return {"status": "healthy", "database": "connected", "pool": "active"}
 
 
 if __name__ == "__main__":
