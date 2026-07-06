@@ -98,7 +98,7 @@ async def approve_team(
 )
 async def confirm_donation(
     team_id: UUID,
-    matricula: int,
+    matricula: str,
     confirm_donation_port: Annotated[
         ConfirmDonationPort, Depends(get_confirm_donation_team_port)
     ],

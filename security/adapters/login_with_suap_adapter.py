@@ -10,14 +10,14 @@ from domain.exceptions.business_exception import BusinessException
 from domain.user import User
 
 
-def _safe_int_conversion(value) -> Optional[int]:
+def _clean_numeric_string(value) -> Optional[str]:
     if value is None:
         return None
 
     val_str = str(value).strip().replace(".", "").replace("-", "")
 
     if val_str and val_str.isdigit():
-        return int(val_str)
+        return val_str
 
     return None
 
@@ -65,15 +65,15 @@ class LoginWithSuapAdapter(LoginWithSuapPort):
         if not suap_data.email:
             raise BusinessException("Email não fornecido pelo SUAP")
 
-        matricula_int = _safe_int_conversion(suap_data.matricula)
-        if matricula_int is None:
+        matricula_clean = _clean_numeric_string(suap_data.matricula)
+        if matricula_clean is None:
             raise BusinessException(f"Matrícula inválida: {suap_data.matricula}")
 
     async def _get_or_create_user(self, suap_data: User) -> User:
-        matricula_int = _safe_int_conversion(suap_data.matricula)
-        cpf_int = _safe_int_conversion(suap_data.cpf)
+        matricula_clean = _clean_numeric_string(suap_data.matricula)
+        cpf_clean = _clean_numeric_string(suap_data.cpf)
 
-        existing_user = await self.user_repository.find_by_matricula(matricula_int)
+        existing_user = await self.user_repository.find_by_matricula(matricula_clean)
 
         if existing_user:
             if not existing_user.active:
@@ -84,16 +84,16 @@ class LoginWithSuapAdapter(LoginWithSuapPort):
             existing_user.name = suap_data.name
             existing_user.email = suap_data.email
 
-            if cpf_int is not None:
-                existing_user.cpf = cpf_int
+            if cpf_clean is not None:
+                existing_user.cpf = cpf_clean
 
             return await self.user_repository.save(existing_user)
 
         new_user = User(
             name=suap_data.name,
             email=suap_data.email,
-            cpf=cpf_int,
-            matricula=matricula_int,
+            cpf=cpf_clean,
+            matricula=matricula_clean,
             active=True,
         )
 

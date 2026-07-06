@@ -49,12 +49,12 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         result = await self.session.execute(selecionar)
         return result.scalar_one_or_none() is not None
 
-    async def find_teams_by_matricula(self, matricula: int) -> List[Team]:
+    async def find_teams_by_matricula(self, matricula: str) -> List[Team]:
         selecionar = (
             select(TeamEntity)
             .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
             .where(
-                TeamMemberEntity.member_matricula == matricula,
+                TeamMemberEntity.member_matricula == str(matricula),
                 TeamEntity.deleted_at.is_(None),
                 TeamMemberEntity.deleted_at.is_(None)
             )

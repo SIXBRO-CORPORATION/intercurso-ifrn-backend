@@ -10,7 +10,7 @@ class UserResponse(BaseModel):
     user_id: UUID = Field()
     name: str = Field()
     email: Optional[str] = Field(default=None)
-    matricula: int = Field()
+    matricula: str = Field()
     role: str = Field()
     atleta: bool = Field()
     active: bool = Field()

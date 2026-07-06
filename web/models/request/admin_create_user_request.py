@@ -10,8 +10,8 @@ class AdminCreateUserRequest(BaseModel):
 
     name: str = Field(min_length=3, max_length=255)
     email: Optional[EmailStr] = Field(default=None)
-    cpf: int = Field()
-    matricula: int = Field()
+    cpf: str = Field(pattern=r"^\d{11}$")
+    matricula: str = Field(pattern=r"^\d+$", max_length=14)
     role: str = Field(description="MONITOR ou ADMIN")
 
     @field_validator("role")

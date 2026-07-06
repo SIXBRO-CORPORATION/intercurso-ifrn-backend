@@ -13,7 +13,7 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
         pass
 
     @abstractmethod
-    async def find_teams_by_matricula(self, matricula: int) -> List[Team]:
+    async def find_teams_by_matricula(self, matricula: str) -> List[Team]:
         pass
 
     @abstractmethod

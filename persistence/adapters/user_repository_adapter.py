@@ -40,18 +40,22 @@ class UserRepositoryAdapter(UserRepositoryPort):
         result = await self.session.execute(selecionar)
         return result.scalar_one_or_none() is not None
 
-    async def exists_by_matricula(self, matricula: int) -> bool:
-        selecionar = select(UserEntity.id).where(UserEntity.matricula == matricula)
+    async def exists_by_matricula(self, matricula: str) -> bool:
+        selecionar = select(UserEntity.id).where(
+            UserEntity.matricula == str(matricula)
+        )
         result = await self.session.execute(selecionar)
         return result.scalar_one_or_none() is not None
 
-    async def exists_by_cpf(self, cpf: int) -> bool:
-        selecionar = select(UserEntity.id).where(UserEntity.cpf == cpf)
+    async def exists_by_cpf(self, cpf: str) -> bool:
+        selecionar = select(UserEntity.id).where(UserEntity.cpf == str(cpf))
         result = await self.session.execute(selecionar)
         return result.scalar_one_or_none() is not None
 
-    async def find_by_matricula(self, matricula: int) -> Optional[User]:
-        selecionar = select(UserEntity).where(UserEntity.matricula == matricula)
+    async def find_by_matricula(self, matricula: str) -> Optional[User]:
+        selecionar = select(UserEntity).where(
+            UserEntity.matricula == str(matricula)
+        )
         result = await self.session.execute(selecionar)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None

@@ -25,7 +25,7 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
 
     async def execute(self, context: Context) -> TeamMember:
         team_id = context.get_property("team_id", UUID)
-        matricula = context.get_property("matricula", int)
+        matricula = context.get_property("matricula", str)
         confirmed_by_user_id = context.get_property("confirmed_by_user_id", UUID)
 
         if team_id is None or matricula is None:

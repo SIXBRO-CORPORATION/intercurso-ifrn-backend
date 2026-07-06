@@ -23,7 +23,7 @@ def make_adapter():
     return adapter, team_repository, team_member_repository, user_repository
 
 
-def make_context(team_id=None, matricula=123456):
+def make_context(team_id=None, matricula="123456"):
     context = Context()
     context.put_property("team_id", team_id if team_id is not None else uuid4())
     context.put_property("matricula", matricula)
@@ -38,7 +38,7 @@ class TestConfirmDonationAdapter:
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
-        member_user = User(id=uuid4(), matricula=123456)
+        member_user = User(id=uuid4(), matricula="123456")
         member = TeamMember(
             id=uuid4(),
             user_id=member_user.id,
@@ -61,7 +61,7 @@ class TestConfirmDonationAdapter:
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.APPROVED)
-        member_user = User(id=uuid4(), matricula=123456)
+        member_user = User(id=uuid4(), matricula="123456")
         member = TeamMember(
             id=uuid4(),
             user_id=member_user.id,
@@ -114,7 +114,7 @@ class TestConfirmDonationAdapter:
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
-        member_user = User(id=uuid4(), matricula=123456)
+        member_user = User(id=uuid4(), matricula="123456")
 
         team_repository.get.return_value = team
         user_repository.find_by_matricula.return_value = member_user
@@ -128,7 +128,7 @@ class TestConfirmDonationAdapter:
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
-        member_user = User(id=uuid4(), matricula=123456)
+        member_user = User(id=uuid4(), matricula="123456")
         member = TeamMember(
             id=uuid4(),
             user_id=member_user.id,
