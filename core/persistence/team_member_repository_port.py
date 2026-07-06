@@ -10,3 +10,7 @@ class TeamMemberRepositoryPort(BaseRepositoryPort[TeamMember]):
     @abstractmethod
     async def find_members_by_team_id(self, team_id: UUID) -> List[TeamMember]:
         pass
+
+    @abstractmethod
+    async def delete(self, team_member_id: UUID) -> int:
+        pass

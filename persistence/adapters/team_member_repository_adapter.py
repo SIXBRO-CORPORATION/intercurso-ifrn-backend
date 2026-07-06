@@ -1,7 +1,8 @@
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
@@ -55,3 +56,16 @@ class TeamMemberRepositoryAdapter(TeamMemberRepositoryPort):
         return [
             self.team_member_mapper.to_domain(entity) for entity in team_member_entities
         ]
+
+    async def delete(self, team_member_id: UUID) -> int:
+        statement = (
+            update(TeamMemberEntity)
+            .where(
+                TeamMemberEntity.id == team_member_id,
+                TeamMemberEntity.deleted_at.is_(None),
+            )
+            .values(deleted_at=datetime.now(), modified_at=datetime.now())
+        )
+        result = await self.session.execute(statement)
+        await self.session.flush()
+        return result.rowcount

@@ -25,11 +25,11 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
 
     async def execute(self, context: Context) -> TeamMember:
         team_id = context.get_property("team_id", UUID)
-        matricula = context.get_property("matricula", str)
+        target_user_id = context.get_property("target_user_id", UUID)
         confirmed_by_user_id = context.get_property("confirmed_by_user_id", UUID)
 
-        if team_id is None or matricula is None:
-            raise BusinessException("Time e matrícula são obrigatórios")
+        if team_id is None or target_user_id is None:
+            raise BusinessException("Time e membro alvo são obrigatórios")
 
         team = await self.team_repository.get(team_id)
         if team is None:
@@ -40,9 +40,9 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
                 "Doações só podem ser confirmadas para times submetidos ou aprovados"
             )
 
-        member_user = await self.user_repository.find_by_matricula(matricula)
+        member_user = await self.user_repository.get(target_user_id)
         if member_user is None:
-            raise BusinessException("Usuário com essa matrícula não foi encontrado")
+            raise BusinessException("Usuário não encontrado")
 
         members = await self.team_member_repository.find_members_by_team_id(team_id)
         member = next(
@@ -60,7 +60,6 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
 
         updated_member = await self.team_member_repository.save(member)
 
-        context.put_property("user_updated", True)
         context.put_property("member_user", member_user)
 
         return updated_member

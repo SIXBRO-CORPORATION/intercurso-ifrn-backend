@@ -9,6 +9,9 @@ from core.business.team.confirm_donation_port import ConfirmDonationPort
 from core.business.team.create_team_port import CreateTeamPort
 from core.business.team.get_team_invite_info_port import GetTeamInviteInfoPort
 from core.business.team.join_team_via_invite_port import JoinTeamViaInvitePort
+from core.business.team.leave_team_port import LeaveTeamPort
+from core.business.team.remove_member_port import RemoveMemberPort
+from core.business.team.select_captain_port import SelectCaptainPort
 from core.context import Context
 from domain.modality import Modality
 from domain.team import Team
@@ -28,6 +31,9 @@ from web.dependencies import (
     get_confirm_donation_team_port,
     get_team_invite_info_port,
     get_join_team_via_invite_port,
+    get_select_captain_port,
+    get_remove_member_port,
+    get_leave_team_port,
     get_team_model_mapper,
     require_authenticated_user,
     require_monitor,
@@ -92,13 +98,13 @@ async def approve_team(
 
 
 @router.patch(
-    "/{team_id}/members/{matricula}/confirm-donation",
+    "/{team_id}/members/{user_id}/confirm-donation",
     response_model=ApiResponse[dict],
     status_code=status.HTTP_200_OK,
 )
 async def confirm_donation(
     team_id: UUID,
-    matricula: str,
+    user_id: UUID,
     confirm_donation_port: Annotated[
         ConfirmDonationPort, Depends(get_confirm_donation_team_port)
     ],
@@ -106,20 +112,19 @@ async def confirm_donation(
 ):
     context = Context()
     context.put_property("team_id", team_id)
-    context.put_property("matricula", matricula)
+    context.put_property("target_user_id", user_id)
     context.put_property("confirmed_by_user_id", current_user.id)
 
     updated_member = await confirm_donation_port.execute(context)
 
-    user_updated = context.get_property("user_updated", bool)
     member_user = context.get_property("member_user", User)
 
     return ApiResponse.success(
         data={
-            "member_matricula": member_user.matricula if member_user else matricula,
+            "member_user_id": str(user_id),
+            "member_matricula": member_user.matricula if member_user else None,
             "member_name": member_user.name if member_user else None,
             "status": updated_member.donation_status.value,
-            "user_updated": bool(user_updated),
         },
         message="Doação confirmada com sucesso!",
     )
@@ -180,3 +185,94 @@ async def join_team_via_invite(
     response_data = mapper.to_join_response(team, saved_member)
 
     return ApiResponse(data=response_data, message="Você entrou no time com sucesso!")
+
+
+@router.patch(
+    "/{team_id}/members/{user_id}/captain",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def select_captain(
+    team_id: UUID,
+    user_id: UUID,
+    select_captain_port: Annotated[
+        SelectCaptainPort, Depends(get_select_captain_port)
+    ],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("target_user_id", user_id)
+    context.put_property("requesting_user_id", current_user.id)
+
+    updated_team = await select_captain_port.execute(context)
+
+    return ApiResponse.success(
+        data={
+            "team_id": str(updated_team.id),
+            "captain_id": str(updated_team.captain_id),
+            "is_owner": updated_team.owner_id == user_id,
+            "is_captain": True,
+        },
+        message="Capitão selecionado com sucesso!",
+    )
+
+
+@router.delete(
+    "/{team_id}/members/{user_id}",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def remove_member(
+    team_id: UUID,
+    user_id: UUID,
+    remove_member_port: Annotated[RemoveMemberPort, Depends(get_remove_member_port)],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("target_user_id", user_id)
+    context.put_property("requesting_user_id", current_user.id)
+
+    await remove_member_port.execute(context)
+
+    removed_user = context.get_property("removed_user", User)
+    administrative_operation = (
+        context.get_property("administrative_operation", bool) or False
+    )
+
+    return ApiResponse.success(
+        data={
+            "team_id": str(team_id),
+            "user_id": str(user_id),
+            "name": removed_user.name if removed_user else None,
+            "matricula": removed_user.matricula if removed_user else None,
+            "administrative_operation": administrative_operation,
+        },
+        message="Membro removido com sucesso!",
+    )
+
+
+@router.delete(
+    "/{team_id}/leave",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def leave_team(
+    team_id: UUID,
+    leave_team_port: Annotated[LeaveTeamPort, Depends(get_leave_team_port)],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("requesting_user_id", current_user.id)
+
+    await leave_team_port.execute(context)
+
+    return ApiResponse.success(
+        data={
+            "team_id": str(team_id),
+            "user_id": str(current_user.id),
+        },
+        message="Você saiu do time com sucesso!",
+    )

@@ -23,10 +23,12 @@ def make_adapter():
     return adapter, team_repository, team_member_repository, user_repository
 
 
-def make_context(team_id=None, matricula="123456"):
+def make_context(team_id=None, target_user_id=None):
     context = Context()
     context.put_property("team_id", team_id if team_id is not None else uuid4())
-    context.put_property("matricula", matricula)
+    context.put_property(
+        "target_user_id", target_user_id if target_user_id is not None else uuid4()
+    )
     context.put_property("confirmed_by_user_id", uuid4())
     return context
 
@@ -46,7 +48,7 @@ class TestConfirmDonationAdapter:
         )
 
         team_repository.get.return_value = team
-        user_repository.find_by_matricula.return_value = member_user
+        user_repository.get.return_value = member_user
         team_member_repository.find_members_by_team_id.return_value = [member]
         team_member_repository.save.return_value = member
 
@@ -69,7 +71,7 @@ class TestConfirmDonationAdapter:
         )
 
         team_repository.get.return_value = team
-        user_repository.find_by_matricula.return_value = member_user
+        user_repository.get.return_value = member_user
         team_member_repository.find_members_by_team_id.return_value = [member]
         team_member_repository.save.return_value = member
 
@@ -98,13 +100,13 @@ class TestConfirmDonationAdapter:
 
         team_member_repository.save.assert_not_awaited()
 
-    async def test_blocks_when_user_not_found_by_matricula(self):
+    async def test_blocks_when_user_not_found(self):
         adapter, team_repository, team_member_repository, user_repository = (
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
         team_repository.get.return_value = team
-        user_repository.find_by_matricula.return_value = None
+        user_repository.get.return_value = None
 
         with pytest.raises(BusinessException):
             await adapter.execute(make_context(team.id))
@@ -117,7 +119,7 @@ class TestConfirmDonationAdapter:
         member_user = User(id=uuid4(), matricula="123456")
 
         team_repository.get.return_value = team
-        user_repository.find_by_matricula.return_value = member_user
+        user_repository.get.return_value = member_user
         team_member_repository.find_members_by_team_id.return_value = []
 
         with pytest.raises(BusinessException):
@@ -136,7 +138,7 @@ class TestConfirmDonationAdapter:
         )
 
         team_repository.get.return_value = team
-        user_repository.find_by_matricula.return_value = member_user
+        user_repository.get.return_value = member_user
         team_member_repository.find_members_by_team_id.return_value = [member]
 
         with pytest.raises(BusinessException):
@@ -144,7 +146,7 @@ class TestConfirmDonationAdapter:
 
         team_member_repository.save.assert_not_awaited()
 
-    async def test_blocks_when_team_id_or_matricula_missing(self):
+    async def test_blocks_when_team_id_or_target_user_id_missing(self):
         adapter, team_repository, team_member_repository, user_repository = (
             make_adapter()
         )
