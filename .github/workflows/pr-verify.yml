@@ -34,6 +34,12 @@ jobs:
       - name: Install project dependencies
         run: uv sync
 
+      - name: Check Lint
+        run: task lint
+
+      - name: Run Tests
+        run: task test
+
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         if: always()
