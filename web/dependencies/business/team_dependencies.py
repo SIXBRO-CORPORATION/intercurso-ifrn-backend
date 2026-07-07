@@ -9,6 +9,7 @@ from core.business.team.join_team_via_invite_port import JoinTeamViaInvitePort
 from core.business.team.select_captain_port import SelectCaptainPort
 from core.business.team.remove_member_port import RemoveMemberPort
 from core.business.team.leave_team_port import LeaveTeamPort
+from core.business.team.submit_team_port import SubmitTeamPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.user_repository_port import UserRepositoryPort
@@ -25,6 +26,7 @@ from business.team.join_team_via_invite_adapter import JoinTeamViaInviteAdapter
 from business.team.select_captain_adapter import SelectCaptainAdapter
 from business.team.remove_member_adapter import RemoveMemberAdapter
 from business.team.leave_team_adapter import LeaveTeamAdapter
+from business.team.submit_team_adapter import SubmitTeamAdapter
 from web.dependencies.persistence_dependencies import (
     get_user_repository,
     get_team_repository,
@@ -150,4 +152,22 @@ def get_leave_team_port(
 ) -> LeaveTeamPort:
     return LeaveTeamAdapter(
         team_repository, team_member_repository, user_repository
+    )
+
+
+def get_submit_team_port(
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    season_repository: Annotated[SeasonRepositoryPort, Depends(get_season_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+) -> SubmitTeamPort:
+    return SubmitTeamAdapter(
+        team_repository,
+        team_member_repository,
+        season_repository,
+        modality_repository,
     )

@@ -32,6 +32,7 @@ from web.dependencies.business.team_dependencies import (
     get_select_captain_port,
     get_remove_member_port,
     get_leave_team_port,
+    get_submit_team_port,
 )
 
 from web.dependencies.business.modality_dependencies import (
@@ -92,6 +93,7 @@ __all__ = [
     "get_select_captain_port",
     "get_remove_member_port",
     "get_leave_team_port",
+    "get_submit_team_port",
 
     # Business Dependencies - Modalities
     "get_create_modality_port",

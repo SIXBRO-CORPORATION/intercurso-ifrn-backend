@@ -12,6 +12,7 @@ from core.business.team.join_team_via_invite_port import JoinTeamViaInvitePort
 from core.business.team.leave_team_port import LeaveTeamPort
 from core.business.team.remove_member_port import RemoveMemberPort
 from core.business.team.select_captain_port import SelectCaptainPort
+from core.business.team.submit_team_port import SubmitTeamPort
 from core.context import Context
 from domain.modality import Modality
 from domain.team import Team
@@ -34,6 +35,7 @@ from web.dependencies import (
     get_select_captain_port,
     get_remove_member_port,
     get_leave_team_port,
+    get_submit_team_port,
     get_team_model_mapper,
     require_authenticated_user,
     require_monitor,
@@ -68,6 +70,38 @@ async def create_team(
     response_data = mapper.to_register_response(saved_team, owner_member, current_user)
 
     return ApiResponse(data=response_data, message="Time cadastrado com sucesso!")
+
+
+@router.patch(
+    "/{team_id}/submit",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def submit_team(
+    team_id: UUID,
+    submit_team_port: Annotated[SubmitTeamPort, Depends(get_submit_team_port)],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("requesting_user_id", current_user.id)
+
+    submitted_team = await submit_team_port.execute(context)
+
+    return ApiResponse.success(
+        data={
+            "team_id": str(submitted_team.id),
+            "name": submitted_team.name,
+            "status": submitted_team.status.value,
+            "token_active": submitted_team.token_active,
+            "submmited_at": (
+                submitted_team.submmited_at.isoformat()
+                if submitted_team.submmited_at
+                else None
+            ),
+        },
+        message="Time submetido para aprovação com sucesso! Aguarde a confirmação das doações e a aprovação do monitor.",
+    )
 
 
 @router.patch(
