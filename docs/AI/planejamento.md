@@ -2,7 +2,7 @@
 
 > Baseado na leitura dos 18 casos de uso em `docs/` e na análise do código-fonte atual do repositório `SIXBRO-CORPORATION/intercurso-ifrn-backend` (branch `main`).
 >
-> **Atualizado em 2026-07-05** após a conclusão da Fase 0 e da Fase 1 (commits posteriores à versão original deste plano, incluindo a implementação do UC003 nesta revisão). O diagnóstico e a tabela abaixo refletem o estado real do código nesta data, não mais o estado descrito na primeira versão do documento.
+> **Atualizado em 2026-07-06** após a conclusão da Fase 3 (UC006, UC007 e UC008). O diagnóstico e a tabela abaixo refletem o estado real do código nesta data, não mais o estado descrito nas versões anteriores deste plano.
 
 ---
 
@@ -14,8 +14,8 @@ O projeto segue uma arquitetura em camadas (hexagonal/ports & adapters): `domain
 
 **Padrão geral encontrado (revisado):**
 - **Domain + Persistence (models, mappers, adapters, ports):** construídos para praticamente todas as entidades do sistema (Season, Modality, Team, Bracket, Match, etc.) — trabalho de infraestrutura bem avançado.
-- **Business (casos de uso reais):** implementado para Autenticação, Usuário (criar/buscar/atualizar perfil), **Temporada (UC001, UC002 e UC003 completos)**, **Modalidade (UC004 completo)** e parcialmente para Equipe (UC005, UC009 e UC010 completos; UC006, UC007 e UC008 ainda não implementados). Chaveamento e Partida seguem sem lógica de negócio.
-- **Web (controllers/rotas):** `auth_controller`, `user_controller`, `season_controller` e `modality_controller` funcionais e registrados em `main.py`. `team_controller` funcional para os fluxos de criar/aprovar time e confirmar doação; ainda faltam as rotas de UC006/007/008.
+- **Business (casos de uso reais):** implementado para Autenticação, Usuário (criar/buscar/atualizar perfil), **Temporada (UC001, UC002 e UC003 completos)**, **Modalidade (UC004 completo)** e **Equipe (UC005 a UC010 completos)**. Chaveamento e Partida seguem sem lógica de negócio.
+- **Web (controllers/rotas):** `auth_controller`, `user_controller`, `season_controller` e `modality_controller` funcionais e registrados em `main.py`. `team_controller` completo para o ciclo de vida do time: criar, entrar via convite, selecionar capitão, remover membro, sair do time, submeter para aprovação, aprovar e confirmar doação.
 - **Testes:** `tests/unit/business` existe e cobre os adapters de `season` e `modality` (via mocks das ports). Ainda não há testes de `tests/integration` nem `tests/e2e`, e a cobertura de `team`/`users` é incompleta.
 - **Jobs automáticos (UC001/UC002):** implementados via APScheduler (`scheduling/configuration/scheduler.py` + `scheduling/jobs/season_scheduler_jobs.py`), rodando a cada 1 minuto para abrir/fechar inscrições automaticamente.
 - **UC018 (Reportar Jogador):** não existe absolutamente nada — nem domínio, nem persistência, nem enum de status.
@@ -30,9 +30,9 @@ O projeto segue uma arquitetura em camadas (hexagonal/ports & adapters): `domain
 | 003 | Finalizar Temporada | ✅ | ✅ | ✅ | ✅ |
 | 004 | Cadastrar Modalidade | ✅ | ✅ | ✅ | ✅ |
 | 005 | Criar Equipe | ✅ | ✅ | ✅ | ✅ |
-| 006 | Entrar via Convite | ✅ | ✅ | ❌ | ❌ |
-| 007 | Gerenciar Membros | ✅ | ✅ | ❌ | ❌ |
-| 008 | Submeter Equipe | ✅ | ✅ | ❌ | ❌ |
+| 006 | Entrar via Convite | ✅ | ✅ | ✅ | ✅ |
+| 007 | Gerenciar Membros | ✅ | ✅ | ✅ | ✅ |
+| 008 | Submeter Equipe | ✅ | ✅ | ✅ | ✅ |
 | 009 | Aprovar Equipe | ✅ | ✅ | ✅ | ✅ |
 | 010 | Confirmar Doação | ✅ | ✅ | ✅ | ✅ |
 | 011 | Criar Chaveamento | ✅ | ✅ | ❌ | ❌ |
@@ -78,13 +78,20 @@ O projeto segue uma arquitetura em camadas (hexagonal/ports & adapters): `domain
 - `web/controllers/modality_controller.py`.
 - Testes unitários em `tests/unit/business/modality/`.
 
-### Fase 3 — Completar Gestão de Equipes (UC006, UC007, UC008)
-UC005/009/010 já concluídos nas Fases 0/1. Falta:
-- UC006 — Entrar via Convite: `join_team_via_invite_port/adapter` (validação de token, temporada ativa, aluno não estar em outro time da modalidade).
-- UC007 — Gerenciar Membros: `select_captain_port`, `remove_member_port`, `leave_team_port`.
-- UC008 — Submeter Equipe: `submit_team_port` (validação de mínimo de membros, transição para PENDING_APPROVAL).
-- Ampliar `team_controller.py` com as novas rotas e os respectivos modelos de request/response.
-- Testes cobrindo os fluxos alternativos descritos nos documentos (nome duplicado, limites inválidos, confirmação incorreta etc.), incluindo os que ainda faltam para UC005/009/010 (hoje sem testes unitários próprios).
+### Fase 3 — Completar Gestão de Equipes (UC006, UC007, UC008) ✅ CONCLUÍDA
+UC005/009/010 já concluídos nas Fases 0/1. Nesta fase:
+- UC006 — Entrar via Convite: `join_team_via_invite_port/adapter` (validação de token/`token_active`, time em DRAFT, temporada ativa em REGISTRATION_OPEN dentro do período de inscrição, limite máximo de membros da modalidade, aluno não estar em outro time da mesma modalidade/temporada, marca `atleta = true` no usuário).
+- UC007 — Gerenciar Membros: `select_captain_port/adapter`, `remove_member_port/adapter` e `leave_team_port/adapter`.
+  - Capitão é controlado exclusivamente via `team.captain_id` (o campo `TeamMember.role` não foi alterado e continua distinguindo apenas OWNER/MEMBER), permitindo o owner acumular os papéis de dono e capitão sem conflito.
+  - Remoção de membro aceita dois atores no mesmo endpoint: owner (somente com time em DRAFT) ou monitor (em qualquer status do time), decidido dentro do próprio adapter a partir do `role` do usuário autenticado.
+  - Saída voluntária do time bloqueada para o owner e restrita a times em DRAFT.
+  - Ambos os fluxos liberam `team.captain_id` quando o membro removido/saindo era o capitão, e desmarcam `atleta = false` no usuário quando ele não pertence a mais nenhum outro time.
+  - Endpoint de confirmação de doação (UC010) alterado para identificar o membro alvo por `user_id` em vez de matrícula, padronizando a identificação por ID nas rotas de membro.
+  - Adicionado método `delete` (soft delete) em `TeamMemberRepositoryPort`/adapter, seguindo o mesmo padrão já usado em `MatchRepositoryPort.delete_by_bracket`.
+- UC008 — Submeter Equipe: `submit_team_port/adapter` — valida owner, time em DRAFT, temporada ativa (`find_active_season`) igual à do time e em REGISTRATION_OPEN dentro do período, mínimo de membros da modalidade; transição para `TeamStatus.SUBMITTED`, `token_active = False`, `submmited_at = now()` e normalização do `donation_status` dos membros para `PENDING_DONATION`.
+- `team_controller.py` ampliado com as novas rotas: `PATCH /{team_id}/members/{user_id}/captain`, `DELETE /{team_id}/members/{user_id}`, `DELETE /{team_id}/leave`, `PATCH /{team_id}/submit`, além da alteração de `confirm-donation` para usar `user_id`.
+- **Débito técnico assumido (documentado em TODOs no código, mesmo padrão das fases anteriores):** registro de auditoria das operações (autor, data/hora, ação) e notificação ao monitor na submissão — ambos dependem de infraestrutura ainda inexistente no projeto.
+- **Pendente:** testes unitários de UC006, UC007 e UC008 (decisão consciente de adiar para focar no código nesta rodada); ampliar cobertura de UC005/009/010 (ainda sem testes próprios, conforme já apontado nas fases anteriores).
 
 ### Fase 4 — Gestão de Chaveamento (UC011, UC012)
 - `core/business/bracket/create_bracket_port` (sorteio de times, geração de partidas, transição automática da temporada para IN_PROGRESS na primeira criação) e `manage_bracket_port` (re-sortear, editar/deletar partidas).
@@ -127,9 +134,9 @@ UC005/009/010 já concluídos nas Fases 0/1. Falta:
 Fase 0 (destravar build)  →  ✅ concluída
 Fase 1 (Temporadas)       →  ✅ concluída  →  Fase 2 (Modalidades)  →  ✅ concluída
         ↓
-Fase 3 (Equipes, completar UC006-008)  →  próxima prioridade
+Fase 3 (Equipes, UC006-008)  →  ✅ concluída
         ↓
-Fase 4 (Chaveamento)  →  Fase 5 (Partidas)  →  Fase 6 (Tempo real)
+Fase 4 (Chaveamento)  →  próxima prioridade  →  Fase 5 (Partidas)  →  Fase 6 (Tempo real)
         ↓ (paralelo, independente)
 Fase 7 (Reportes)
         ↓ (contínuo, do início ao fim)
@@ -139,6 +146,7 @@ Fase 8 (Testes/CI/Docs)
 ## 5. Próximos passos imediatos
 1. ~~Abrir uma PR só com a Fase 0 (fix do build)~~ — concluído.
 2. ~~Implementar UC001, UC002 e UC003 (Fase 1)~~ — concluído nesta revisão do plano.
-3. Priorizar a Fase 3 (UC006, UC007, UC008) para fechar por completo a Gestão de Equipes, já que UC005/009/010 dependem desses fluxos para um ciclo de inscrição de time ponta a ponta.
-4. Validar com o time se o mecanismo de agendamento de jobs (já resolvido na Fase 1 com APScheduler) atende também às necessidades futuras da Fase 4, e se a estratégia de WebSocket/Push (Fase 6) já foi decidida em alguma ADR/discussão não presente no repo.
-5. Depois da Fase 3, seguir para Fases 4–7 na ordem já prevista, mantendo a Fase 8 (testes/CI/docs) em paralelo contínuo.
+3. ~~Priorizar a Fase 3 (UC006, UC007, UC008) para fechar por completo a Gestão de Equipes~~ — concluído: ciclo de inscrição de time ponta a ponta (criar → entrar via convite → gerenciar membros → submeter → aprovar → confirmar doação) está funcional.
+4. Priorizar a Fase 4 (UC011, UC012 — Chaveamento), já que Chaveamento e Partida dependem de um ciclo de equipes completo, agora disponível.
+5. Validar com o time se o mecanismo de agendamento de jobs (já resolvido na Fase 1 com APScheduler) atende também às necessidades futuras da Fase 4, e se a estratégia de WebSocket/Push (Fase 6) já foi decidida em alguma ADR/discussão não presente no repo.
+6. Depois da Fase 4, seguir para Fases 5–7 na ordem já prevista, mantendo a Fase 8 (testes/CI/docs) em paralelo contínuo — incluindo a dívida de testes unitários de UC005 a UC010 registrada na Fase 3.
