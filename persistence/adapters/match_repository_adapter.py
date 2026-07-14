@@ -140,6 +140,19 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         await self.session.flush()
         return result.rowcount
 
+    async def delete(self, match_id: UUID) -> int:
+        query = (
+            update(MatchEntity)
+            .where(
+                MatchEntity.id == match_id,
+                MatchEntity.deleted_at.is_(None),
+            )
+            .values(deleted_at=datetime.now(), modified_at=datetime.now())
+        )
+        result = await self.session.execute(query)
+        await self.session.flush()
+        return result.rowcount
+
     async def find_tbd_matches_by_bracket(self, bracket_id: UUID) -> List[Match]:
         query = (
             select(MatchEntity)

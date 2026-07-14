@@ -40,5 +40,9 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
         pass
 
     @abstractmethod
+    async def delete(self, match_id: UUID) -> int:
+        pass
+
+    @abstractmethod
     async def find_tbd_matches_by_bracket(self, bracket_id: UUID) -> List[Match]:
         pass

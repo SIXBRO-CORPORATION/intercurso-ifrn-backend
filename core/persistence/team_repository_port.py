@@ -31,3 +31,9 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
     @abstractmethod
     async def find_by_invite_token(self, invite_token: str) -> Optional[Team]:
         pass
+
+    @abstractmethod
+    async def find_approved_teams_by_season_and_modality(
+        self, season_id: UUID, modality_id: UUID
+    ) -> List[Team]:
+        pass

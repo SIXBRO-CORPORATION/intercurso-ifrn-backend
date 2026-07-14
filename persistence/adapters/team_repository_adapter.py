@@ -113,3 +113,20 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         result = await self.session.execute(selecionar)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
+
+    async def find_approved_teams_by_season_and_modality(
+        self, season_id: UUID, modality_id: UUID
+    ) -> List[Team]:
+        selecionar = (
+            select(TeamEntity)
+            .where(
+                TeamEntity.season_id == season_id,
+                TeamEntity.modality_id == modality_id,
+                TeamEntity.status == TeamStatus.APPROVED.value,
+                TeamEntity.deleted_at.is_(None)
+            )
+            .order_by(TeamEntity.created_at.asc())
+        )
+        result = await self.session.execute(selecionar)
+        team_entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in team_entities]

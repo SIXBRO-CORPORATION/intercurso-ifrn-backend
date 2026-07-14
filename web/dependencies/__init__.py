@@ -3,6 +3,10 @@ from web.dependencies.persistence_dependencies import (
     get_team_repository,
     get_team_member_repository,
     get_refresh_token_repository,
+    get_bracket_repository,
+    get_bracket_group_repository,
+    get_bracket_group_team_repository,
+    get_match_repository,
 )
 
 from web.dependencies.security_dependencies import (
@@ -47,6 +51,14 @@ from web.dependencies.business.season_dependencies import (
     get_season_details_port,
 )
 
+from web.dependencies.business.bracket_dependencies import (
+    get_bracket_config_suggestion_port,
+    get_create_bracket_port,
+    get_resort_bracket_port,
+    get_update_match_port,
+    get_delete_match_port,
+)
+
 from web.dependencies.business.auth_dependencies import (
     get_oauth_provider,
     get_login_with_suap_port,
@@ -59,6 +71,7 @@ from web.dependencies.mapper_dependencies import (
     get_modality_model_mapper,
     get_team_model_mapper,
     get_season_model_mapper,
+    get_bracket_model_mapper,
 )
 
 __all__ = [
@@ -67,6 +80,10 @@ __all__ = [
     "get_team_repository",
     "get_team_member_repository",
     "get_refresh_token_repository",
+    "get_bracket_repository",
+    "get_bracket_group_repository",
+    "get_bracket_group_team_repository",
+    "get_match_repository",
 
     # Security Dependencies
     "get_jwt_provider",
@@ -105,6 +122,13 @@ __all__ = [
     "get_reopen_registration_port",
     "get_season_details_port",
 
+    # Business Dependencies - Brackets
+    "get_bracket_config_suggestion_port",
+    "get_create_bracket_port",
+    "get_resort_bracket_port",
+    "get_update_match_port",
+    "get_delete_match_port",
+
     # Business Dependencies - Auth
     "get_oauth_provider",
     "get_login_with_suap_port",
@@ -116,4 +140,5 @@ __all__ = [
     "get_modality_model_mapper",
     "get_team_model_mapper",
     "get_season_model_mapper",
+    "get_bracket_model_mapper",
 ]

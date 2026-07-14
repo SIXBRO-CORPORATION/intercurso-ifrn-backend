@@ -14,6 +14,14 @@ from persistence.adapters.season_modality_repository_adapter import (
 )
 from persistence.adapters.modality_repository_adapter import ModalityRepositoryAdapter
 from persistence.adapters.refresh_token_adapter import RefreshTokenRepositoryAdapter
+from persistence.adapters.bracket_repository_adapter import BracketRepositoryAdapter
+from persistence.adapters.bracket_group_repository_adapter import (
+    BracketGroupRepositoryAdapter,
+)
+from persistence.adapters.bracket_group_team_repository_adapter import (
+    BracketGroupTeamRepositoryAdapter,
+)
+from persistence.adapters.match_repository_adapter import MatchRepositoryAdapter
 from core.persistence.user_repository_port import UserRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
@@ -23,6 +31,12 @@ from core.persistence.season_modality_repository_port import (
 )
 from core.persistence.modality_repository_port import ModalityRepositoryPort
 from core.persistence.refresh_token_repository_port import RefreshTokenRepositoryPort
+from core.persistence.bracket_repository_port import BracketRepositoryPort
+from core.persistence.bracket_group_repository_port import BracketGroupRepositoryPort
+from core.persistence.bracket_group_team_repository_port import (
+    BracketGroupTeamRepositoryPort,
+)
+from core.persistence.match_repository_port import MatchRepositoryPort
 from persistence.database import get_db
 from persistence.mappers.team_mapper import TeamMapper
 from persistence.mappers.team_member_mapper import TeamMemberMapper
@@ -31,6 +45,10 @@ from persistence.mappers.season_mapper import SeasonMapper
 from persistence.mappers.season_modality_mapper import SeasonModalityMapper
 from persistence.mappers.modality_mapper import ModalityMapper
 from persistence.mappers.refresh_token_mapper import RefreshTokenMapper
+from persistence.mappers.bracket_mapper import BracketMapper
+from persistence.mappers.bracket_group_mapper import BracketGroupMapper
+from persistence.mappers.bracket_group_team_mapper import BracketGroupTeamMapper
+from persistence.mappers.match_mapper import MatchMapper
 
 
 def get_user_repository(
@@ -88,3 +106,35 @@ def get_refresh_token_repository(
     mapper = RefreshTokenMapper()
 
     return RefreshTokenRepositoryAdapter(session, mapper)
+
+
+def get_bracket_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> BracketRepositoryPort:
+    mapper = BracketMapper()
+
+    return BracketRepositoryAdapter(session, mapper)
+
+
+def get_bracket_group_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> BracketGroupRepositoryPort:
+    mapper = BracketGroupMapper()
+
+    return BracketGroupRepositoryAdapter(session, mapper)
+
+
+def get_bracket_group_team_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> BracketGroupTeamRepositoryPort:
+    mapper = BracketGroupTeamMapper()
+
+    return BracketGroupTeamRepositoryAdapter(session, mapper)
+
+
+def get_match_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> MatchRepositoryPort:
+    mapper = MatchMapper()
+
+    return MatchRepositoryAdapter(session, mapper)
