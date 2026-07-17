@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -31,7 +31,7 @@ def make_context(season_id=None, new_start=None, new_end=None, reason=None):
 class TestManageSeasonAdapter:
     async def test_edits_both_dates_in_draft(self):
         adapter, season_repository = make_adapter()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
             name="Intercurso 2026",
@@ -54,7 +54,7 @@ class TestManageSeasonAdapter:
 
     async def test_edits_only_end_date_in_registration_open(self):
         adapter, season_repository = make_adapter()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
             name="Intercurso 2026",
@@ -75,7 +75,7 @@ class TestManageSeasonAdapter:
 
     async def test_blocks_editing_start_date_in_registration_open(self):
         adapter, season_repository = make_adapter()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
             name="Intercurso 2026",
@@ -95,7 +95,7 @@ class TestManageSeasonAdapter:
         season = Season(id=uuid4(), name="X", status=SeasonStatus.IN_PROGRESS)
         season_repository.get.return_value = season
 
-        context = make_context(new_end=datetime.now() + timedelta(days=10))
+        context = make_context(new_end=datetime.now(timezone.utc) + timedelta(days=10))
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
@@ -105,14 +105,14 @@ class TestManageSeasonAdapter:
         season = Season(id=uuid4(), name="X", status=SeasonStatus.FINISHED)
         season_repository.get.return_value = season
 
-        context = make_context(new_end=datetime.now() + timedelta(days=10))
+        context = make_context(new_end=datetime.now(timezone.utc) + timedelta(days=10))
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
 
     async def test_blocks_start_date_in_the_past(self):
         adapter, season_repository = make_adapter()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
             name="X",
@@ -129,7 +129,7 @@ class TestManageSeasonAdapter:
 
     async def test_blocks_end_date_before_start_date(self):
         adapter, season_repository = make_adapter()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
             name="X",
@@ -155,7 +155,7 @@ class TestManageSeasonAdapter:
         adapter, season_repository = make_adapter()
         season_repository.get.return_value = None
 
-        context = make_context(new_end=datetime.now() + timedelta(days=10))
+        context = make_context(new_end=datetime.now(timezone.utc) + timedelta(days=10))
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -45,8 +45,8 @@ def make_open_season(season_id=None):
         id=season_id or uuid4(),
         name="Intercurso 2026",
         status=SeasonStatus.REGISTRATION_OPEN,
-        registration_start_date=datetime.now() - timedelta(days=1),
-        registration_end_date=datetime.now() + timedelta(days=5),
+        registration_start_date=datetime.now(timezone.utc) - timedelta(days=1),
+        registration_end_date=datetime.now(timezone.utc) + timedelta(days=5),
     )
 
 
@@ -153,7 +153,7 @@ class TestCreateTeamAdapter:
 
         context, _ = make_context()
         season = make_open_season()
-        season.registration_start_date = datetime.now() + timedelta(days=1)
+        season.registration_start_date = datetime.now(timezone.utc) + timedelta(days=1)
         season_repository.find_active_season.return_value = season
 
         with pytest.raises(BusinessException):
@@ -172,7 +172,7 @@ class TestCreateTeamAdapter:
 
         context, _ = make_context()
         season = make_open_season()
-        season.registration_end_date = datetime.now() - timedelta(days=1)
+        season.registration_end_date = datetime.now(timezone.utc) - timedelta(days=1)
         season_repository.find_active_season.return_value = season
 
         with pytest.raises(BusinessException):

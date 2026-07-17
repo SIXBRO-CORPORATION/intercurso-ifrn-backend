@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -29,7 +29,7 @@ def make_context(season_id=None, new_end=None):
 class TestReopenRegistrationAdapter:
     async def test_reopens_closed_season(self):
         adapter, season_repository = make_adapter()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
             name="Intercurso 2026",
@@ -54,7 +54,7 @@ class TestReopenRegistrationAdapter:
         season_repository.get.return_value = season
 
         context = make_context(
-            season.id, datetime.now() + timedelta(days=10)
+            season.id, datetime.now(timezone.utc) + timedelta(days=10)
         )
 
         with pytest.raises(BusinessException):
@@ -66,7 +66,7 @@ class TestReopenRegistrationAdapter:
         season_repository.get.return_value = season
 
         context = make_context(
-            season.id, datetime.now() + timedelta(days=10)
+            season.id, datetime.now(timezone.utc) + timedelta(days=10)
         )
 
         with pytest.raises(BusinessException):
@@ -86,7 +86,7 @@ class TestReopenRegistrationAdapter:
         season_repository.get.return_value = season
 
         context = make_context(
-            season.id, datetime.now() - timedelta(days=1)
+            season.id, datetime.now(timezone.utc) - timedelta(days=1)
         )
 
         with pytest.raises(BusinessException):
@@ -94,7 +94,7 @@ class TestReopenRegistrationAdapter:
 
     async def test_blocks_new_end_date_before_start_date(self):
         adapter, season_repository = make_adapter()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
             name="X",
@@ -113,7 +113,7 @@ class TestReopenRegistrationAdapter:
         adapter, season_repository = make_adapter()
         season_repository.get.return_value = None
 
-        context = make_context(new_end=datetime.now() + timedelta(days=10))
+        context = make_context(new_end=datetime.now(timezone.utc) + timedelta(days=10))
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)

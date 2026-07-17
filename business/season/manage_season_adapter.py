@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from core.business.season.manage_season_port import ManageSeasonPort
@@ -40,7 +40,7 @@ class ManageSeasonAdapter(ManageSeasonPort):
                 "Não é possível alterar a data de abertura após o início das inscrições"
             )
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         if new_start is not None:
             if new_start < now:

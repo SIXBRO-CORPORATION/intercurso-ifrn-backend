@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -32,7 +32,7 @@ class TestCloseRegistrationAdapter:
             id=uuid4(),
             name="Intercurso 2026",
             status=SeasonStatus.REGISTRATION_OPEN,
-            registration_end_date=datetime.now() + timedelta(days=5),
+            registration_end_date=datetime.now(timezone.utc) + timedelta(days=5),
         )
         season_repository.get.return_value = season
         season_repository.save.return_value = season

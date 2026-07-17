@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -31,7 +31,7 @@ def make_context(
     registration_end_date=None,
     open_immediately=False,
 ):
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     year = year if year is not None else now.year
     modality_ids = modality_ids if modality_ids is not None else [uuid4()]
     registration_start_date = (
@@ -70,7 +70,7 @@ class TestCreateSeasonAdapter:
             id=modality_id, name="Futsal", min_members=5, max_members=10, active=True
         )
         season_repository.save.return_value = Season(
-            id=uuid4(), name="Intercurso 2026", year=datetime.now().year
+            id=uuid4(), name="Intercurso 2026", year=datetime.now(timezone.utc).year
         )
         season_modality_repository.save.return_value = SeasonModality(
             id=uuid4(), modality_id=modality_id
@@ -122,7 +122,7 @@ class TestCreateSeasonAdapter:
 
     async def test_blocks_year_before_current(self):
         adapter, *_ = make_adapter()
-        context = make_context(year=datetime.now().year - 1)
+        context = make_context(year=datetime.now(timezone.utc).year - 1)
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
@@ -137,7 +137,7 @@ class TestCreateSeasonAdapter:
     async def test_blocks_start_date_in_the_past(self):
         adapter, *_ = make_adapter()
         context = make_context(
-            registration_start_date=datetime.now() - timedelta(days=1)
+            registration_start_date=datetime.now(timezone.utc) - timedelta(days=1)
         )
 
         with pytest.raises(BusinessException):
@@ -145,7 +145,7 @@ class TestCreateSeasonAdapter:
 
     async def test_blocks_end_date_before_start_date(self):
         adapter, *_ = make_adapter()
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         context = make_context(
             registration_start_date=now + timedelta(days=5),
             registration_end_date=now + timedelta(days=1),
