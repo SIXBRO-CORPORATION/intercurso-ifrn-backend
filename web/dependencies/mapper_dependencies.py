@@ -3,6 +3,7 @@ from web.mappers.season_model_mapper import SeasonModelMapper
 from web.mappers.team_model_mapper import TeamModelMapper
 from web.mappers.user_model_mapper import UserModelMapper
 from web.mappers.bracket_model_mapper import BracketModelMapper
+from web.mappers.match_model_mapper import MatchModelMapper
 
 
 def get_user_model_mapper() -> UserModelMapper:
@@ -23,3 +24,7 @@ def get_season_model_mapper() -> SeasonModelMapper:
 
 def get_bracket_model_mapper() -> BracketModelMapper:
     return BracketModelMapper()
+
+
+def get_match_model_mapper() -> MatchModelMapper:
+    return MatchModelMapper()

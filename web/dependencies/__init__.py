@@ -59,6 +59,10 @@ from web.dependencies.business.bracket_dependencies import (
     get_delete_match_port,
 )
 
+from web.dependencies.business.match_dependencies import (
+    get_start_match_port,
+)
+
 from web.dependencies.business.auth_dependencies import (
     get_oauth_provider,
     get_login_with_suap_port,
@@ -72,6 +76,7 @@ from web.dependencies.mapper_dependencies import (
     get_team_model_mapper,
     get_season_model_mapper,
     get_bracket_model_mapper,
+    get_match_model_mapper,
 )
 
 __all__ = [
@@ -129,6 +134,9 @@ __all__ = [
     "get_update_match_port",
     "get_delete_match_port",
 
+    # Business Dependencies - Matches
+    "get_start_match_port",
+
     # Business Dependencies - Auth
     "get_oauth_provider",
     "get_login_with_suap_port",
@@ -141,4 +149,5 @@ __all__ = [
     "get_team_model_mapper",
     "get_season_model_mapper",
     "get_bracket_model_mapper",
+    "get_match_model_mapper",
 ]

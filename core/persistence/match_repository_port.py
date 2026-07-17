@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
@@ -23,6 +23,10 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
 
     @abstractmethod
     async def find_in_progress_matches(self) -> List[Match]:
+        pass
+
+    @abstractmethod
+    async def find_in_progress_by_monitor(self, monitor_id: UUID) -> Optional[Match]:
         pass
 
     @abstractmethod

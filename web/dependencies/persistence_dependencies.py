@@ -22,6 +22,12 @@ from persistence.adapters.bracket_group_team_repository_adapter import (
     BracketGroupTeamRepositoryAdapter,
 )
 from persistence.adapters.match_repository_adapter import MatchRepositoryAdapter
+from persistence.adapters.match_event_repository_adapter import (
+    MatchEventRepositoryAdapter,
+)
+from persistence.adapters.modality_configuration_repository_adapter import (
+    ModalityConfigurationRepositoryAdapter,
+)
 from core.persistence.user_repository_port import UserRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
@@ -37,6 +43,10 @@ from core.persistence.bracket_group_team_repository_port import (
     BracketGroupTeamRepositoryPort,
 )
 from core.persistence.match_repository_port import MatchRepositoryPort
+from core.persistence.match_event_repository_port import MatchEventRepositoryPort
+from core.persistence.modality_configuration_repository_port import (
+    ModalityConfigurationRepositoryPort,
+)
 from persistence.database import get_db
 from persistence.mappers.team_mapper import TeamMapper
 from persistence.mappers.team_member_mapper import TeamMemberMapper
@@ -49,6 +59,10 @@ from persistence.mappers.bracket_mapper import BracketMapper
 from persistence.mappers.bracket_group_mapper import BracketGroupMapper
 from persistence.mappers.bracket_group_team_mapper import BracketGroupTeamMapper
 from persistence.mappers.match_mapper import MatchMapper
+from persistence.mappers.match_event_mapper import MatchEventMapper
+from persistence.mappers.modality_configuration_mapper import (
+    ModalityConfigurationMapper,
+)
 
 
 def get_user_repository(
@@ -138,3 +152,19 @@ def get_match_repository(
     mapper = MatchMapper()
 
     return MatchRepositoryAdapter(session, mapper)
+
+
+def get_match_event_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> MatchEventRepositoryPort:
+    mapper = MatchEventMapper()
+
+    return MatchEventRepositoryAdapter(session, mapper)
+
+
+def get_modality_configuration_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> ModalityConfigurationRepositoryPort:
+    mapper = ModalityConfigurationMapper()
+
+    return ModalityConfigurationRepositoryAdapter(session, mapper)

@@ -37,7 +37,7 @@ O projeto segue uma arquitetura em camadas (hexagonal/ports & adapters): `domain
 | 010 | Confirmar Doação | ✅ | ✅ | ✅ | ✅ |
 | 011 | Criar Chaveamento | ✅ | ✅ | ✅ | ✅ |
 | 012 | Gerenciar Chaveamento | ✅ | ✅ | ✅ | ✅ |
-| 013 | Iniciar Partida | ✅ | ✅ | ❌ | ❌ |
+| 013 | Iniciar Partida | ✅ | ✅ | ✅ | ✅ |
 | 014 | Registrar Evento | ✅ | ✅ | ❌ | ❌ |
 | 015 | Finalizar Partida | ✅ | ✅ | ❌ | ❌ |
 | 016 | Visualizar Partida (tempo real) | ✅ (parcial) | ✅ | ❌ | ❌ (sem WebSocket) |
@@ -106,11 +106,15 @@ UC005/009/010 já concluídos nas Fases 0/1. Nesta fase:
 - **Débito técnico específico desta fase (documentado no topo do `bracket_controller.py`):** endpoints de consulta (`GET` de detalhe do bracket com grupos/partidas, `GET` de lista de brackets da temporada, `GET` de lista de partidas) não foram implementados nesta rodada — o foco foi a camada de escrita (UC011/UC012 são, em essência, casos de uso de criação/edição). Ficam para uma rodada futura de endpoints de leitura para o front.
 - **Observação para a Fase 5:** `Match` não possui campo de posição/rodada na árvore de chaveamento (ex.: `next_match_id`). A Fase 5 (avanço automático de vencedores) precisará definir uma estratégia para isso — não resolvido aqui por estar fora do escopo combinado (UC011/UC012).
 
-### Fase 5 — Gestão de Partidas (UC013, UC014, UC015, UC017)
-- `core/business/match/start_match_port`, `register_event_port` (gol/ponto, cartões, expulsão, controle de cronômetro, períodos/sets), `finish_match_port` (definição de vencedor, avanço automático no chaveamento, pênaltis), `correct_event_port` (desfazer/deletar evento, soft delete, recalcular placar).
-- Essa é a fase com mais regras de negócio por documento (UC014 e UC015 têm ~20KB cada) — recomenda-se quebrar em múltiplos PRs pequenos por fluxo alternativo.
-- `web/controllers/match_controller.py`.
-- Testes unitários fortes em cálculo de placar, avanço de chaveamento e regras de pênaltis/empate.
+### Fase 5 — Gestão de Partidas (UC013 ✅ CONCLUÍDA · UC014, UC015, UC017 pendentes)
+- **Estratégia de rastreamento de monitor (decisão tomada nesta rodada):** foi criada uma coluna dedicada `monitor_id` (FK para `users`, nullable) em `matches`, em vez de inferir o monitor responsável a partir de outra tabela. `MatchRepositoryPort` ganhou `find_in_progress_by_monitor(monitor_id)`, usada para aplicar a regra de negócio 4 do UC013 ("apenas uma partida IN_PROGRESS por monitor").
+- `core/business/match/start_match_port.py` + `business/match/start_match_adapter.py` (UC013 — Iniciar Partida): valida ator monitor (via `require_monitor` no controller), partida em SCHEDULED, ambos os times APPROVED, os dois times já definidos na partida (não permite iniciar partida ainda TBD/BYE) e a regra de 1 partida IN_PROGRESS por monitor. Ao iniciar: `status = IN_PROGRESS`, `started_at = now()`, `clock_seconds = 0`, `clock_running = true`, `current_period = 1`, placares zerados, `monitor_id` preenchido, e cria o `MatchEvent` `MATCH_STARTED` (equivalente ao `MATCH_START` do documento — nome já existente no enum `EventType`).
+- **Resposta rica no endpoint de início:** como essa resposta já seria necessária para a interface de gerenciamento em tempo real (Bloco de Dados 1 do UC013) e não há débito futuro planejado para "enriquecer" depois, o endpoint `POST /api/match/{match_id}/start` já devolve tudo de uma vez — times (com placar), lista de jogadores de cada time, configuração da modalidade (períodos, duração, tipo de pontuação) e a timeline com o evento `MATCH_STARTED` — em vez de só a `Match` crua. Isso difere do padrão adotado na Fase 4 para os `GET`s de chaveamento (que ficaram como débito técnico), pois ali o cliente já tinha alternativa de buscar os dados via os endpoints de escrita existentes; aqui o dado rico é exigido pela própria UC no mesmo passo.
+- `web/controllers/match_controller.py`: `POST /api/match/{match_id}/start`.
+- Testes unitários em `tests/unit/business/match/test_start_match_adapter.py` (6 testes): início bem-sucedido, bloqueio por status diferente de SCHEDULED, bloqueio por time não aprovado, bloqueio por times ainda não definidos, bloqueio por monitor já gerenciando outra partida, e o caso de borda em que a partida "em andamento" encontrada é a própria partida sendo iniciada (não deve bloquear).
+- **Débito técnico assumido (documentado em TODOs no código, mesmo padrão das fases anteriores):** notificação via WebSocket (canais `/matches/{match_id}/live` e `/seasons/{season_id}/live`) e Push Notification para alunos dependem da infraestrutura da Fase 6 (ainda inexistente); registro de auditoria da operação depende de infraestrutura de auditoria ainda inexistente no projeto.
+- **Pendente nesta fase:** UC014 (Registrar Evento), UC015 (Finalizar Partida) e UC017 (Corrigir Evento) — ficam para as próximas rodadas, um PR por caso de uso, dado o volume de regras de negócio de cada um (~20KB de especificação cada). UC015 é quem vai efetivamente precisar de uma estratégia de avanço automático no chaveamento (`next_match_id` ou equivalente, observação já registrada ao final da Fase 4); UC013 não mexeu nisso por não precisar.
+- Também não implementado nesta rodada (fora do escopo de UC013): endpoints de consulta de partida (`GET /api/match/{match_id}`, listagens) — mesmo padrão de débito técnico já assumido para os `GET`s de chaveamento na Fase 4.
 
 ### Fase 6 — Tempo real (UC016)
 - Hoje não há nenhuma infraestrutura de WebSocket. É necessário decidir e implementar:
@@ -143,7 +147,7 @@ Fase 1 (Temporadas)       →  ✅ concluída  →  Fase 2 (Modalidades)  →  �
         ↓
 Fase 3 (Equipes, UC006-008)  →  ✅ concluída
         ↓
-Fase 4 (Chaveamento, UC011-012)  →  ✅ concluída  →  Fase 5 (Partidas)  →  próxima prioridade  →  Fase 6 (Tempo real)
+Fase 4 (Chaveamento, UC011-012)  →  ✅ concluída  →  Fase 5 (Partidas, UC013 ✅ / UC014-015-017 pendentes)  →  Fase 6 (Tempo real)
         ↓ (paralelo, independente)
 Fase 7 (Reportes)
         ↓ (contínuo, do início ao fim)
@@ -155,6 +159,6 @@ Fase 8 (Testes/CI/Docs)
 2. ~~Implementar UC001, UC002 e UC003 (Fase 1)~~ — concluído nesta revisão do plano.
 3. ~~Priorizar a Fase 3 (UC006, UC007, UC008) para fechar por completo a Gestão de Equipes~~ — concluído: ciclo de inscrição de time ponta a ponta (criar → entrar via convite → gerenciar membros → submeter → aprovar → confirmar doação) está funcional.
 4. ~~Priorizar a Fase 4 (UC011, UC012 — Chaveamento), já que Chaveamento e Partida dependem de um ciclo de equipes completo, agora disponível~~ — concluído: criação de chaveamento (sorteio, BYE, grupos, mata-mata, transição automática da temporada) e gestão (re-sorteio, edição e deleção de partidas) funcionais ponta a ponta.
-5. Priorizar a Fase 5 (UC013-015, UC017 — Partidas). Antes de iniciar, definir com o time a estratégia de rastreamento da árvore do chaveamento (ver observação registrada na Fase 4) para viabilizar o avanço automático de vencedores.
-6. Validar com o time se o mecanismo de agendamento de jobs (já resolvido na Fase 1 com APScheduler) atende também às necessidades futuras da Fase 4, e se a estratégia de WebSocket/Push (Fase 6) já foi decidida em alguma ADR/discussão não presente no repo.
+5. ~~Priorizar a Fase 5 (UC013-015, UC017 — Partidas). Antes de iniciar, definir com o time a estratégia de rastreamento da árvore do chaveamento (ver observação registrada na Fase 4) para viabilizar o avanço automático de vencedores.~~ — UC013 (Iniciar Partida) concluído: coluna `monitor_id` criada em `matches` para rastrear qual monitor gerencia qual partida; endpoint de início funcional com resposta rica (times, jogadores, configuração da modalidade). A estratégia de avanço automático no chaveamento (`next_match_id` ou equivalente) segue em aberto para o UC015.
+6. Priorizar UC014 (Registrar Evento) como próximo passo da Fase 5 — depende do que já foi entregue no UC013 (partida IN_PROGRESS, cronômetro e monitor_id).
 7. Depois da Fase 5, seguir para Fases 6–7 na ordem já prevista, mantendo a Fase 8 (testes/CI/docs) em paralelo contínuo — incluindo a dívida de testes unitários de UC005 a UC010 registrada na Fase 3 e os `GET`s de chaveamento registrados como débito técnico na Fase 4.

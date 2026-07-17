@@ -97,6 +97,16 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
 
+    async def find_in_progress_by_monitor(self, monitor_id: UUID) -> Optional[Match]:
+        query = select(MatchEntity).where(
+            MatchEntity.monitor_id == monitor_id,
+            MatchEntity.status == MatchStatus.IN_PROGRESS.value,
+            MatchEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None
+
     async def find_scheduled_by_date(
         self, start_date: datetime, end_date: datetime
     ) -> List[Match]:

@@ -15,6 +15,7 @@ class Match(AbstractDomain):
     bracket_group_id: UUID = None
     team1_id: UUID = None
     team2_id: UUID = None
+    monitor_id: UUID = None
     match_type: MatchType = None
     match_category: MatchCategory = None
     status: MatchStatus = None
