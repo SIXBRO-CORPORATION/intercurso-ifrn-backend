@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from core.business.team.join_team_via_invite_port import JoinTeamViaInvitePort
@@ -52,7 +52,7 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
         if season is None or season.status != SeasonStatus.REGISTRATION_OPEN:
             raise BusinessException("O período de inscrição está fechado")
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if season.registration_start_date and now < season.registration_start_date:
             raise BusinessException("O período de inscrição está fechado")
         if season.registration_end_date and now > season.registration_end_date:

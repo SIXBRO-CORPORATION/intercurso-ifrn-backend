@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from core.business.team.submit_team_port import SubmitTeamPort
@@ -60,7 +60,7 @@ class SubmitTeamAdapter(SubmitTeamPort):
                 "Período de inscrições encerrado. Não é mais possível submeter times."
             )
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if (
             active_season.registration_start_date
             and now < active_season.registration_start_date

@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from core.business.team.create_team_port import CreateTeamPort
@@ -57,7 +57,7 @@ class CreateTeamAdapter(CreateTeamPort):
                 "Não há uma temporada com inscrições abertas no momento"
             )
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if active_season.registration_start_date and now < active_season.registration_start_date:
             raise BusinessException("O período de inscrição ainda não foi iniciado")
         if active_season.registration_end_date and now > active_season.registration_end_date:

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
 from domain.team_member import TeamMember
 from persistence.mappers.team_member_mapper import TeamMemberMapper
+from persistence.mappers.user_mapper import UserMapper
 from persistence.model.team_member_entity import TeamMemberEntity
 
 
@@ -16,9 +17,11 @@ class TeamMemberRepositoryAdapter(TeamMemberRepositoryPort):
         self,
         session: AsyncSession,
         team_member_mapper: TeamMemberMapper,
+        user_mapper: UserMapper
     ):
         self.session = session
         self.team_member_mapper = team_member_mapper
+        self.user_mapper = user_mapper
 
     async def get(self, entity_id: UUID) -> Optional[TeamMember]:
         selecionar = select(TeamMemberEntity).where(

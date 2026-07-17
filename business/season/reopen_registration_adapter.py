@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
@@ -34,7 +34,7 @@ class ReopenRegistrationAdapter(ReopenRegistrationPort):
                 "Apenas temporadas com inscrições encerradas podem ser reabertas"
             )
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if new_end <= now:
             raise BusinessException(
                 "Nova data de encerramento deve ser maior que a data atual"

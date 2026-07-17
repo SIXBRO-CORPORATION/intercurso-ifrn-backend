@@ -18,7 +18,7 @@ class TeamEntity(AbstractEntity):
 
     status = Column(String(30), nullable=False, default="DRAFT")
 
-    invite_token = Column(UUID(as_uuid=True), unique=True, nullable=False)
+    invite_token = Column(String, unique=True, nullable=False)
 
     token_active = Column(Boolean, default=True)
 

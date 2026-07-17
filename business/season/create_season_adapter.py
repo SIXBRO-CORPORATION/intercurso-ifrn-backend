@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from uuid import UUID
 
@@ -49,7 +49,7 @@ class CreateSeasonAdapter(CreateSeasonPort):
         if not modality_ids:
             raise BusinessException("Ao menos uma modalidade deve ser selecionada")
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
 
         if not open_immediately:
             if (
