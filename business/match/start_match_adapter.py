@@ -11,9 +11,6 @@ from core.persistence.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.season_modality_repository_port import (
-    SeasonModalityRepositoryPort,
-)
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.user_repository_port import UserRepositoryPort
@@ -36,7 +33,6 @@ class StartMatchAdapter(StartMatchPort):
         team_member_repository: TeamMemberRepositoryPort,
         user_repository: UserRepositoryPort,
         bracket_repository: BracketRepositoryPort,
-        season_modality_repository: SeasonModalityRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
         modality_repository: ModalityRepositoryPort,
     ):
@@ -46,7 +42,6 @@ class StartMatchAdapter(StartMatchPort):
         self.team_member_repository = team_member_repository
         self.user_repository = user_repository
         self.bracket_repository = bracket_repository
-        self.season_modality_repository = season_modality_repository
         self.modality_configuration_repository = modality_configuration_repository
         self.modality_repository = modality_repository
 
@@ -136,17 +131,11 @@ class StartMatchAdapter(StartMatchPort):
         modality_configuration = None
         if bracket is not None:
             modality = await self.modality_repository.get(bracket.modality_id)
-            season_modality = (
-                await self.season_modality_repository.find_by_season_and_modality(
-                    bracket.season_id, bracket.modality_id
+            modality_configuration = (
+                await self.modality_configuration_repository.find_by_modality(
+                    bracket.modality_id
                 )
             )
-            if season_modality is not None:
-                modality_configuration = (
-                    await self.modality_configuration_repository.find_by_season_modality(
-                        season_modality.id
-                    )
-                )
 
         team1_players = await self._load_players(team1.id)
         team2_players = await self._load_players(team2.id)

@@ -1,6 +1,17 @@
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class ModalityConfigurationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    num_periods: int = Field()
+    period_durations_minutes: int = Field()
+    score_type: str = Field()
+    has_third_place_match: bool = Field()
+    metadata: Optional[Any] = Field(default=None)
 
 
 class ModalityCreateResponse(BaseModel):
@@ -11,4 +22,5 @@ class ModalityCreateResponse(BaseModel):
     min_members: int = Field()
     max_members: int = Field()
     active: bool = Field()
+    configuration: Optional[ModalityConfigurationResponse] = Field(default=None)
     message: str = Field()

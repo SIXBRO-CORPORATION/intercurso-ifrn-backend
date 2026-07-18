@@ -6,7 +6,7 @@ from persistence.model.abstract_entity import AbstractEntity
 class ModalityConfigurationEntity(AbstractEntity):
     __tablename__ = "modality_configurations"
 
-    season_modality_id = Column(ForeignKey("season_modalities.id"), nullable=False, unique=True)
+    modality_id = Column(ForeignKey("modalities.id"), nullable=False, unique=True)
 
     num_periods = Column(Integer, default=2, nullable=False)
 

@@ -29,7 +29,6 @@ def make_adapter():
     team_member_repository = AsyncMock()
     user_repository = AsyncMock()
     bracket_repository = AsyncMock()
-    season_modality_repository = AsyncMock()
     modality_configuration_repository = AsyncMock()
     modality_repository = AsyncMock()
 
@@ -40,7 +39,6 @@ def make_adapter():
         team_member_repository,
         user_repository,
         bracket_repository,
-        season_modality_repository,
         modality_configuration_repository,
         modality_repository,
     )
@@ -53,7 +51,6 @@ def make_adapter():
         team_member_repository,
         user_repository,
         bracket_repository,
-        season_modality_repository,
         modality_configuration_repository,
         modality_repository,
     )
@@ -91,7 +88,6 @@ class TestStartMatchAdapter:
             team_member_repository,
             user_repository,
             bracket_repository,
-            season_modality_repository,
             modality_configuration_repository,
             modality_repository,
         ) = make_adapter()
@@ -121,12 +117,13 @@ class TestStartMatchAdapter:
         bracket_repository.get.return_value = bracket
         modality_repository.get.return_value = Modality(id=bracket.modality_id, name="Futsal")
 
-        season_modality_id = uuid4()
-        season_modality_repository.find_by_season_and_modality.return_value = type(
-            "SM", (), {"id": season_modality_id}
-        )()
-        modality_configuration_repository.find_by_season_modality.return_value = (
-            ModalityConfiguration(id=uuid4(), num_periods=2, period_durations_minutes=20)
+        modality_configuration_repository.find_by_modality.return_value = (
+            ModalityConfiguration(
+                id=uuid4(),
+                modality_id=bracket.modality_id,
+                num_periods=2,
+                period_durations_minutes=20,
+            )
         )
 
         match_event_repository.save.side_effect = lambda e: MatchEvent(
@@ -155,6 +152,10 @@ class TestStartMatchAdapter:
         assert context.get_property("team1", Team) == team1
         assert context.get_property("team2", Team) == team2
         assert len(context.get_property("team1_players", list)) == 1
+
+        modality_configuration_repository.find_by_modality.assert_awaited_once_with(
+            bracket.modality_id
+        )
 
     @pytest.mark.asyncio
     async def test_blocks_when_not_scheduled(self):
@@ -252,7 +253,6 @@ class TestStartMatchAdapter:
             team_member_repository,
             user_repository,
             bracket_repository,
-            season_modality_repository,
             modality_configuration_repository,
             modality_repository,
         ) = make_adapter()

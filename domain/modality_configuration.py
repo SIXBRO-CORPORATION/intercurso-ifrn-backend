@@ -9,7 +9,7 @@ from domain.enums.score_type import ScoreType
 
 @dataclass
 class ModalityConfiguration(AbstractDomain):
-    season_modality_id: UUID = None
+    modality_id: UUID = None
     num_periods: int = None
     period_durations_minutes: int = None
     score_type: ScoreType = None

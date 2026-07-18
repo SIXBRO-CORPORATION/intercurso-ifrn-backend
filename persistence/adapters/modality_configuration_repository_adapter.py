@@ -47,20 +47,20 @@ class ModalityConfigurationRepositoryAdapter(ModalityConfigurationRepositoryPort
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
 
-    async def find_by_season_modality(
-        self, season_modality_id: UUID
+    async def find_by_modality(
+        self, modality_id: UUID
     ) -> Optional[ModalityConfiguration]:
         query = select(ModalityConfigurationEntity).where(
-            ModalityConfigurationEntity.season_modality_id == season_modality_id,
+            ModalityConfigurationEntity.modality_id == modality_id,
             ModalityConfigurationEntity.deleted_at.is_(None),
         )
         result = await self.session.execute(query)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
 
-    async def exists_by_season_modality(self, season_modality_id: UUID) -> bool:
+    async def exists_by_modality(self, modality_id: UUID) -> bool:
         query = select(ModalityConfigurationEntity.id).where(
-            ModalityConfigurationEntity.season_modality_id == season_modality_id,
+            ModalityConfigurationEntity.modality_id == modality_id,
             ModalityConfigurationEntity.deleted_at.is_(None),
         )
         result = await self.session.execute(query)
