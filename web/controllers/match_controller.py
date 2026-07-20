@@ -26,7 +26,7 @@ router = APIRouter(prefix="/api/match", tags=["match"])
 # GET de partidas por temporada/time) e os demais casos de uso da fase
 # (UC014 - Registrar Evento, UC015 - Finalizar Partida, UC017 - Corrigir
 # Evento) ficam para as próximas rodadas desta fase, conforme o planejamento
-# em docs/AI/planejamento.md.
+# em docs/ai/planejamento.md.
 
 
 @router.post(
