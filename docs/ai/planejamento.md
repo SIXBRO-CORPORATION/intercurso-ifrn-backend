@@ -161,4 +161,9 @@ Fase 8 (Testes/CI/Docs)
 4. ~~Priorizar a Fase 4 (UC011, UC012 — Chaveamento), já que Chaveamento e Partida dependem de um ciclo de equipes completo, agora disponível~~ — concluído: criação de chaveamento (sorteio, BYE, grupos, mata-mata, transição automática da temporada) e gestão (re-sorteio, edição e deleção de partidas) funcionais ponta a ponta.
 5. ~~Priorizar a Fase 5 (UC013-015, UC017 — Partidas). Antes de iniciar, definir com o time a estratégia de rastreamento da árvore do chaveamento (ver observação registrada na Fase 4) para viabilizar o avanço automático de vencedores.~~ — UC013 (Iniciar Partida) concluído: coluna `monitor_id` criada em `matches` para rastrear qual monitor gerencia qual partida; endpoint de início funcional com resposta rica (times, jogadores, configuração da modalidade). A estratégia de avanço automático no chaveamento (`next_match_id` ou equivalente) segue em aberto para o UC015.
 6. Priorizar UC014 (Registrar Evento) como próximo passo da Fase 5 — depende do que já foi entregue no UC013 (partida IN_PROGRESS, cronômetro e monitor_id).
+7. Antes de implementar o controle de cronômetro da UC014, seguir a decisão registrada em
+   [ADR 0001](../adr/ADR001_Cronometro.md): cronômetro autoritativo no backend,
+   representado como snapshot (`clock_seconds` + `clock_running` + timestamp de referência) e
+   calculado sob demanda — nunca um job persistindo tick a tick, nem `clock_seconds` recebido do
+   cliente.
 7. Depois da Fase 5, seguir para Fases 6–7 na ordem já prevista, mantendo a Fase 8 (testes/CI/docs) em paralelo contínuo — incluindo a dívida de testes unitários de UC005 a UC010 registrada na Fase 3 e os `GET`s de chaveamento registrados como débito técnico na Fase 4.

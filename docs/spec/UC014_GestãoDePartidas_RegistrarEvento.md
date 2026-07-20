@@ -295,6 +295,9 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 - [UC015 - Finalizar Partida](UC015_FinalizarPartida.md)
 - [UC016 - Visualizar Partida em Tempo Real](UC016_VisualizarPartida.md)
 - [UC017 - Corrigir Eventos da Partida](UC017_CorrigirEventos.md)
+- [ADR 0001 - Estratégia do Cronômetro da Partida](adr/0001-cronometro-partida-uc014.md) — decisão
+  técnica de como as regras 3, 24, 25 e 28 (cronômetro autoritativo no backend) devem ser
+  implementadas, evitando escrita persistida a cada segundo.
 
 ## 11. Sugestão de UI
 1. Monitor acessa partida agendada
