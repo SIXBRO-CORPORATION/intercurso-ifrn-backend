@@ -33,10 +33,10 @@ jobs:
         run: uv sync --frozen
 
       - name: Run Tests
-        run: task test
+        run: uv run pytest
 
       - name: Check Lint
-        run: task lint
+        run: uv run ruff check .
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
