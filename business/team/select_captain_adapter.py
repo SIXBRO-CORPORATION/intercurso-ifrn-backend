@@ -7,8 +7,6 @@ from core.persistence.team_repository_port import TeamRepositoryPort
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.team import Team
-from domain.team_member import TeamMember
-
 
 class SelectCaptainAdapter(SelectCaptainPort):
     def __init__(
