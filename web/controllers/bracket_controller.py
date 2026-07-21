@@ -62,7 +62,7 @@ async def preview_bracket_config(
     normalized_format = format.strip().upper()
     if normalized_format not in ModalityFormat.__members__:
         valid = ", ".join(ModalityFormat.__members__.keys())
-        raise BusinessException(f"Formato inválido. Valores aceitos: {valid}")
+        raise BusinessException(f"Formato inválido! Valores aceitos: {valid}")
     modality_format = ModalityFormat[normalized_format]
 
     context = Context()
