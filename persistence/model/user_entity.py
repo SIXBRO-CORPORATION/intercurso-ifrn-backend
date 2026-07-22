@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean
+from sqlalchemy import Column, String, Boolean
 from persistence.model.abstract_entity import AbstractEntity
 
 
