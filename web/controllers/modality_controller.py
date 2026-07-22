@@ -7,7 +7,6 @@ from core.business.modality.create_modality_port import CreateModalityPort
 from core.context import Context
 from domain.modality import Modality
 from domain.modality_configuration import ModalityConfiguration
-from domain.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import require_monitor
 from web.dependencies.business.modality_dependencies import get_create_modality_port
