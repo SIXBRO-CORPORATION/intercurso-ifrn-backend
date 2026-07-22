@@ -11,3 +11,20 @@ from .match_event_entity import MatchEventEntity
 from .bracket_entity import BracketEntity
 from .bracket_group_entity import BracketGroupEntity
 from .bracket_group_team_entity import BracketGroupTeamEntity
+
+
+__all__ = [
+    "UserEntity",
+    "TeamEntity",
+    "TeamMemberEntity",
+    "SeasonEntity",
+    "SeasonModalityEntity",
+    "RefreshTokenEntity",
+    "ModalityEntity",
+    "ModalityConfigurationEntity",
+    "MatchEntity",
+    "MatchEventEntity",
+    "BracketEntity",
+    "BracketGroupEntity",
+    "BracketGroupTeamEntity",
+]
