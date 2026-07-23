@@ -17,7 +17,7 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 6. O sistema valida conforme Regras de Negócio;
 7. O sistema cria evento GOAL ou POINT com `clock_seconds` atual;
 8. O sistema incrementa placar do time: `team_score++`;
-9. Para vôlei, sistema atualiza pontuação do set atual em `metadata`;
+9. Para vôlei, sistema atualiza a pontuação do set atual;
 10. O sistema atualiza interface com novo placar;
 11. O sistema envia WebSocket: `score_update` e `goal_scored`/`point_scored`;
 12. O sistema envia Push Notification: "⚽ Gol! [Time] - [Jogador] ([Tempo]')";
@@ -31,14 +31,13 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 3. O sistema verifica se jogador já possui cartão amarelo nesta partida;
 4. **Se jogador NÃO tem amarelo anterior:**
    - Sistema cria evento CARD_YELLOW;
-   - Sistema registra em `metadata`: `{"previous_cards": 0}`;
    - Sistema envia WebSocket: `card_issued`;
    - Sistema envia Push Notification: "🟨 Cartão amarelo para [Jogador]";
 5. **Se jogador JÁ tem 1 amarelo anterior:**
    - Sistema exibe alerta: "⚠️ Este jogador já possui 1 amarelo. Isso resultará em EXPULSÃO. Confirmar?";
    - Monitor confirma;
-   - Sistema cria evento CARD_YELLOW com `metadata`: `{"previous_cards": 1}`;
-   - Sistema cria evento EXPULSION com `metadata`: `{"triggered_by": "second_yellow", "auto_generated": true}`;
+   - Sistema cria evento CARD_YELLOW, identificando-o como o segundo amarelo do jogador na partida;
+   - Sistema cria evento EXPULSION, identificando que foi motivada pelo segundo cartão amarelo e gerada automaticamente pelo sistema (sem intervenção manual do monitor);
    - Sistema marca jogador como EXPELLED nesta partida;
    - Sistema envia WebSocket: `card_issued` e `player_expelled`;
    - Sistema envia Push Notifications para ambos eventos;
@@ -89,7 +88,7 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 2. Sistema exibe sugestão: "Set Finalizado: [25x23]. Iniciar próximo set?";
 3. Monitor confirma;
 4. Sistema valida pontuação conforme regras do vôlei;
-5. Sistema registra set vencido em `metadata.sets` da partida;
+5. Sistema registra o set vencido no histórico de sets da partida;
 6. Sistema incrementa contagem de sets do time vencedor;
 7. Sistema reseta pontuação do set atual para 0x0;
 8. Sistema envia WebSocket: `set_finished`;
@@ -120,7 +119,7 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 | Jogador                  | E             | Jogador que marcou (obrigatório)                      |
 | Tempo do Cronômetro      | S             | Segundos do cronômetro no momento do evento           |
 | Novo Placar              | S             | Placar atualizado                                     |
-| Metadata                 | S             | Para vôlei: pontuação do set atual                    |
+| Pontuação do Set Atual   | S             | Para vôlei: placar do set em andamento                |
 
 ### Bloco de Dados 2 – Evento de Cartão
 
@@ -131,7 +130,7 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 | Jogador                  | E             | Jogador que recebeu cartão (obrigatório)              |
 | Cartões Anteriores       | S             | Quantidade de amarelos anteriores                     |
 | Gera Expulsão            | S             | Se 2º amarelo ou vermelho direto                      |
-| Metadata                 | S             | Informações adicionais (motivo, etc)                  |
+| Motivo da Expulsão       | S             | Quando gerada: "2º amarelo" ou "vermelho direto"      |
 
 ### Bloco de Dados 3 – Evento de Expulsão
 
@@ -173,7 +172,7 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 7. Jogador deve pertencer ao time;
 8. Jogador **não pode estar expulso**;
 9. Sistema incrementa placar automaticamente: `team_score++`;
-10. Para vôlei, sistema atualiza pontuação do set em `metadata`;
+10. Para vôlei, sistema atualiza a pontuação do set atual;
 11. Sistema envia WebSocket: `score_update` + `goal_scored`/`point_scored`;
 12. Sistema envia Push: "⚽ Gol! [Time] - [Jogador] ([Tempo]')".
 
@@ -207,7 +206,7 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 ### Sets (Vôlei):
 34. Set finaliza quando time atinge **25 pontos com diferença de 2** (ou 15 no 5º set);
 35. Sistema **sugere** fim de set, mas monitor deve confirmar;
-36. Sistema registra set vencido em `metadata.sets`;
+36. Sistema registra o set vencido no histórico de sets da partida;
 37. Sistema incrementa contagem de sets do time vencedor;
 38. Sistema reseta pontuação do set para 0x0;
 39. Se time atinge sets necessários (ex: 2 de 3), sistema sugere finalizar partida;
@@ -262,7 +261,7 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 - WebSocket enviado.
 
 ### Set (Vôlei):
-- Set registrado em metadata;
+- Set registrado no histórico de sets da partida;
 - Contagem de sets atualizada;
 - Pontuação do set resetada;
 - WebSocket enviado.
@@ -295,9 +294,12 @@ Este caso de uso permite que o monitor registre todos os eventos que ocorrem dur
 - [UC015 - Finalizar Partida](UC015_FinalizarPartida.md)
 - [UC016 - Visualizar Partida em Tempo Real](UC016_VisualizarPartida.md)
 - [UC017 - Corrigir Eventos da Partida](UC017_CorrigirEventos.md)
-- [ADR 0001 - Estratégia do Cronômetro da Partida](adr/0001-cronometro-partida-uc014.md) — decisão
+- [ADR 0001 - Estratégia do Cronômetro da Partida](adr/ADR001_Cronometro.md) — decisão
   técnica de como as regras 3, 24, 25 e 28 (cronômetro autoritativo no backend) devem ser
   implementadas, evitando escrita persistida a cada segundo.
+- [ADR 0002 - Normalização de Configuração por Modalidade e Histórico de Sets](adr/ADR002_NormalizacaoConfiguracaoModalidadeESets.md) —
+  decisão técnica (proposta) de como persistir a configuração de pontos/sets do vôlei e o
+  histórico de sets da partida (Bloco de Dados 5, RN9-10, RN34-40) em tabelas normalizadas.
 
 ## 11. Sugestão de UI
 1. Monitor acessa partida agendada
