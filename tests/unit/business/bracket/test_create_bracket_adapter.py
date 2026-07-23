@@ -5,14 +5,14 @@ import pytest
 
 from business.bracket.create_bracket_adapter import CreateBracketAdapter
 from core.context import Context
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.modality_format import ModalityFormat
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
-from domain.team import Team
+from domain.season.season import Season
+from domain.team.team import Team
 
 
 def make_adapter():

@@ -11,7 +11,7 @@ from domain.enums.donation_status import DonationStatus
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.team import Team
+from domain.team.team import Team
 
 
 class SubmitTeamAdapter(SubmitTeamPort):

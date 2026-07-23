@@ -1,5 +1,5 @@
 from typing import Optional
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.modality_format import ModalityFormat
 from domain.enums.bracket_status import BracketStatus
 from persistence.model.bracket_entity import BracketEntity

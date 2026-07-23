@@ -8,7 +8,7 @@ from business.season.reopen_registration_adapter import ReopenRegistrationAdapte
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
+from domain.season.season import Season
 
 
 def make_adapter():

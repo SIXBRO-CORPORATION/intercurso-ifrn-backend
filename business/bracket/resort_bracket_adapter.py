@@ -14,14 +14,14 @@ from core.persistence.bracket_group_team_repository_port import (
 from core.persistence.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match_repository_port import MatchRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
-from domain.bracket import Bracket
-from domain.bracket_group import BracketGroup
-from domain.bracket_group_team import BracketGroupTeam
+from domain.bracket.bracket import Bracket
+from domain.bracket.bracket_group import BracketGroup
+from domain.bracket.bracket_group_team import BracketGroupTeam
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.match_status import MatchStatus
 from domain.enums.modality_format import ModalityFormat
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 
 
 class ResortBracketAdapter(ResortBracketPort):

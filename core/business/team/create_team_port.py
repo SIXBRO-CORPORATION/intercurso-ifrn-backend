@@ -1,5 +1,5 @@
 from core.command import Command
-from domain.team import Team
+from domain.team.team import Team
 
 
 class CreateTeamPort(Command[Team]):

@@ -7,7 +7,7 @@ from core.persistence.season_repository_port import SeasonRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
+from domain.season.season import Season
 
 
 class FinishSeasonAdapter(FinishSeasonPort):

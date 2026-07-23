@@ -3,7 +3,7 @@ from typing import Optional
 from urllib.parse import urlencode
 from core.security.oauth_provider_port import OAuthProviderPort
 from security.config import settings
-from domain.user import User
+from domain.user.user import User
 from domain.exceptions.business_exception import BusinessException
 
 

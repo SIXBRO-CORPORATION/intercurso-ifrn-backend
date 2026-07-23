@@ -5,7 +5,7 @@ from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
 from domain.enums.match_status import MatchStatus
-from domain.match import Match
+from domain.match.match import Match
 
 
 class MatchRepositoryPort(BaseRepositoryPort[Match]):

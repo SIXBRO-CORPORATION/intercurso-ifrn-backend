@@ -8,7 +8,7 @@ from core.persistence.user_repository_port import UserRepositoryPort
 from domain.enums.team_status import TeamStatus
 from domain.enums.user_role import UserRole
 from domain.exceptions.business_exception import BusinessException
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 
 
 class RemoveMemberAdapter(RemoveMemberPort):

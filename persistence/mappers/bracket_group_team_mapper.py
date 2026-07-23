@@ -1,5 +1,5 @@
 from typing import Optional
-from domain.bracket_group_team import BracketGroupTeam
+from domain.bracket.bracket_group_team import BracketGroupTeam
 from persistence.model.bracket_group_team_entity import BracketGroupTeamEntity
 
 class BracketGroupTeamMapper:

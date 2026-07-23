@@ -14,10 +14,10 @@ from core.business.team.remove_member_port import RemoveMemberPort
 from core.business.team.select_captain_port import SelectCaptainPort
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.context import Context
-from domain.modality import Modality
-from domain.team import Team
-from domain.team_member import TeamMember
-from domain.user import User
+from domain.modality.modality import Modality
+from domain.team.team import Team
+from domain.team.team_member import TeamMember
+from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.mappers.team_model_mapper import TeamModelMapper
 from web.models.request.team_register_request import TeamRegisterRequest

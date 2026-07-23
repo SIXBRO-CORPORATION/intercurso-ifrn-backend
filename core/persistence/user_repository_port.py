@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Optional
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
-from domain.user import User
+from domain.user.user import User
 
 
 class UserRepositoryPort(BaseRepositoryPort[User]):

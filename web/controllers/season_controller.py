@@ -11,8 +11,8 @@ from core.business.season.get_season_details_port import GetSeasonDetailsPort
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
 from core.context import Context
-from domain.season import Season
-from domain.user import User
+from domain.season.season import Season
+from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import require_monitor
 from web.dependencies.business.season_dependencies import (

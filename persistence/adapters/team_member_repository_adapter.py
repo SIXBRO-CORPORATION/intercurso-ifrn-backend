@@ -6,7 +6,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 from persistence.mappers.team_member_mapper import TeamMemberMapper
 from persistence.mappers.user_mapper import UserMapper
 from persistence.model.team_member_entity import TeamMemberEntity

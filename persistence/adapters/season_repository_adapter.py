@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.season_repository_port import SeasonRepositoryPort
 from domain.enums.season_status import SeasonStatus
-from domain.season import Season
+from domain.season.season import Season
 from persistence.mappers.season_mapper import SeasonMapper
 from persistence.model.season_entity import SeasonEntity
 

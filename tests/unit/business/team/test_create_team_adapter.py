@@ -8,9 +8,9 @@ from business.team.create_team_adapter import CreateTeamAdapter
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
-from domain.team import Team
-from domain.user import User
+from domain.season.season import Season
+from domain.team.team import Team
+from domain.user.user import User
 
 
 def make_adapter():

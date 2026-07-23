@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.persistence.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
-from domain.modality_configuration import ModalityConfiguration
+from domain.modality.modality_configuration import ModalityConfiguration
 from persistence.mappers.modality_configuration_mapper import (
     ModalityConfigurationMapper,
 )

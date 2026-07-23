@@ -3,7 +3,7 @@ from typing import List
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
-from domain.bracket_group import BracketGroup
+from domain.bracket.bracket_group import BracketGroup
 
 
 class BracketGroupRepositoryPort(BaseRepositoryPort[BracketGroup]):

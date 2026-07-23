@@ -3,7 +3,7 @@ from typing import List
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 
 
 class TeamMemberRepositoryPort(BaseRepositoryPort[TeamMember]):

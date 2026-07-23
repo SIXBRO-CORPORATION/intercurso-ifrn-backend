@@ -1,5 +1,5 @@
 from typing import Optional
-from domain.match import Match
+from domain.match.match import Match
 from domain.enums.match_type import MatchType
 from domain.enums.match_category import MatchCategory
 from domain.enums.match_status import MatchStatus

@@ -5,8 +5,8 @@ from core.persistence.modality_configuration_repository_port import (
 )
 from core.persistence.modality_repository_port import ModalityRepositoryPort
 from domain.exceptions.business_exception import BusinessException
-from domain.modality import Modality
-from domain.modality_configuration import ModalityConfiguration
+from domain.modality.modality import Modality
+from domain.modality.modality_configuration import ModalityConfiguration
 
 
 class CreateModalityAdapter(CreateModalityPort):

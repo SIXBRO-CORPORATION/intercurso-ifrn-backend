@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from core.security.jwt_provider_port import JWTProviderPort
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.enums.user_role import UserRole
-from domain.user import User
+from domain.user.user import User
 from security.adapters.jwt_provider_adapter import JWTProviderAdapter
 from security.utils import (
     validate_user_active,

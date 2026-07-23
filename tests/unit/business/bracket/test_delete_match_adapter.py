@@ -7,7 +7,7 @@ from business.bracket.delete_match_adapter import DeleteMatchAdapter
 from core.context import Context
 from domain.enums.match_status import MatchStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 
 
 def make_adapter():

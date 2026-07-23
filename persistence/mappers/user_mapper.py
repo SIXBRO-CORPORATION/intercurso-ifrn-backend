@@ -1,7 +1,7 @@
 from typing import Optional
 
 from domain.enums.user_role import UserRole
-from domain.user import User
+from domain.user.user import User
 from persistence.model.user_entity import UserEntity
 
 

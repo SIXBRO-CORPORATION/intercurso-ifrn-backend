@@ -6,12 +6,12 @@ import pytest
 
 from business.bracket.update_match_adapter import UpdateMatchAdapter
 from core.context import Context
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.match_status import MatchStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
-from domain.team import Team
+from domain.match.match import Match
+from domain.team.team import Team
 
 
 def make_adapter():

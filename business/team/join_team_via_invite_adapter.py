@@ -13,7 +13,7 @@ from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 
 
 class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):

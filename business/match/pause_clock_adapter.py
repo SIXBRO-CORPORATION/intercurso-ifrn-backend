@@ -19,7 +19,7 @@ from core.persistence.team_member_repository_port import TeamMemberRepositoryPor
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 
 
 class PauseClockAdapter(PauseClockPort):

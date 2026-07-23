@@ -9,7 +9,7 @@ from core.persistence.team_repository_port import TeamRepositoryPort
 from domain.enums.match_status import MatchStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 
 
 class UpdateMatchAdapter(UpdateMatchPort):

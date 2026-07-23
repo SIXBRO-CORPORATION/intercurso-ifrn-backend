@@ -6,7 +6,7 @@ from core.context import Context
 from core.persistence.season_repository_port import SeasonRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
+from domain.season.season import Season
 
 
 class ManageSeasonAdapter(ManageSeasonPort):

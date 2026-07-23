@@ -16,8 +16,8 @@ from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.user_repository_port import UserRepositoryPort
 from domain.enums.event_type import EventType
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
-from domain.match_event import MatchEvent
+from domain.match.match import Match
+from domain.match.match_event import MatchEvent
 
 
 class StartPeriodAdapter(StartPeriodPort):

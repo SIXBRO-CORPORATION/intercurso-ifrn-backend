@@ -6,7 +6,7 @@ from sqlalchemy import select, update, delete, false, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.refresh_token_repository_port import RefreshTokenRepositoryPort
-from domain.refresh_token import RefreshToken
+from domain.auth.refresh_token import RefreshToken
 from persistence.mappers.refresh_token_mapper import RefreshTokenMapper
 from persistence.model.refresh_token_entity import RefreshTokenEntity
 

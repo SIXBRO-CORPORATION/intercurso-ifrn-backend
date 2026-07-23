@@ -19,13 +19,13 @@ from core.persistence.season_modality_repository_port import (
 )
 from core.persistence.season_repository_port import SeasonRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
-from domain.bracket import Bracket
-from domain.bracket_group import BracketGroup
-from domain.bracket_group_team import BracketGroupTeam
+from domain.bracket.bracket import Bracket
+from domain.bracket.bracket_group import BracketGroup
+from domain.bracket.bracket_group_team import BracketGroupTeam
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 
 
 class CreateBracketAdapter(CreateBracketPort):

@@ -7,9 +7,9 @@ import pytest
 from business.season.create_season_adapter import CreateSeasonAdapter
 from core.context import Context
 from domain.exceptions.business_exception import BusinessException
-from domain.modality import Modality
-from domain.season import Season
-from domain.season_modality import SeasonModality
+from domain.modality.modality import Modality
+from domain.season.season import Season
+from domain.season.season_modality import SeasonModality
 
 
 def make_adapter():

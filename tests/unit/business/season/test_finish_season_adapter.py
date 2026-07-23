@@ -7,8 +7,8 @@ from business.season.finish_season_adapter import FinishSeasonAdapter
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
-from domain.team import Team
+from domain.season.season import Season
+from domain.team.team import Team
 
 
 def make_adapter():

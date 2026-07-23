@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.persistence.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from domain.season_modality import SeasonModality
+from domain.season.season_modality import SeasonModality
 from persistence.mappers.season_modality_mapper import SeasonModalityMapper
 from persistence.model.season_modality_entity import SeasonModalityEntity
 

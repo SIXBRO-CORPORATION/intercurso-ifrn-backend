@@ -8,9 +8,9 @@ from core.context import Context
 from domain.enums.donation_status import DonationStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.team import Team
-from domain.team_member import TeamMember
-from domain.user import User
+from domain.team.team import Team
+from domain.team.team_member import TeamMember
+from domain.user.user import User
 
 
 def make_adapter():

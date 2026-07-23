@@ -1,5 +1,5 @@
 from typing import Optional
-from domain.season import Season
+from domain.season.season import Season
 from domain.enums.season_status import SeasonStatus
 from persistence.model.season_entity import SeasonEntity
 

@@ -5,7 +5,7 @@ import pytest
 
 from business.match.start_match_adapter import StartMatchAdapter
 from core.context import Context
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.event_type import EventType
 from domain.enums.match_category import MatchCategory
 from domain.enums.match_status import MatchStatus
@@ -13,13 +13,13 @@ from domain.enums.match_type import MatchType
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
-from domain.match_event import MatchEvent
-from domain.modality import Modality
-from domain.modality_configuration import ModalityConfiguration
-from domain.team import Team
-from domain.team_member import TeamMember
-from domain.user import User
+from domain.match.match import Match
+from domain.match.match_event import MatchEvent
+from domain.modality.modality import Modality
+from domain.modality.modality_configuration import ModalityConfiguration
+from domain.team.team import Team
+from domain.team.team_member import TeamMember
+from domain.user.user import User
 
 
 def make_adapter():

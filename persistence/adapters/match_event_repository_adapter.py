@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.match_event_repository_port import MatchEventRepositoryPort
 from domain.enums.event_type import EventType
-from domain.match_event import MatchEvent
+from domain.match.match_event import MatchEvent
 from persistence.mappers.match_event_mapper import MatchEventMapper
 from persistence.model.match_event_entity import MatchEventEntity
 

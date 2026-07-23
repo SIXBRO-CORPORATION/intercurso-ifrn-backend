@@ -4,11 +4,11 @@ import pytest
 
 from business.match.end_set_adapter import EndSetAdapter
 from core.context import Context
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.event_type import EventType
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
-from domain.modality_configuration import ModalityConfiguration
+from domain.modality.modality_configuration import ModalityConfiguration
 
 from tests.unit.business.match._helpers import (
     make_adapter,

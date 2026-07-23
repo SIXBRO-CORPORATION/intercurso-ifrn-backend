@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
-from domain.season_modality import SeasonModality
+from domain.season.season_modality import SeasonModality
 
 
 class SeasonModalityRepositoryPort(BaseRepositoryPort[SeasonModality]):

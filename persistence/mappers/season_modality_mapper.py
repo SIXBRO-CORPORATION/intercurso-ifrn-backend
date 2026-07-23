@@ -1,5 +1,5 @@
 from typing import Optional
-from domain.season_modality import SeasonModality
+from domain.season.season_modality import SeasonModality
 from persistence.model.season_modality_entity import SeasonModalityEntity
 
 class SeasonModalityMapper:

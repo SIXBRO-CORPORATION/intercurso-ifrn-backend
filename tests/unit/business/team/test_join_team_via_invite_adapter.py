@@ -11,11 +11,11 @@ from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.modality import Modality
-from domain.season import Season
-from domain.team import Team
-from domain.team_member import TeamMember
-from domain.user import User
+from domain.modality.modality import Modality
+from domain.season.season import Season
+from domain.team.team import Team
+from domain.team.team_member import TeamMember
+from domain.user.user import User
 
 
 def make_adapter():

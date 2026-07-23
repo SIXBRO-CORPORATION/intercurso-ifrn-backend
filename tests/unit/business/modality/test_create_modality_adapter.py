@@ -7,8 +7,8 @@ from business.modality.create_modality_adapter import CreateModalityAdapter
 from core.context import Context
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
-from domain.modality import Modality
-from domain.modality_configuration import ModalityConfiguration
+from domain.modality.modality import Modality
+from domain.modality.modality_configuration import ModalityConfiguration
 
 
 def make_adapter():

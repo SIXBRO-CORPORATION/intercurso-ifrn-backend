@@ -6,7 +6,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.bracket_group_repository_port import BracketGroupRepositoryPort
-from domain.bracket_group import BracketGroup
+from domain.bracket.bracket_group import BracketGroup
 from persistence.mappers.bracket_group_mapper import BracketGroupMapper
 from persistence.model.bracket_group_entity import BracketGroupEntity
 

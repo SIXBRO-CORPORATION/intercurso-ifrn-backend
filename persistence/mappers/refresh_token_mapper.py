@@ -1,6 +1,6 @@
 from typing import Optional
 
-from domain.refresh_token import RefreshToken
+from domain.auth.refresh_token import RefreshToken
 from persistence.model.refresh_token_entity import RefreshTokenEntity
 
 

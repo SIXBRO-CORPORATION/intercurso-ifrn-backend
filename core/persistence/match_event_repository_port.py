@@ -4,7 +4,7 @@ from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
 from domain.enums.event_type import EventType
-from domain.match_event import MatchEvent
+from domain.match.match_event import MatchEvent
 
 
 class MatchEventRepositoryPort(BaseRepositoryPort[MatchEvent]):

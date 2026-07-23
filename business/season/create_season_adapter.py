@@ -11,8 +11,8 @@ from core.persistence.season_modality_repository_port import (
 from core.persistence.season_repository_port import SeasonRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
-from domain.season_modality import SeasonModality
+from domain.season.season import Season
+from domain.season.season_modality import SeasonModality
 
 
 class CreateSeasonAdapter(CreateSeasonPort):

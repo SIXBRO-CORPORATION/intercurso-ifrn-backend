@@ -1,5 +1,5 @@
 from typing import Optional
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.donation_status import DonationStatus
 from persistence.model.team_member_entity import TeamMemberEntity
