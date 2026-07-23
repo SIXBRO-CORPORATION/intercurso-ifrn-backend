@@ -4,6 +4,7 @@ from uuid import UUID
 from business.match._shared import (
     is_player_expelled,
     load_management_context,
+    load_modality_configuration,
     validate_match_in_progress,
     validate_player_in_team,
     validate_team_in_match,
@@ -66,8 +67,11 @@ class RegisterGoalAdapter(RegisterGoalPort):
         now = datetime.now()
         clock_seconds = match.current_clock_seconds(now)
 
-        _, modality_configuration = await self._load_modality_configuration(
-            match.bracket_id
+        _, modality_configuration = await load_modality_configuration(
+            self.bracket_repository,
+            self.modality_repository,
+            self.modality_configuration_repository,
+            match.bracket_id,
         )
         score_type = (
             modality_configuration.score_type if modality_configuration else None
@@ -118,15 +122,3 @@ class RegisterGoalAdapter(RegisterGoalPort):
         metadata.setdefault("sets", [])
         metadata.setdefault("sets_won", {"team1": 0, "team2": 0})
         match.metadata_json = metadata
-
-    async def _load_modality_configuration(self, bracket_id: UUID):
-        bracket = await self.bracket_repository.get(bracket_id)
-        if bracket is None:
-            return None, None
-        modality = await self.modality_repository.get(bracket.modality_id)
-        modality_configuration = (
-            await self.modality_configuration_repository.find_by_modality(
-                bracket.modality_id
-            )
-        )
-        return modality, modality_configuration

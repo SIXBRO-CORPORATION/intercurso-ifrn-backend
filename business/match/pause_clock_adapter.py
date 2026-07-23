@@ -1,7 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
-from business.match._shared import load_management_context, validate_match_in_progress
+from business.match._shared import (
+    load_management_context,
+    pause_clock,
+    validate_match_in_progress,
+)
 from core.business.match.pause_clock_port import PauseClockPort
 from core.context import Context
 from core.persistence.bracket_repository_port import BracketRepositoryPort
@@ -51,8 +55,7 @@ class PauseClockAdapter(PauseClockPort):
             raise BusinessException("Cronômetro já está pausado")
 
         now = datetime.now()
-        match.sync_clock(now)
-        match.clock_running = False
+        pause_clock(match, now)
         saved_match = await self.match_repository.save(match)
 
         await load_management_context(

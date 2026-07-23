@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -48,6 +49,11 @@ async def validate_match_in_progress(
         )
 
     return match
+
+
+def pause_clock(match: Match, now: Optional[datetime] = None) -> None:
+    match.sync_clock(now)
+    match.clock_running = False
 
 
 async def validate_team_in_match(match: Match, team_id: Optional[UUID]) -> None:
