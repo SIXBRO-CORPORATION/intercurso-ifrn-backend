@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from domain.match import Match
 from domain.match_event import MatchEvent
@@ -66,6 +66,7 @@ class MatchModelMapper:
                 team_id=event.team_id,
                 player_id=event.player_id,
                 created_at=event.created_at,
+                metadata=event.metadata_json,
             )
             for event in events
         ]
@@ -80,6 +81,7 @@ class MatchModelMapper:
         modality: Optional[Modality],
         modality_configuration: Optional[ModalityConfiguration],
         timeline_events: List[MatchEvent],
+        match_point_reached: Optional[bool] = None,
     ) -> MatchManagementResponse:
         return MatchManagementResponse(
             match_id=match.id,
@@ -103,4 +105,6 @@ class MatchModelMapper:
                 modality_configuration
             ),
             timeline=self._to_timeline_response(timeline_events),
+            metadata=match.metadata_json,
+            match_point_reached=match_point_reached,
         )

@@ -15,7 +15,7 @@ class MatchEventMapper:
             player_id=entity.player_id,
             event_type=EventType(entity.event_type) if entity.event_type else None,
             clock_seconds=entity.clock_seconds,
-            metadata=entity.metadata,
+            metadata_json=entity.metadata_json,
             created_at=entity.created_at,
             modified_at=entity.modified_at,
             active=entity.active
@@ -32,7 +32,7 @@ class MatchEventMapper:
             player_id=domain.player_id,
             event_type=domain.event_type.value if domain.event_type else None,
             clock_seconds=domain.clock_seconds,
-            metadata=domain.metadata,
+            metadata_json=domain.metadata_json,
             created_at=domain.created_at,
             modified_at=domain.modified_at,
             active=domain.active

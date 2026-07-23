@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -41,6 +41,13 @@ class MatchTimelineEventResponse(BaseModel):
     team_id: Optional[UUID] = Field(default=None)
     player_id: Optional[UUID] = Field(default=None)
     created_at: Optional[datetime] = Field(default=None)
+    metadata: Optional[Any] = Field(
+        default=None,
+        description=(
+            "Dados adicionais do evento (ex: cartões anteriores em CARD_YELLOW, "
+            "motivo da EXPULSION, placar do set em SET_END)"
+        ),
+    )
 
 
 class MatchManagementResponse(BaseModel):
@@ -72,3 +79,19 @@ class MatchManagementResponse(BaseModel):
     )
 
     timeline: List[MatchTimelineEventResponse] = Field(default_factory=list)
+
+    metadata: Optional[Any] = Field(
+        default=None,
+        description=(
+            "Dados adicionais da partida (ex: no vôlei, "
+            "current_set_score/current_set_number/sets/sets_won)"
+        ),
+    )
+    match_point_reached: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Preenchido apenas na resposta de "
+            "fim de set, indica se algum time já atingiu os sets necessários "
+            "para vencer a partida (sugestão para UC015)"
+        ),
+    )

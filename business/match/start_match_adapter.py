@@ -58,7 +58,6 @@ class StartMatchAdapter(StartMatchPort):
         if match is None:
             raise BusinessException("Partida não encontrada")
 
-        # Regra de negócio 2: partida deve estar em SCHEDULED.
         if match.status != MatchStatus.SCHEDULED:
             status_atual = match.status.value if match.status else "desconhecido"
             raise BusinessException(
@@ -77,7 +76,6 @@ class StartMatchAdapter(StartMatchPort):
         if team1 is None or team2 is None:
             raise BusinessException("Um dos times da partida não foi encontrado")
 
-        # Regra de negócio 3: ambos os times devem estar APPROVED.
         not_approved_teams = [
             team.name for team in (team1, team2) if team.status != TeamStatus.APPROVED
         ]
@@ -87,7 +85,6 @@ class StartMatchAdapter(StartMatchPort):
                 + ", ".join(not_approved_teams)
             )
 
-        # Regra de negócio 4: monitor só pode gerenciar uma partida IN_PROGRESS por vez.
         ongoing_match = await self.match_repository.find_in_progress_by_monitor(
             monitor_id
         )
@@ -111,12 +108,11 @@ class StartMatchAdapter(StartMatchPort):
         # infraestrutura de auditoria ainda inexistente no projeto.
         saved_match = await self.match_repository.save(match)
 
-        # Regra de negócio 8: cria evento MATCH_STARTED na timeline.
         match_start_event = MatchEvent(
             match_id=saved_match.id,
             event_type=EventType.MATCH_STARTED,
             clock_seconds=0,
-            metadata={"monitor_id": str(monitor_id)},
+            metadata_json={"monitor_id": str(monitor_id)},
         )
         saved_event = await self.match_event_repository.save(match_start_event)
 

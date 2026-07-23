@@ -61,6 +61,13 @@ from web.dependencies.business.bracket_dependencies import (
 
 from web.dependencies.business.match_dependencies import (
     get_start_match_port,
+    get_register_goal_port,
+    get_register_card_port,
+    get_pause_clock_port,
+    get_resume_clock_port,
+    get_end_period_port,
+    get_start_period_port,
+    get_end_set_port,
 )
 
 from web.dependencies.business.auth_dependencies import (
@@ -136,6 +143,13 @@ __all__ = [
 
     # Business Dependencies - Matches
     "get_start_match_port",
+    "get_register_goal_port",
+    "get_register_card_port",
+    "get_pause_clock_port",
+    "get_resume_clock_port",
+    "get_end_period_port",
+    "get_start_period_port",
+    "get_end_set_port",
 
     # Business Dependencies - Auth
     "get_oauth_provider",

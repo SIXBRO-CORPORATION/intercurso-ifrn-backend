@@ -11,3 +11,4 @@ class EventType(Enum):
     CARD_YELLOW = "Cartão amerelo"
     CARD_RED = "Cartão vermelho"
     EXPULSION = "Expulsão"
+    SET_END = "Fim de set"

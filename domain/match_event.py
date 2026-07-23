@@ -12,4 +12,4 @@ class MatchEvent(AbstractDomain):
     player_id:UUID = None
     event_type: EventType = None
     clock_seconds: int = None
-    metadata: dict = field(default_factory=dict)
+    metadata_json: dict = field(default_factory=dict)

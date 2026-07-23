@@ -31,7 +31,7 @@ class MatchMapper:
             clock_running=entity.clock_running,
             current_period=entity.current_period,
             is_bye=entity.is_bye,
-            metadata=entity.metadata,
+            metadata_json=entity.metadata_json,
             created_at=entity.created_at,
             modified_at=entity.modified_at,
             active=entity.active
@@ -62,7 +62,7 @@ class MatchMapper:
             clock_running=domain.clock_running,
             current_period=domain.current_period,
             is_bye=domain.is_bye,
-            metadata=domain.metadata,
+            metadata_json=domain.metadata_json,
             created_at=domain.created_at,
             modified_at=domain.modified_at,
             active=domain.active

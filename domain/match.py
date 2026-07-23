@@ -30,4 +30,16 @@ class Match(AbstractDomain):
     clock_running: bool = None
     current_period: int = None
     is_bye: bool = None
-    metadata: dict = field(default_factory=dict)
+    metadata_json: dict = field(default_factory=dict)
+
+    def current_clock_seconds(self, now: datetime = None) -> int:
+        base = self.clock_seconds or 0
+        if self.clock_running and self.modified_at:
+            reference = now or datetime.now()
+            elapsed = (reference - self.modified_at).total_seconds()
+            if elapsed > 0:
+                return base + int(elapsed)
+        return base
+
+    def sync_clock(self, now: datetime = None) -> None:
+        self.clock_seconds = self.current_clock_seconds(now)
