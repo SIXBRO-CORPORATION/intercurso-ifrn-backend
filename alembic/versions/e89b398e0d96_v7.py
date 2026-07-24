@@ -8,11 +8,8 @@ Create Date: 2026-07-24 20:35:13.454439
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 from alembic_utils.pg_function import PGFunction
-from sqlalchemy import text as sql_text
 from alembic_utils.pg_trigger import PGTrigger
-from sqlalchemy import text as sql_text
 
 # revision identifiers, used by Alembic.
 revision: str = 'e89b398e0d96'
