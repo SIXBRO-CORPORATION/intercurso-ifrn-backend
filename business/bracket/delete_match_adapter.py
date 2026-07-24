@@ -2,7 +2,7 @@ from uuid import UUID
 
 from core.business.bracket.delete_match_port import DeleteMatchPort
 from core.context import Context
-from core.persistence.match_repository_port import MatchRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
 from domain.enums.match_status import MatchStatus
 from domain.exceptions.business_exception import BusinessException
 

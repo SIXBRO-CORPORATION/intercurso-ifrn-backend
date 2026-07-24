@@ -4,15 +4,15 @@ from uuid import UUID
 
 from core.business.season.create_season_port import CreateSeasonPort
 from core.context import Context
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season import Season
-from domain.season_modality import SeasonModality
+from domain.season.season_modality import SeasonModality
 
 
 class CreateSeasonAdapter(CreateSeasonPort):

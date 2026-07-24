@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import Optional, Dict, Any, Tuple
 from uuid import UUID
 
-from domain.auth_token import AuthToken
+from domain.security.auth_token import AuthToken
 
 
 class JWTProviderPort(ABC):

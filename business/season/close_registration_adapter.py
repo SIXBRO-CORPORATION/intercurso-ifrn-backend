@@ -3,7 +3,7 @@ from uuid import UUID
 
 from core.business.season.close_registration_port import CloseRegistrationPort
 from core.context import Context
-from core.persistence.season_repository_port import SeasonRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season import Season

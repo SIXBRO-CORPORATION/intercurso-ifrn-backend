@@ -14,12 +14,12 @@ from core.business.season.finish_season_port import FinishSeasonPort
 from core.business.season.get_season_details_port import GetSeasonDetailsPort
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from web.dependencies.persistence_dependencies import (
     get_modality_repository,
     get_season_modality_repository,

@@ -10,14 +10,14 @@ from core.business.team.select_captain_port import SelectCaptainPort
 from core.business.team.remove_member_port import RemoveMemberPort
 from core.business.team.leave_team_port import LeaveTeamPort
 from core.business.team.submit_team_port import SubmitTeamPort
-from core.persistence.team_repository_port import TeamRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.modality_repository_port import ModalityRepositoryPort
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
 from business.team.create_team_adapter import CreateTeamAdapter
 from business.team.approve_team_adapter import ApproveTeamAdapter
 from business.team.confirm_donation_adapter import ConfirmDonationAdapter

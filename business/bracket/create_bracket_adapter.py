@@ -8,20 +8,20 @@ from business.bracket.engine.config_suggester import (
 from business.bracket.engine.draw_engine import build_draw
 from core.business.bracket.create_bracket_port import CreateBracketPort
 from core.context import Context
-from core.persistence.bracket_group_repository_port import BracketGroupRepositoryPort
-from core.persistence.bracket_group_team_repository_port import (
+from core.persistence.bracket.bracket_group_repository_port import BracketGroupRepositoryPort
+from core.persistence.bracket.bracket_group_team_repository_port import (
     BracketGroupTeamRepositoryPort,
 )
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.bracket import Bracket
-from domain.bracket_group import BracketGroup
-from domain.bracket_group_team import BracketGroupTeam
+from domain.bracket.bracket_group import BracketGroup
+from domain.bracket.bracket_group_team import BracketGroupTeam
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException

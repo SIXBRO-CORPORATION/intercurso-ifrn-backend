@@ -4,23 +4,23 @@ from uuid import UUID
 
 from core.business.match.start_match_port import StartMatchPort
 from core.context import Context
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_event_repository_port import MatchEventRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.modality_configuration_repository_port import (
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.event_type import EventType
 from domain.enums.match_status import MatchStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.match import Match
-from domain.match_event import MatchEvent
-from domain.team_member import TeamMember
+from domain.match.match_event import MatchEvent
+from domain.team.team_member import TeamMember
 from domain.user import User
 
 

@@ -14,11 +14,11 @@ from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.match import Match
-from domain.match_event import MatchEvent
+from domain.match.match_event import MatchEvent
 from domain.modality import Modality
-from domain.modality_configuration import ModalityConfiguration
+from domain.modality.modality_configuration import ModalityConfiguration
 from domain.team import Team
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 from domain.user import User
 
 

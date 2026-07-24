@@ -17,9 +17,9 @@ from web.dependencies import (
     require_admin,
 )
 from web.mappers.user_model_mapper import UserModelMapper
-from web.models.request.admin_create_user_request import AdminCreateUserRequest
-from web.models.request.admin_update_user_request import AdminUpdateUserRequest
-from web.models.response.user_response import UserResponse
+from web.models.request.admin.admin_create_user_request import AdminCreateUserRequest
+from web.models.request.admin.admin_update_user_request import AdminUpdateUserRequest
+from web.models.response.user.user_response import UserResponse
 
 
 router = APIRouter(prefix="/api/user", tags=["user"])

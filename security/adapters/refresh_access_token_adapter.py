@@ -1,7 +1,7 @@
 from security.services.refresh_token_service import RefreshTokenService
 from core.security.refresh_access_token_port import RefreshAccessTokenPort
 from core.context import Context
-from domain.auth_token import AuthToken
+from domain.security.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException
 
 

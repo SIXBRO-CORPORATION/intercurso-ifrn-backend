@@ -14,8 +14,8 @@ from core.business.match.start_period_port import StartPeriodPort
 from core.business.match.end_set_port import EndSetPort
 from core.context import Context
 from domain.modality import Modality
-from domain.modality_configuration import ModalityConfiguration
-from domain.match_event import MatchEvent
+from domain.modality.modality_configuration import ModalityConfiguration
+from domain.match.match_event import MatchEvent
 from domain.team import Team
 from domain.user import User
 from web.commons.api_response import ApiResponse
@@ -32,9 +32,9 @@ from web.dependencies import (
     require_monitor,
 )
 from web.mappers.match_model_mapper import MatchModelMapper
-from web.models.request.match_card_request import MatchCardRequest
-from web.models.request.match_goal_request import MatchGoalRequest
-from web.models.response.match_management_response import MatchManagementResponse
+from web.models.request.match.match_card_request import MatchCardRequest
+from web.models.request.match.match_goal_request import MatchGoalRequest
+from web.models.response.match.match_management_response import MatchManagementResponse
 
 router = APIRouter(prefix="/api/match", tags=["match"])
 

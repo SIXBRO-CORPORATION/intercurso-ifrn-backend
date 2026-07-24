@@ -2,14 +2,14 @@ from typing import Optional
 
 from domain.modality import Modality
 from domain.team import Team
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 from domain.user import User
-from web.models.response.team_invite_preview_response import (
+from web.models.response.team.team_invite_preview_response import (
     TeamInvitePreviewResponse,
 )
-from web.models.response.team_join_response import TeamJoinResponse
-from web.models.response.team_member_response import TeamMemberResponse
-from web.models.response.team_register_response import TeamRegisterResponse
+from web.models.response.team.team_join_response import TeamJoinResponse
+from web.models.response.team.team_member_response import TeamMemberResponse
+from web.models.response.team.team_register_response import TeamRegisterResponse
 
 
 class TeamModelMapper:

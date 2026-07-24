@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from uuid import UUID
 
-from domain.audit_log import AuditLog
+from domain.audit.audit_log import AuditLog
 
 
 class AuditLogRepositoryPort(ABC):

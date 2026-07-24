@@ -28,8 +28,8 @@ from web.dependencies import (
     get_user_model_mapper,
 )
 from web.mappers.user_model_mapper import UserModelMapper
-from web.models.request.refresh_token_request import RefreshTokenRequest
-from web.models.response.user_response import UserResponse
+from web.models.request.auth.refresh_token_request import RefreshTokenRequest
+from web.models.response.user.user_response import UserResponse
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 

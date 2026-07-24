@@ -1,10 +1,10 @@
 from typing import List
 
 from domain.season import Season
-from domain.season_modality import SeasonModality
-from web.models.response.season_create_response import SeasonCreateResponse
-from web.models.response.season_details_response import SeasonDetailsResponse
-from web.models.response.season_status_response import SeasonStatusResponse
+from domain.season.season_modality import SeasonModality
+from web.models.response.season.season_create_response import SeasonCreateResponse
+from web.models.response.season.season_details_response import SeasonDetailsResponse
+from web.models.response.season.season_status_response import SeasonStatusResponse
 
 
 class SeasonModelMapper:

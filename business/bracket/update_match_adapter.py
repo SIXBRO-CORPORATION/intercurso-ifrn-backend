@@ -3,9 +3,9 @@ from uuid import UUID
 
 from core.business.bracket.update_match_port import UpdateMatchPort
 from core.context import Context
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.match_status import MatchStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException

@@ -9,7 +9,7 @@ from core.context import Context
 from domain.exceptions.business_exception import BusinessException
 from domain.modality import Modality
 from domain.season import Season
-from domain.season_modality import SeasonModality
+from domain.season.season_modality import SeasonModality
 
 
 def make_adapter():

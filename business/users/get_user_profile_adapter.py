@@ -2,7 +2,7 @@ from uuid import UUID
 
 from core.business.users.get_user_profile_port import GetUserProfilePort
 from core.context import Context
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.user import User
 
 

@@ -3,8 +3,8 @@ from uuid import UUID
 
 from core.business.season.finish_season_port import FinishSeasonPort
 from core.context import Context
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season import Season

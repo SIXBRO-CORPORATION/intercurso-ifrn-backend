@@ -8,17 +8,17 @@ from core.business.bracket.get_bracket_config_suggestion_port import (
 )
 from core.business.bracket.resort_bracket_port import ResortBracketPort
 from core.business.bracket.update_match_port import UpdateMatchPort
-from core.persistence.bracket_group_repository_port import BracketGroupRepositoryPort
-from core.persistence.bracket_group_team_repository_port import (
+from core.persistence.bracket.bracket_group_repository_port import BracketGroupRepositoryPort
+from core.persistence.bracket.bracket_group_team_repository_port import (
     BracketGroupTeamRepositoryPort,
 )
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from business.bracket.create_bracket_adapter import CreateBracketAdapter
 from business.bracket.delete_match_adapter import DeleteMatchAdapter
 from business.bracket.get_bracket_config_suggestion_adapter import (

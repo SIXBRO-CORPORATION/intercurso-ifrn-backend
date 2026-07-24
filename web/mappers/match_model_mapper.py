@@ -1,13 +1,13 @@
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from domain.match import Match
-from domain.match_event import MatchEvent
+from domain.match.match_event import MatchEvent
 from domain.modality import Modality
-from domain.modality_configuration import ModalityConfiguration
+from domain.modality.modality_configuration import ModalityConfiguration
 from domain.team import Team
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 from domain.user import User
-from web.models.response.match_management_response import (
+from web.models.response.match.match_management_response import (
     MatchManagementResponse,
     MatchModalityConfigurationResponse,
     MatchPlayerResponse,

@@ -4,10 +4,10 @@ from fastapi import Depends
 
 from business.modality.create_modality_adapter import CreateModalityAdapter
 from core.business.modality.create_modality_port import CreateModalityPort
-from core.persistence.modality_configuration_repository_port import (
+from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
-from core.persistence.modality_repository_port import ModalityRepositoryPort
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
 from web.dependencies.persistence_dependencies import (
     get_modality_configuration_repository,
     get_modality_repository,

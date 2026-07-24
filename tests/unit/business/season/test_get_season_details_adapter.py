@@ -9,7 +9,7 @@ from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season import Season
-from domain.season_modality import SeasonModality
+from domain.season.season_modality import SeasonModality
 from domain.team import Team
 
 

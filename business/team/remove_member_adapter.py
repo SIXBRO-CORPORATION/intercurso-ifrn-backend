@@ -2,13 +2,13 @@ from uuid import UUID
 
 from core.business.team.remove_member_port import RemoveMemberPort
 from core.context import Context
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.team_status import TeamStatus
 from domain.enums.user_role import UserRole
 from domain.exceptions.business_exception import BusinessException
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 
 
 class RemoveMemberAdapter(RemoveMemberPort):

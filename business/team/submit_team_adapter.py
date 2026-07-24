@@ -3,10 +3,10 @@ from uuid import UUID
 
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.context import Context
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.donation_status import DonationStatus
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus

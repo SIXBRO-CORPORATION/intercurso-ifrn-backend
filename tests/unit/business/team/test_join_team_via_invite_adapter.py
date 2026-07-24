@@ -14,7 +14,7 @@ from domain.exceptions.business_exception import BusinessException
 from domain.modality import Modality
 from domain.season import Season
 from domain.team import Team
-from domain.team_member import TeamMember
+from domain.team.team_member import TeamMember
 from domain.user import User
 
 

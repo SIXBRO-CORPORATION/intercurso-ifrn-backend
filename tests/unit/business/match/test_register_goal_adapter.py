@@ -10,9 +10,9 @@ from domain.enums.score_type import ScoreType
 from domain.enums.team_member_role import TeamMemberRole
 from domain.exceptions.business_exception import BusinessException
 from domain.bracket import Bracket
-from domain.match_event import MatchEvent
-from domain.modality_configuration import ModalityConfiguration
-from domain.team_member import TeamMember
+from domain.match.match_event import MatchEvent
+from domain.modality.modality_configuration import ModalityConfiguration
+from domain.team.team_member import TeamMember
 
 from tests.unit.business.match._helpers import (
     make_adapter,

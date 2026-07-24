@@ -19,7 +19,7 @@ from domain.exceptions.jwt_exception import (
     JWTDecodeError,
 )
 from security.config import settings
-from domain.auth_token import AuthToken
+from domain.security.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException
 
 
