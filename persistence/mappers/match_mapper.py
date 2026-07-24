@@ -32,6 +32,8 @@ class MatchMapper:
             current_period=entity.current_period,
             is_bye=entity.is_bye,
             metadata_json=entity.metadata_json,
+            team1_sets_won=entity.team1_sets_won,
+            team2_sets_won=entity.team2_sets_won,
             created_at=entity.created_at,
             modified_at=entity.modified_at,
             active=entity.active
@@ -63,6 +65,8 @@ class MatchMapper:
             current_period=domain.current_period,
             is_bye=domain.is_bye,
             metadata_json=domain.metadata_json,
+            team1_sets_won=domain.team1_sets_won,
+            team2_sets_won=domain.team2_sets_won,
             created_at=domain.created_at,
             modified_at=domain.modified_at,
             active=domain.active

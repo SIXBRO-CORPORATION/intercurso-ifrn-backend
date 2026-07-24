@@ -11,7 +11,20 @@ class MatchTeamResponse(BaseModel):
     team_id: UUID = Field()
     name: str = Field()
     photo: Optional[str] = Field(default=None, description="Logo do time")
-    score: int = Field(description="Placar atual do time")
+    score: int = Field(description="Placar atual do time (no vôlei, placar do set em andamento)")
+    sets_won: Optional[int] = Field(
+        default=None,
+        description="Sets vencidos na partida (apenas modalidades com score_type SETS)",
+    )
+
+
+class MatchSetResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    set_number: int = Field()
+    team1_points: int = Field()
+    team2_points: int = Field()
+    winner_team_id: UUID = Field()
 
 
 class MatchPlayerResponse(BaseModel):
@@ -30,6 +43,15 @@ class MatchModalityConfigurationResponse(BaseModel):
     period_duration_minutes: Optional[int] = Field(default=None)
     score_type: Optional[str] = Field(default=None)
     has_third_place_match: Optional[bool] = Field(default=None)
+    points_per_set: Optional[int] = Field(
+        default=None, description="Vôlei (ADR002): pontos necessários para vencer um set normal"
+    )
+    final_set_points: Optional[int] = Field(
+        default=None, description="Vôlei (ADR002): pontos necessários para vencer o set decisivo"
+    )
+    sets_to_win: Optional[int] = Field(
+        default=None, description="Vôlei (ADR002): sets necessários para vencer a partida"
+    )
 
 
 class MatchTimelineEventResponse(BaseModel):
@@ -80,11 +102,17 @@ class MatchManagementResponse(BaseModel):
 
     timeline: List[MatchTimelineEventResponse] = Field(default_factory=list)
 
+    sets: List[MatchSetResponse] = Field(
+        default_factory=list,
+        description="Histórico de sets já disputados (vôlei, ADR002); vazio para outras modalidades",
+    )
+
     metadata: Optional[Any] = Field(
         default=None,
         description=(
-            "Dados adicionais da partida (ex: no vôlei, "
-            "current_set_score/current_set_number/sets/sets_won)"
+            "Metadados livres da partida (uso genérico/futuro). Os dados de "
+            "sets do vôlei NÃO ficam mais aqui: veja team1.sets_won/"
+            "team2.sets_won e o campo `sets` (ADR002)."
         ),
     )
     match_point_reached: Optional[bool] = Field(
