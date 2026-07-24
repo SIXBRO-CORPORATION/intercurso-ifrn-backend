@@ -13,11 +13,11 @@ from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.event_type import EventType
 from domain.enums.match_status import MatchStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
-from domain.modality import Modality
+from domain.match.match import Match
+from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
 from domain.team.team_member import TeamMember
-from domain.user import User
+from domain.user.user import User
 
 
 async def validate_match_in_progress(

@@ -9,7 +9,7 @@ from core.persistence.match.match_event_repository_port import MatchEventReposit
 from domain.enums.event_type import EventType
 from domain.match.match_event import MatchEvent
 from persistence.mappers.match.match_event_mapper import MatchEventMapper
-from persistence.model.match_event_entity import MatchEventEntity
+from persistence.model.match.match_event_entity import MatchEventEntity
 
 
 class MatchEventRepositoryAdapter(MatchEventRepositoryPort):

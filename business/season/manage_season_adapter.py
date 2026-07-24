@@ -1,22 +1,34 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.context import Context
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
+from domain.season.season import Season
 
 
 class ManageSeasonAdapter(ManageSeasonPort):
-    def __init__(self, season_repository: SeasonRepositoryPort):
+    def __init__(
+        self,
+        season_repository: SeasonRepositoryPort,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
+    ):
         self.season_repository = season_repository
+        self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
         season_id = context.get_property("season_id", UUID)
         new_start = context.get_property("new_registration_start_date", datetime)
         new_end = context.get_property("new_registration_end_date", datetime)
+        reason = context.get_property("reason", str)
+        updated_by = context.get_property("updated_by", UUID)
 
         if season_id is None:
             raise BusinessException("Identificador da temporada é obrigatório")
@@ -42,6 +54,9 @@ class ManageSeasonAdapter(ManageSeasonPort):
 
         now = datetime.now(timezone.utc)
 
+        old_start = season.registration_start_date
+        old_end = season.registration_end_date
+
         if new_start is not None:
             if new_start < now:
                 raise BusinessException(
@@ -60,9 +75,26 @@ class ManageSeasonAdapter(ManageSeasonPort):
 
         updated_season = await self.season_repository.save(season)
 
-        # TODO (débito técnico assumido nesta fase, mesmo padrão do UC001):
-        # registrar a alteração em auditoria (monitor responsável, data/hora,
-        # datas antigas/novas, motivo informado). Não há infraestrutura de
-        # auditoria no projeto ainda.
+        updating_user = (
+            await self.user_repository.get(updated_by) if updated_by else None
+        )
+        actor_role = (
+            updating_user.role.value
+            if updating_user is not None and updating_user.role
+            else None
+        )
+        description = (
+            f"Datas da temporada '{updated_season.name}' atualizadas "
+            f"(abertura: {old_start} -> {updated_season.registration_start_date}, "
+            f"encerramento: {old_end} -> {updated_season.registration_end_date})"
+        )
+        if reason:
+            description += f" — motivo: {reason}"
+        await self.audit_logger.log(
+            action=AuditAction.SEASON_DATES_UPDATED,
+            description=description,
+            actor_id=updated_by,
+            actor_role=actor_role,
+        )
 
         return updated_season

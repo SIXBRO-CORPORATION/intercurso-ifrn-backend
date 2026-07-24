@@ -5,7 +5,7 @@ from uuid import uuid4
 from domain.enums.match_category import MatchCategory
 from domain.enums.match_status import MatchStatus
 from domain.enums.match_type import MatchType
-from domain.match import Match
+from domain.match.match import Match
 
 
 def make_mocks():

@@ -6,9 +6,10 @@ import pytest
 
 from business.season.create_season_adapter import CreateSeasonAdapter
 from core.context import Context
+from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
-from domain.modality import Modality
-from domain.season import Season
+from domain.modality.modality import Modality
+from domain.season.season import Season
 from domain.season.season_modality import SeasonModality
 
 
@@ -16,20 +17,33 @@ def make_adapter():
     season_repository = AsyncMock()
     season_modality_repository = AsyncMock()
     modality_repository = AsyncMock()
+    user_repository = AsyncMock()
+    audit_logger = AsyncMock()
 
     adapter = CreateSeasonAdapter(
-        season_repository, season_modality_repository, modality_repository
+        season_repository,
+        season_modality_repository,
+        modality_repository,
+        user_repository,
+        audit_logger,
     )
-    return adapter, season_repository, season_modality_repository, modality_repository
+    return (
+        adapter,
+        season_repository,
+        season_modality_repository,
+        modality_repository,
+        user_repository,
+        audit_logger,
+    )
 
 
 def make_context(
-    name="Intercurso 2026",
-    year=None,
-    modality_ids=None,
-    registration_start_date=None,
-    registration_end_date=None,
-    open_immediately=False,
+        name="Intercurso 2026",
+        year=None,
+        modality_ids=None,
+        registration_start_date=None,
+        registration_end_date=None,
+        open_immediately=False,
 ):
     now = datetime.now(timezone.utc)
     year = year if year is not None else now.year
@@ -62,9 +76,14 @@ def make_context(
 @pytest.mark.unit
 class TestCreateSeasonAdapter:
     async def test_creates_season_as_draft_successfully(self):
-        adapter, season_repository, season_modality_repository, modality_repository = (
-            make_adapter()
-        )
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            user_repository,
+            audit_logger,
+        ) = make_adapter()
         modality_id = uuid4()
         modality_repository.get.return_value = Modality(
             id=modality_id, name="Futsal", min_members=5, max_members=10, active=True
@@ -85,11 +104,20 @@ class TestCreateSeasonAdapter:
         season_modality_repository.save.assert_awaited_once()
         # Abertura não imediata: não deve nem consultar temporada ativa
         season_repository.find_active_season.assert_not_awaited()
+        audit_logger.log.assert_awaited_once()
+        assert (
+                audit_logger.log.await_args.kwargs["action"] == AuditAction.SEASON_CREATED
+        )
 
     async def test_open_immediately_deactivates_current_active_season(self):
-        adapter, season_repository, season_modality_repository, modality_repository = (
-            make_adapter()
-        )
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            user_repository,
+            audit_logger,
+        ) = make_adapter()
         modality_id = uuid4()
         modality_repository.get.return_value = Modality(
             id=modality_id, name="Futsal", min_members=5, max_members=10, active=True
@@ -155,7 +183,7 @@ class TestCreateSeasonAdapter:
             await adapter.execute(context)
 
     async def test_blocks_nonexistent_modality(self):
-        adapter, _, _, modality_repository = make_adapter()
+        adapter, _, _, modality_repository, *_rest = make_adapter()
         modality_repository.get.return_value = None
 
         context = make_context()
@@ -164,7 +192,7 @@ class TestCreateSeasonAdapter:
             await adapter.execute(context)
 
     async def test_blocks_inactive_modality(self):
-        adapter, _, _, modality_repository = make_adapter()
+        adapter, _, _, modality_repository, *_rest = make_adapter()
         modality_repository.get.return_value = Modality(
             id=uuid4(), name="Futsal", active=False
         )

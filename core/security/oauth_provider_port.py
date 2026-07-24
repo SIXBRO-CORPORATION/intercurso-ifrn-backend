@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from domain.user import User
+from domain.user.user import User
 
 
 class OAuthProviderPort(ABC):

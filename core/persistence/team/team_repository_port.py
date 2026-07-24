@@ -4,7 +4,7 @@ from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
 from domain.enums.team_status import TeamStatus
-from domain.team import Team
+from domain.team.team import Team
 
 
 class TeamRepositoryPort(BaseRepositoryPort[Team]):

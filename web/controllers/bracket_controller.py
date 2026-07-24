@@ -12,10 +12,10 @@ from core.business.bracket.get_bracket_config_suggestion_port import (
 from core.business.bracket.resort_bracket_port import ResortBracketPort
 from core.business.bracket.update_match_port import UpdateMatchPort
 from core.context import Context
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.modality_format import ModalityFormat
 from domain.exceptions.business_exception import BusinessException
-from domain.user import User
+from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import (
     get_bracket_config_suggestion_port,

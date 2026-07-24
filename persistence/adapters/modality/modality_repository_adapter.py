@@ -5,9 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
-from domain.modality import Modality
+from domain.modality.modality import Modality
 from persistence.mappers.modality.modality_mapper import ModalityMapper
-from persistence.model.modality_entity import ModalityEntity
+from persistence.model.modality.modality_entity import ModalityEntity
 
 
 class ModalityRepositoryAdapter(ModalityRepositoryPort):

@@ -9,7 +9,7 @@ from core.persistence.season.season_modality_repository_port import (
 )
 from domain.season.season_modality import SeasonModality
 from persistence.mappers.season.season_modality_mapper import SeasonModalityMapper
-from persistence.model.season_modality_entity import SeasonModalityEntity
+from persistence.model.season.season_modality_entity import SeasonModalityEntity
 
 
 class SeasonModalityRepositoryAdapter(SeasonModalityRepositoryPort):

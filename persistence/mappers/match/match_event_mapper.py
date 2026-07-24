@@ -1,7 +1,7 @@
 from typing import Optional
 from domain.match.match_event import MatchEvent
 from domain.enums.event_type import EventType
-from persistence.model.match_event_entity import MatchEventEntity
+from persistence.model.match.match_event_entity import MatchEventEntity
 
 class MatchEventMapper:
     def to_domain(self, entity: Optional[MatchEventEntity]) -> Optional[MatchEvent]:

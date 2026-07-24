@@ -1,5 +1,5 @@
 from core.command import Command
-from domain.season import Season
+from domain.season.season import Season
 
 
 class CreateSeasonPort(Command[Season]):

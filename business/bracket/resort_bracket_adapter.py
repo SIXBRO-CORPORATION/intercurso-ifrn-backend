@@ -6,6 +6,7 @@ from business.bracket.engine.config_suggester import (
 )
 from business.bracket.engine.draw_engine import build_draw
 from core.business.bracket.resort_bracket_port import ResortBracketPort
+from core.business.audit.audit_logger import AuditLogger
 from core.context import Context
 from core.persistence.bracket.bracket_group_repository_port import BracketGroupRepositoryPort
 from core.persistence.bracket.bracket_group_team_repository_port import (
@@ -14,14 +15,16 @@ from core.persistence.bracket.bracket_group_team_repository_port import (
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
-from domain.bracket import Bracket
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.bracket.bracket import Bracket
 from domain.bracket.bracket_group import BracketGroup
 from domain.bracket.bracket_group_team import BracketGroupTeam
+from domain.enums.audit_action import AuditAction
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.match_status import MatchStatus
 from domain.enums.modality_format import ModalityFormat
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 
 
 class ResortBracketAdapter(ResortBracketPort):
@@ -32,15 +35,20 @@ class ResortBracketAdapter(ResortBracketPort):
         bracket_group_team_repository: BracketGroupTeamRepositoryPort,
         match_repository: MatchRepositoryPort,
         team_repository: TeamRepositoryPort,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.bracket_repository = bracket_repository
         self.bracket_group_repository = bracket_group_repository
         self.bracket_group_team_repository = bracket_group_team_repository
         self.match_repository = match_repository
         self.team_repository = team_repository
+        self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Bracket:
         bracket_id = context.get_property("bracket_id", UUID)
+        requested_by = context.get_property("requested_by", UUID)
         if bracket_id is None:
             raise BusinessException("Chaveamento é obrigatório")
 
@@ -71,9 +79,6 @@ class ResortBracketAdapter(ResortBracketPort):
         team_count = len(approved_teams)
         validate_team_count_for_format(bracket.format, team_count)
 
-        # Mantém as escolhas manuais do monitor (ex.: num_groups/classified_per_group),
-        # mas recalcula group_sizes para o número atual de times aprovados, caso
-        # a composição de times tenha mudado desde a criação original.
         configuration_override = dict(bracket.configuration or {})
         if bracket.format == ModalityFormat.GROUP_STAGE_KNOCKOUT:
             configuration_override.pop("group_sizes", None)
@@ -144,9 +149,22 @@ class ResortBracketAdapter(ResortBracketPort):
         bracket.configuration = resolved_config
         saved_bracket = await self.bracket_repository.save(bracket)
 
-        # TODO (débito técnico, mesmo padrão das fases anteriores): registro de
-        # auditoria do re-sorteio (monitor, data/hora) depende de infraestrutura
-        # ainda inexistente no projeto.
+        requesting_monitor = (
+            await self.user_repository.get(requested_by) if requested_by else None
+        )
+        actor_role = (
+            requesting_monitor.role.value
+            if requesting_monitor is not None and requesting_monitor.role
+            else None
+        )
+        await self.audit_logger.log(
+            action=AuditAction.BRACKET_RESORTED,
+            description=(
+                f"Chaveamento re-sorteado para {team_count} time(s) aprovado(s)"
+            ),
+            actor_id=requested_by,
+            actor_role=actor_role,
+        )
 
         context.put_property("teams_count", team_count)
         context.put_property("groups_created", len(draw_plan.groups))

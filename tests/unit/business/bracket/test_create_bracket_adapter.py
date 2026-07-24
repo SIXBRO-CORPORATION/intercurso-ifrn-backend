@@ -5,14 +5,15 @@ import pytest
 
 from business.bracket.create_bracket_adapter import CreateBracketAdapter
 from core.context import Context
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.modality_format import ModalityFormat
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
+from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
-from domain.team import Team
+from domain.season.season import Season
+from domain.team.team import Team
 
 
 def make_adapter():
@@ -23,6 +24,8 @@ def make_adapter():
     team_repository = AsyncMock()
     season_repository = AsyncMock()
     season_modality_repository = AsyncMock()
+    user_repository = AsyncMock()
+    audit_logger = AsyncMock()
 
     adapter = CreateBracketAdapter(
         bracket_repository,
@@ -32,6 +35,8 @@ def make_adapter():
         team_repository,
         season_repository,
         season_modality_repository,
+        user_repository,
+        audit_logger,
     )
     return (
         adapter,
@@ -42,6 +47,8 @@ def make_adapter():
         team_repository,
         season_repository,
         season_modality_repository,
+        user_repository,
+        audit_logger,
     )
 
 
@@ -70,14 +77,14 @@ def make_context(modality_id, modality_format, configuration=None):
 
 
 def configure_happy_path(
-    bracket_repository,
-    season_modality_repository,
-    team_repository,
-    season_repository,
-    season,
-    modality_id,
-    team_count=8,
-    existing_brackets=None,
+        bracket_repository,
+        season_modality_repository,
+        team_repository,
+        season_repository,
+        season,
+        modality_id,
+        team_count=8,
+        existing_brackets=None,
 ):
     season_repository.find_active_season.return_value = season
     season_modality_repository.exists_by_season_and_modality.return_value = True
@@ -111,6 +118,8 @@ class TestCreateBracketAdapterSuccess:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
 
         modality_id = uuid4()
@@ -135,6 +144,11 @@ class TestCreateBracketAdapterSuccess:
         assert context.get_property("teams_count", int) == 8
         assert context.get_property("matches_created", int) == 8
         assert match_repository.save.await_count == 8
+        audit_logger.log.assert_awaited_once()
+        assert (
+                audit_logger.log.await_args.kwargs["action"]
+                == AuditAction.BRACKET_CREATED
+        )
 
     @pytest.mark.asyncio
     async def test_subsequent_bracket_does_not_transition_season(self):
@@ -147,6 +161,8 @@ class TestCreateBracketAdapterSuccess:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
 
         modality_id = uuid4()
@@ -179,6 +195,8 @@ class TestCreateBracketAdapterSuccess:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
 
         modality_id = uuid4()
@@ -216,6 +234,8 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
         season_repository.find_active_season.return_value = None
 
@@ -234,6 +254,8 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
         season_repository.find_active_season.return_value = make_season(
             SeasonStatus.REGISTRATION_OPEN
@@ -254,6 +276,8 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
         season_repository.find_active_season.return_value = make_season()
         season_modality_repository.exists_by_season_and_modality.return_value = False
@@ -273,6 +297,8 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
         season_repository.find_active_season.return_value = make_season()
         season_modality_repository.exists_by_season_and_modality.return_value = True
@@ -293,6 +319,8 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
         modality_id = uuid4()
         season = make_season()
@@ -318,6 +346,8 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
+            user_repository,
+            audit_logger,
         ) = make_adapter()
         modality_id = uuid4()
         season = make_season()

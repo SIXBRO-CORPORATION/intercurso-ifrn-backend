@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import Depends
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.match.start_match_port import StartMatchPort
 from core.business.match.register_goal_port import RegisterGoalPort
 from core.business.match.register_card_port import RegisterCardPort
@@ -27,6 +28,7 @@ from business.match.resume_clock_adapter import ResumeClockAdapter
 from business.match.end_period_adapter import EndPeriodAdapter
 from business.match.start_period_adapter import StartPeriodAdapter
 from business.match.end_set_adapter import EndSetAdapter
+from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
     get_bracket_repository,
     get_match_event_repository,
@@ -57,6 +59,7 @@ def get_start_match_port(
     modality_repository: Annotated[
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> StartMatchPort:
     return StartMatchAdapter(
         match_repository,
@@ -67,6 +70,7 @@ def get_start_match_port(
         bracket_repository,
         modality_configuration_repository,
         modality_repository,
+        audit_logger,
     )
 
 

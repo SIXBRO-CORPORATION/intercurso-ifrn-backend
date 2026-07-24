@@ -10,7 +10,7 @@ from core.security.refresh_access_token_port import RefreshAccessTokenPort
 from core.context import Context
 from core.security.oauth_provider_port import OAuthProviderPort
 from domain.exceptions.business_exception import BusinessException
-from domain.user import User
+from domain.user.user import User
 from security.config import settings
 from security.utils.oauth_state import (
     OAUTH_STATE_COOKIE_NAME,

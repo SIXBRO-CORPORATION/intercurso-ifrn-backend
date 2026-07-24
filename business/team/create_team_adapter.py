@@ -16,7 +16,7 @@ from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.donation_status import DonationStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.team import Team
+from domain.team.team import Team
 from domain.team.team_member import TeamMember
 
 

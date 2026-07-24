@@ -9,7 +9,7 @@ from domain.enums.match_status import MatchStatus
 from domain.enums.score_type import ScoreType
 from domain.enums.team_member_role import TeamMemberRole
 from domain.exceptions.business_exception import BusinessException
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.match.match_event import MatchEvent
 from domain.modality.modality_configuration import ModalityConfiguration
 from domain.team.team_member import TeamMember

@@ -1,20 +1,31 @@
 from datetime import datetime
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.season.close_registration_port import CloseRegistrationPort
 from core.context import Context
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
+from domain.season.season import Season
 
 
 class CloseRegistrationAdapter(CloseRegistrationPort):
-    def __init__(self, season_repository: SeasonRepositoryPort):
+    def __init__(
+        self,
+        season_repository: SeasonRepositoryPort,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
+    ):
         self.season_repository = season_repository
+        self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
         season_id = context.get_property("season_id", UUID)
+        closed_by = context.get_property("closed_by", UUID)
 
         if season_id is None:
             raise BusinessException("Identificador da temporada é obrigatório")
@@ -33,12 +44,22 @@ class CloseRegistrationAdapter(CloseRegistrationPort):
 
         updated_season = await self.season_repository.save(season)
 
-        # TODO (débito técnico assumido nesta fase, mesmo padrão do UC001):
-        # enviar notificação a alunos e monitores e registrar a operação em
-        # auditoria (regras 11 e 22/23). Não há infraestrutura de
-        # notificação/auditoria no projeto ainda. O cancelamento do job de
-        # encerramento automático (regra 10) é natural: o job faz polling em
-        # temporadas com status REGISTRATION_OPEN, então mudar o status já
-        # remove esta temporada do próximo ciclo de verificação.
+        closing_user = (
+            await self.user_repository.get(closed_by) if closed_by else None
+        )
+        actor_role = (
+            closing_user.role.value
+            if closing_user is not None and closing_user.role
+            else None
+        )
+        await self.audit_logger.log(
+            action=AuditAction.SEASON_REGISTRATION_CLOSED,
+            description=(
+                f"Inscrições da temporada '{updated_season.name}' encerradas "
+                "antecipadamente"
+            ),
+            actor_id=closed_by,
+            actor_role=actor_role,
+        )
 
         return updated_season

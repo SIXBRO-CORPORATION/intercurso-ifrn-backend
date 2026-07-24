@@ -3,7 +3,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.bracket_status import BracketStatus
 
 

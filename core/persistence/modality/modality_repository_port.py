@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
-from domain.modality import Modality
+from domain.modality.modality import Modality
 
 
 class ModalityRepositoryPort(BaseRepositoryPort[Modality]):

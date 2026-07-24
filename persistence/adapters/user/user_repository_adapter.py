@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.commons.read_repository_port import T
 from core.persistence.user.user_repository_port import UserRepositoryPort
-from domain.user import User
+from domain.user.user import User
 from persistence.mappers.user.user_mapper import UserMapper
-from persistence.model.user_entity import UserEntity
+from persistence.model.user.user_entity import UserEntity
 
 
 class UserRepositoryAdapter(UserRepositoryPort):

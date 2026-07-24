@@ -1,7 +1,7 @@
 from typing import Optional
-from domain.team import Team
+from domain.team.team import Team
 from domain.enums.team_status import TeamStatus
-from persistence.model.team_entity import TeamEntity
+from persistence.model.team.team_entity import TeamEntity
 
 
 class TeamMapper:

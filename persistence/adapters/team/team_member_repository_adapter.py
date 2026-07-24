@@ -9,7 +9,7 @@ from core.persistence.team.team_member_repository_port import TeamMemberReposito
 from domain.team.team_member import TeamMember
 from persistence.mappers.team.team_member_mapper import TeamMemberMapper
 from persistence.mappers.user.user_mapper import UserMapper
-from persistence.model.team_member_entity import TeamMemberEntity
+from persistence.model.team.team_member_entity import TeamMemberEntity
 
 
 class TeamMemberRepositoryAdapter(TeamMemberRepositoryPort):

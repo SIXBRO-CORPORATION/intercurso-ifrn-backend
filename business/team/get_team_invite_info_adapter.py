@@ -11,7 +11,7 @@ from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.team import Team
+from domain.team.team import Team
 
 
 class GetTeamInviteInfoAdapter(GetTeamInviteInfoPort):

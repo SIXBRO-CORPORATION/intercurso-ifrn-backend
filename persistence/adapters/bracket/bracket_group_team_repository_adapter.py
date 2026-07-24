@@ -10,8 +10,8 @@ from core.persistence.bracket.bracket_group_team_repository_port import (
 )
 from domain.bracket.bracket_group_team import BracketGroupTeam
 from persistence.mappers.bracket.bracket_group_team_mapper import BracketGroupTeamMapper
-from persistence.model.bracket_group_entity import BracketGroupEntity
-from persistence.model.bracket_group_team_entity import BracketGroupTeamEntity
+from persistence.model.bracket.bracket_group_entity import BracketGroupEntity
+from persistence.model.bracket.bracket_group_team_entity import BracketGroupTeamEntity
 
 
 class BracketGroupTeamRepositoryAdapter(BracketGroupTeamRepositoryPort):

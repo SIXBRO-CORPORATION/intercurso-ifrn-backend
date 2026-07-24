@@ -1,6 +1,6 @@
 from typing import Optional
 from domain.season.season_modality import SeasonModality
-from persistence.model.season_modality_entity import SeasonModalityEntity
+from persistence.model.season.season_modality_entity import SeasonModalityEntity
 
 class SeasonModalityMapper:
     def to_domain(self, entity: Optional[SeasonModalityEntity]) -> Optional[SeasonModality]:

@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import Depends
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.team.create_team_port import CreateTeamPort
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.business.team.confirm_donation_port import ConfirmDonationPort
@@ -27,6 +28,7 @@ from business.team.select_captain_adapter import SelectCaptainAdapter
 from business.team.remove_member_adapter import RemoveMemberAdapter
 from business.team.leave_team_adapter import LeaveTeamAdapter
 from business.team.submit_team_adapter import SubmitTeamAdapter
+from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
     get_user_repository,
     get_team_repository,
@@ -112,6 +114,7 @@ def get_join_team_via_invite_port(
     modality_repository: Annotated[
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> JoinTeamViaInvitePort:
     return JoinTeamViaInviteAdapter(
         team_repository,
@@ -119,6 +122,7 @@ def get_join_team_via_invite_port(
         user_repository,
         season_repository,
         modality_repository,
+        audit_logger,
     )
 
 
@@ -127,8 +131,12 @@ def get_select_captain_port(
     team_member_repository: Annotated[
         TeamMemberRepositoryPort, Depends(get_team_member_repository)
     ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> SelectCaptainPort:
-    return SelectCaptainAdapter(team_repository, team_member_repository)
+    return SelectCaptainAdapter(
+        team_repository, team_member_repository, user_repository, audit_logger
+    )
 
 
 def get_remove_member_port(
@@ -137,9 +145,10 @@ def get_remove_member_port(
         TeamMemberRepositoryPort, Depends(get_team_member_repository)
     ],
     user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> RemoveMemberPort:
     return RemoveMemberAdapter(
-        team_repository, team_member_repository, user_repository
+        team_repository, team_member_repository, user_repository, audit_logger
     )
 
 
@@ -149,9 +158,10 @@ def get_leave_team_port(
         TeamMemberRepositoryPort, Depends(get_team_member_repository)
     ],
     user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> LeaveTeamPort:
     return LeaveTeamAdapter(
-        team_repository, team_member_repository, user_repository
+        team_repository, team_member_repository, user_repository, audit_logger
     )
 
 
@@ -164,10 +174,14 @@ def get_submit_team_port(
     modality_repository: Annotated[
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> SubmitTeamPort:
     return SubmitTeamAdapter(
         team_repository,
         team_member_repository,
         season_repository,
         modality_repository,
+        user_repository,
+        audit_logger,
     )

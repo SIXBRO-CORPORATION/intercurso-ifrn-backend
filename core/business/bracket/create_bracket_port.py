@@ -1,5 +1,5 @@
 from core.command import Command
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 
 
 class CreateBracketPort(Command[Bracket]):

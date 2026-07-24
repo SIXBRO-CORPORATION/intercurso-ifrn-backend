@@ -7,14 +7,17 @@ import pytest
 from business.season.reopen_registration_adapter import ReopenRegistrationAdapter
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
+from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
+from domain.season.season import Season
 
 
 def make_adapter():
     season_repository = AsyncMock()
-    adapter = ReopenRegistrationAdapter(season_repository)
-    return adapter, season_repository
+    user_repository = AsyncMock()
+    audit_logger = AsyncMock()
+    adapter = ReopenRegistrationAdapter(season_repository, user_repository, audit_logger)
+    return adapter, season_repository, user_repository, audit_logger
 
 
 def make_context(season_id=None, new_end=None):
@@ -28,7 +31,7 @@ def make_context(season_id=None, new_end=None):
 @pytest.mark.unit
 class TestReopenRegistrationAdapter:
     async def test_reopens_closed_season(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, user_repository, audit_logger = make_adapter()
         now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
@@ -47,9 +50,14 @@ class TestReopenRegistrationAdapter:
         assert result.registration_end_date == new_end
         assert result.registration_closed_at is None
         season_repository.save.assert_awaited_once()
+        audit_logger.log.assert_awaited_once()
+        assert (
+            audit_logger.log.await_args.kwargs["action"]
+            == AuditAction.SEASON_REGISTRATION_REOPENED
+        )
 
     async def test_blocks_reopening_draft_season(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         season = Season(id=uuid4(), name="X", status=SeasonStatus.DRAFT)
         season_repository.get.return_value = season
 
@@ -61,7 +69,7 @@ class TestReopenRegistrationAdapter:
             await adapter.execute(context)
 
     async def test_blocks_reopening_finished_season(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         season = Season(id=uuid4(), name="X", status=SeasonStatus.FINISHED)
         season_repository.get.return_value = season
 
@@ -73,7 +81,7 @@ class TestReopenRegistrationAdapter:
             await adapter.execute(context)
 
     async def test_blocks_without_new_end_date(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         season = Season(id=uuid4(), name="X", status=SeasonStatus.REGISTRATION_CLOSED)
         season_repository.get.return_value = season
 
@@ -81,7 +89,7 @@ class TestReopenRegistrationAdapter:
             await adapter.execute(make_context(season.id))
 
     async def test_blocks_new_end_date_in_the_past(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         season = Season(id=uuid4(), name="X", status=SeasonStatus.REGISTRATION_CLOSED)
         season_repository.get.return_value = season
 
@@ -93,7 +101,7 @@ class TestReopenRegistrationAdapter:
             await adapter.execute(context)
 
     async def test_blocks_new_end_date_before_start_date(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
@@ -110,7 +118,7 @@ class TestReopenRegistrationAdapter:
             await adapter.execute(context)
 
     async def test_blocks_when_season_not_found(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         season_repository.get.return_value = None
 
         context = make_context(new_end=datetime.now(timezone.utc) + timedelta(days=10))

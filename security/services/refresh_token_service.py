@@ -2,12 +2,12 @@ from datetime import datetime, timedelta
 from typing import Tuple
 from uuid import UUID
 
-from core.persistence.security.refresh_token_repository_port import RefreshTokenRepositoryPort
+from core.persistence.auth.refresh_token_repository_port import RefreshTokenRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.security.jwt_provider_port import JWTProviderPort
-from domain.security.auth_token import AuthToken
+from domain.auth.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException
-from domain.security.refresh_token import RefreshToken
+from domain.auth.refresh_token import RefreshToken
 
 
 class RefreshTokenService:

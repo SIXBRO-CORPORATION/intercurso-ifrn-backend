@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Tuple
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.match.start_match_port import StartMatchPort
 from core.context import Context
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
@@ -14,14 +15,15 @@ from core.persistence.modality.modality_repository_port import ModalityRepositor
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.event_type import EventType
 from domain.enums.match_status import MatchStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 from domain.match.match_event import MatchEvent
 from domain.team.team_member import TeamMember
-from domain.user import User
+from domain.user.user import User
 
 
 class StartMatchAdapter(StartMatchPort):
@@ -35,6 +37,7 @@ class StartMatchAdapter(StartMatchPort):
         bracket_repository: BracketRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
         modality_repository: ModalityRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -44,6 +47,7 @@ class StartMatchAdapter(StartMatchPort):
         self.bracket_repository = bracket_repository
         self.modality_configuration_repository = modality_configuration_repository
         self.modality_repository = modality_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -103,10 +107,20 @@ class StartMatchAdapter(StartMatchPort):
         match.team2_score = 0
         match.monitor_id = monitor_id
 
-        # TODO (débito técnico, mesmo padrão das fases anteriores): registro de
-        # auditoria da operação (monitor, partida, data/hora) depende de
-        # infraestrutura de auditoria ainda inexistente no projeto.
         saved_match = await self.match_repository.save(match)
+
+        monitor_user = await self.user_repository.get(monitor_id)
+        actor_role = (
+            monitor_user.role.value
+            if monitor_user is not None and monitor_user.role
+            else None
+        )
+        await self.audit_logger.log(
+            action=AuditAction.MATCH_STARTED,
+            description=f"Partida entre '{team1.name}' e '{team2.name}' iniciada",
+            actor_id=monitor_id,
+            actor_role=actor_role,
+        )
 
         match_start_event = MatchEvent(
             match_id=saved_match.id,
@@ -115,11 +129,6 @@ class StartMatchAdapter(StartMatchPort):
             metadata_json={"monitor_id": str(monitor_id)},
         )
         saved_event = await self.match_event_repository.save(match_start_event)
-
-        # TODO (débito técnico Fase 5/6): notificação via WebSocket para os canais
-        # /matches/{match_id}/live e /seasons/{season_id}/live (regra de negócio 9)
-        # e Push Notification para alunos (regra de negócio 10) dependem de
-        # infraestrutura ainda inexistente no projeto (ver Fase 6 do planejamento).
 
         bracket = await self.bracket_repository.get(saved_match.bracket_id)
 

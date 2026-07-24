@@ -1,9 +1,9 @@
 from typing import Optional
-from domain.match import Match
+from domain.match.match import Match
 from domain.enums.match_type import MatchType
 from domain.enums.match_category import MatchCategory
 from domain.enums.match_status import MatchStatus
-from persistence.model.match_entity import MatchEntity
+from persistence.model.match.match_entity import MatchEntity
 
 class MatchMapper:
     def to_domain(self, entity: Optional[MatchEntity]) -> Optional[Match]:

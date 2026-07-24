@@ -1,11 +1,16 @@
+from uuid import UUID
+
+from core.business.audit.audit_logger import AuditLogger
 from core.business.modality.create_modality_port import CreateModalityPort
 from core.context import Context
 from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
-from domain.modality import Modality
+from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
 
 
@@ -14,15 +19,20 @@ class CreateModalityAdapter(CreateModalityPort):
         self,
         modality_repository: ModalityRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.modality_repository = modality_repository
         self.modality_configuration_repository = modality_configuration_repository
+        self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Modality:
         modality = context.get_data(Modality)
         configuration = context.get_property(
             "modality_configuration", ModalityConfiguration
         )
+        created_by = context.get_property("created_by", UUID)
 
         if modality is None:
             raise BusinessException("Dados da modalidade são obrigatórios")
@@ -38,8 +48,6 @@ class CreateModalityAdapter(CreateModalityPort):
                 "Máximo de membros deve ser maior ou igual ao mínimo de membros"
             )
 
-        # UC004 - Regras de Negócio 11-15: a configuração de partida é
-        # obrigatória e criada junto com a modalidade, na mesma operação.
         if configuration is None:
             raise BusinessException("Configuração de partida é obrigatória")
 
@@ -74,10 +82,6 @@ class CreateModalityAdapter(CreateModalityPort):
             active=True,
         )
 
-        # TODO (débito técnico assumido nesta fase): registrar a operação em
-        # auditoria (monitor responsável, data/hora e ação), conforme exigido
-        # pelo UC004. Não há infraestrutura de auditoria no projeto ainda.
-
         saved_modality = await self.modality_repository.save(new_modality)
 
         new_configuration = ModalityConfiguration(
@@ -93,5 +97,20 @@ class CreateModalityAdapter(CreateModalityPort):
             new_configuration
         )
         context.put_property("modality_configuration", saved_configuration)
+
+        created_by_user = (
+            await self.user_repository.get(created_by) if created_by else None
+        )
+        actor_role = (
+            created_by_user.role.value
+            if created_by_user is not None and created_by_user.role
+            else None
+        )
+        await self.audit_logger.log(
+            action=AuditAction.MODALITY_CREATED,
+            description=f"Modalidade '{saved_modality.name}' cadastrada",
+            actor_id=created_by,
+            actor_role=actor_role,
+        )
 
         return saved_modality

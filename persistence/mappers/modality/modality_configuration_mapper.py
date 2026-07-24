@@ -1,7 +1,7 @@
 from typing import Optional
 from domain.modality.modality_configuration import ModalityConfiguration
 from domain.enums.score_type import ScoreType
-from persistence.model.modality_configuration_entity import ModalityConfigurationEntity
+from persistence.model.modality.modality_configuration_entity import ModalityConfigurationEntity
 
 class ModalityConfigurationMapper:
     def to_domain(self, entity: Optional[ModalityConfigurationEntity]) -> Optional[ModalityConfiguration]:

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from domain.user import User
+from domain.user.user import User
 from web.models.response.user.user_response import UserResponse
 
 

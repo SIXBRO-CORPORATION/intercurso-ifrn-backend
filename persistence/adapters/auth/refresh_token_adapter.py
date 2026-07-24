@@ -5,10 +5,10 @@ from uuid import UUID
 from sqlalchemy import select, update, delete, false, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.persistence.security.refresh_token_repository_port import RefreshTokenRepositoryPort
-from domain.security.refresh_token import RefreshToken
-from persistence.mappers.security.refresh_token_mapper import RefreshTokenMapper
-from persistence.model.refresh_token_entity import RefreshTokenEntity
+from core.persistence.auth.refresh_token_repository_port import RefreshTokenRepositoryPort
+from domain.auth.refresh_token import RefreshToken
+from persistence.mappers.auth.refresh_token_mapper import RefreshTokenMapper
+from persistence.model.auth.refresh_token_entity import RefreshTokenEntity
 
 
 class RefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):

@@ -11,7 +11,7 @@ from domain.modality.modality_configuration import ModalityConfiguration
 from persistence.mappers.modality.modality_configuration_mapper import (
     ModalityConfigurationMapper,
 )
-from persistence.model.modality_configuration_entity import (
+from persistence.model.modality.modality_configuration_entity import (
     ModalityConfigurationEntity,
 )
 

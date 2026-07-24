@@ -5,10 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.bracket_status import BracketStatus
 from persistence.mappers.bracket.bracket_mapper import BracketMapper
-from persistence.model.bracket_entity import BracketEntity
+from persistence.model.bracket.bracket_entity import BracketEntity
 
 
 class BracketRepositoryAdapter(BracketRepositoryPort):

@@ -2,7 +2,7 @@ from typing import Optional
 from domain.team.team_member import TeamMember
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.donation_status import DonationStatus
-from persistence.model.team_member_entity import TeamMemberEntity
+from persistence.model.team.team_member_entity import TeamMemberEntity
 
 class TeamMemberMapper:
     def to_domain(self, entity: Optional[TeamMemberEntity]) -> Optional[TeamMember]:

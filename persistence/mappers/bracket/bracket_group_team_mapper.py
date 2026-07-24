@@ -1,6 +1,6 @@
 from typing import Optional
 from domain.bracket.bracket_group_team import BracketGroupTeam
-from persistence.model.bracket_group_team_entity import BracketGroupTeamEntity
+from persistence.model.bracket.bracket_group_team_entity import BracketGroupTeamEntity
 
 class BracketGroupTeamMapper:
     def to_domain(self, entity: Optional[BracketGroupTeamEntity]) -> Optional[BracketGroupTeam]:

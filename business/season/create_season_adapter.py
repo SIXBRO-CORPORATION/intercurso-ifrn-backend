@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import List
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.season.create_season_port import CreateSeasonPort
 from core.context import Context
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
@@ -9,9 +10,11 @@ from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.season import Season
+from domain.season.season import Season
 from domain.season.season_modality import SeasonModality
 
 
@@ -21,10 +24,14 @@ class CreateSeasonAdapter(CreateSeasonPort):
         season_repository: SeasonRepositoryPort,
         season_modality_repository: SeasonModalityRepositoryPort,
         modality_repository: ModalityRepositoryPort,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.season_repository = season_repository
         self.season_modality_repository = season_modality_repository
         self.modality_repository = modality_repository
+        self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
         season = context.get_data(Season)
@@ -123,11 +130,22 @@ class CreateSeasonAdapter(CreateSeasonPort):
 
         context.put_property("season_modalities", season_modalities)
 
-        # TODO (débito técnico assumido nesta fase): registrar a operação em
-        # auditoria (monitor responsável, data/hora, ação) e, em caso de
-        # abertura imediata, disparar notificação push "Inscrições abertas!"
-        # aos alunos, conforme UC001. Não há infraestrutura de
-        # auditoria/notificação no projeto ainda — job de abertura/
-        # encerramento automático (regras 11 e 12) tem o mesmo débito.
+        creating_user = (
+            await self.user_repository.get(created_by) if created_by else None
+        )
+        actor_role = (
+            creating_user.role.value
+            if creating_user is not None and creating_user.role
+            else None
+        )
+        await self.audit_logger.log(
+            action=AuditAction.SEASON_CREATED,
+            description=(
+                f"Temporada '{saved_season.name}' ({saved_season.year}) criada"
+                + (" com abertura imediata das inscrições" if open_immediately else "")
+            ),
+            actor_id=created_by,
+            actor_role=actor_role,
+        )
 
         return saved_season

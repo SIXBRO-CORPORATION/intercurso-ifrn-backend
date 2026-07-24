@@ -3,7 +3,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
-from domain.security.refresh_token import RefreshToken
+from domain.auth.refresh_token import RefreshToken
 
 
 class RefreshTokenRepositoryPort(BaseRepositoryPort[RefreshToken]):

@@ -28,6 +28,9 @@ from persistence.adapters.match.match_event_repository_adapter import (
 from persistence.adapters.modality.modality_configuration_repository_adapter import (
     ModalityConfigurationRepositoryAdapter,
 )
+from persistence.adapters.audit.audit_log_repository_adapter import (
+    AuditLogRepositoryAdapter,
+)
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
@@ -36,7 +39,7 @@ from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
-from core.persistence.security.refresh_token_repository_port import RefreshTokenRepositoryPort
+from core.persistence.auth.refresh_token_repository_port import RefreshTokenRepositoryPort
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.bracket.bracket_group_repository_port import BracketGroupRepositoryPort
 from core.persistence.bracket.bracket_group_team_repository_port import (
@@ -47,6 +50,7 @@ from core.persistence.match.match_event_repository_port import MatchEventReposit
 from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
+from core.persistence.audit.audit_log_repository_port import AuditLogRepositoryPort
 from persistence.database import get_db
 from persistence.mappers.team.team_mapper import TeamMapper
 from persistence.mappers.team.team_member_mapper import TeamMemberMapper
@@ -54,7 +58,7 @@ from persistence.mappers.user.user_mapper import UserMapper
 from persistence.mappers.season.season_mapper import SeasonMapper
 from persistence.mappers.season.season_modality_mapper import SeasonModalityMapper
 from persistence.mappers.modality.modality_mapper import ModalityMapper
-from persistence.mappers.security.refresh_token_mapper import RefreshTokenMapper
+from persistence.mappers.auth.refresh_token_mapper import RefreshTokenMapper
 from persistence.mappers.bracket.bracket_mapper import BracketMapper
 from persistence.mappers.bracket.bracket_group_mapper import BracketGroupMapper
 from persistence.mappers.bracket.bracket_group_team_mapper import BracketGroupTeamMapper
@@ -63,6 +67,7 @@ from persistence.mappers.match.match_event_mapper import MatchEventMapper
 from persistence.mappers.modality.modality_configuration_mapper import (
     ModalityConfigurationMapper,
 )
+from persistence.mappers.audit.audit_log_mapper import AuditLogMapper
 
 
 def get_user_repository(
@@ -168,3 +173,11 @@ def get_modality_configuration_repository(
     mapper = ModalityConfigurationMapper()
 
     return ModalityConfigurationRepositoryAdapter(session, mapper)
+
+
+def get_audit_log_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> AuditLogRepositoryPort:
+    mapper = AuditLogMapper()
+
+    return AuditLogRepositoryAdapter(session, mapper)

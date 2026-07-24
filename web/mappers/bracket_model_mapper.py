@@ -1,5 +1,5 @@
-from domain.bracket import Bracket
-from domain.match import Match
+from domain.bracket.bracket import Bracket
+from domain.match.match import Match
 from web.models.response.bracket.bracket_config_suggestion_response import (
     BracketConfigSuggestionResponse,
 )

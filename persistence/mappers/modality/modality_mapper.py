@@ -1,6 +1,6 @@
 from typing import Optional
-from domain.modality import Modality
-from persistence.model.modality_entity import ModalityEntity
+from domain.modality.modality import Modality
+from persistence.model.modality.modality_entity import ModalityEntity
 
 class ModalityMapper:
     def to_domain(self, entity: Optional[ModalityEntity]) -> Optional[Modality]:

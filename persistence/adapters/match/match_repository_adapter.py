@@ -7,9 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.match.match_repository_port import MatchRepositoryPort
 from domain.enums.match_status import MatchStatus
-from domain.match import Match
+from domain.match.match import Match
 from persistence.mappers.match.match_mapper import MatchMapper
-from persistence.model.match_entity import MatchEntity
+from persistence.model.match.match_entity import MatchEntity
 
 
 class MatchRepositoryAdapter(MatchRepositoryPort):

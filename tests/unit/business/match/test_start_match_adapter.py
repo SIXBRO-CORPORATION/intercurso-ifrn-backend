@@ -5,7 +5,8 @@ import pytest
 
 from business.match.start_match_adapter import StartMatchAdapter
 from core.context import Context
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
+from domain.enums.audit_action import AuditAction
 from domain.enums.event_type import EventType
 from domain.enums.match_category import MatchCategory
 from domain.enums.match_status import MatchStatus
@@ -13,13 +14,13 @@ from domain.enums.match_type import MatchType
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 from domain.match.match_event import MatchEvent
-from domain.modality import Modality
+from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
-from domain.team import Team
+from domain.team.team import Team
 from domain.team.team_member import TeamMember
-from domain.user import User
+from domain.user.user import User
 
 
 def make_adapter():
@@ -32,6 +33,8 @@ def make_adapter():
     modality_configuration_repository = AsyncMock()
     modality_repository = AsyncMock()
 
+    audit_logger = AsyncMock()
+
     adapter = StartMatchAdapter(
         match_repository,
         match_event_repository,
@@ -41,6 +44,7 @@ def make_adapter():
         bracket_repository,
         modality_configuration_repository,
         modality_repository,
+        audit_logger,
     )
 
     return (
@@ -53,6 +57,7 @@ def make_adapter():
         bracket_repository,
         modality_configuration_repository,
         modality_repository,
+        audit_logger,
     )
 
 
@@ -90,6 +95,7 @@ class TestStartMatchAdapter:
             bracket_repository,
             modality_configuration_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         team1 = make_team()
@@ -156,6 +162,12 @@ class TestStartMatchAdapter:
         modality_configuration_repository.find_by_modality.assert_awaited_once_with(
             bracket.modality_id
         )
+
+        audit_logger.log.assert_awaited_once()
+        assert (
+            audit_logger.log.await_args.kwargs["action"] == AuditAction.MATCH_STARTED
+        )
+        assert audit_logger.log.await_args.kwargs["actor_id"] == monitor_id
 
     @pytest.mark.asyncio
     async def test_blocks_when_not_scheduled(self):
@@ -255,6 +267,7 @@ class TestStartMatchAdapter:
             bracket_repository,
             modality_configuration_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         team1 = make_team()

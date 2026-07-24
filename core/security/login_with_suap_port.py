@@ -1,5 +1,5 @@
 from core.command import Command
-from domain.security.auth_token import AuthToken
+from domain.auth.auth_token import AuthToken
 
 
 class LoginWithSuapPort(Command[AuthToken]):

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.persistence.bracket.bracket_group_repository_port import BracketGroupRepositoryPort
 from domain.bracket.bracket_group import BracketGroup
 from persistence.mappers.bracket.bracket_group_mapper import BracketGroupMapper
-from persistence.model.bracket_group_entity import BracketGroupEntity
+from persistence.model.bracket.bracket_group_entity import BracketGroupEntity
 
 
 class BracketGroupRepositoryAdapter(BracketGroupRepositoryPort):

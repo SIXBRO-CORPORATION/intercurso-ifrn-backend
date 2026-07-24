@@ -1,5 +1,5 @@
 from core.command import Command
-from domain.modality import Modality
+from domain.modality.modality import Modality
 
 
 class CreateModalityPort(Command[Modality]):

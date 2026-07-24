@@ -6,10 +6,10 @@ from sqlalchemy import select
 
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.team_status import TeamStatus
-from domain.team import Team
+from domain.team.team import Team
 from persistence.mappers.team.team_mapper import TeamMapper
-from persistence.model.team_entity import TeamEntity
-from persistence.model.team_member_entity import TeamMemberEntity
+from persistence.model.team.team_entity import TeamEntity
+from persistence.model.team.team_member_entity import TeamMemberEntity
 
 
 class TeamRepositoryAdapter(TeamRepositoryPort):

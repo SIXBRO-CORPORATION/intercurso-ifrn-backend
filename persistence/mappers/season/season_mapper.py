@@ -1,7 +1,7 @@
 from typing import Optional
-from domain.season import Season
+from domain.season.season import Season
 from domain.enums.season_status import SeasonStatus
-from persistence.model.season_entity import SeasonEntity
+from persistence.model.season.season_entity import SeasonEntity
 
 class SeasonMapper:
     def to_domain(self, entity: Optional[SeasonEntity]) -> Optional[Season]:

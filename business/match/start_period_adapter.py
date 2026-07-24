@@ -16,7 +16,7 @@ from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.event_type import EventType
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 from domain.match.match_event import MatchEvent
 
 

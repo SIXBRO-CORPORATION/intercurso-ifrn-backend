@@ -21,7 +21,7 @@ from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.event_type import EventType
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 from domain.match.match_event import MatchEvent
 
 

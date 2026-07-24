@@ -8,7 +8,7 @@ from core.business.users.create_user_by_admin_port import CreateUserByAdminPort
 from core.business.users.update_user_by_admin_port import UpdateUserByAdminPort
 from core.context import Context
 from domain.enums.user_role import UserRole
-from domain.user import User
+from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import (
     get_create_user_by_admin_port,

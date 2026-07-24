@@ -5,8 +5,9 @@ from fastapi.params import Depends
 
 from core.business.modality.create_modality_port import CreateModalityPort
 from core.context import Context
-from domain.modality import Modality
+from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
+from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import require_monitor
 from web.dependencies.business.modality_dependencies import get_create_modality_port
@@ -22,7 +23,6 @@ router = APIRouter(prefix="/api/modality", tags=["modality"])
     "/",
     response_model=ApiResponse[ModalityCreateResponse],
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_monitor)]
 )
 async def create_modality(
     request: ModalityCreateRequest,
@@ -30,6 +30,7 @@ async def create_modality(
         CreateModalityPort, Depends(get_create_modality_port)
     ],
     mapper: Annotated[ModalityModelMapper, Depends(get_modality_model_mapper)],
+    current_user: User = Depends(require_monitor),
 ):
     modality_domain = Modality(
         name=request.name,
@@ -46,6 +47,7 @@ async def create_modality(
 
     context = Context(data=modality_domain)
     context.put_property("modality_configuration", configuration_domain)
+    context.put_property("created_by", current_user.id)
 
     saved_modality = await create_modality_port.execute(context)
     saved_configuration = context.get_property(

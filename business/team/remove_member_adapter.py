@@ -1,10 +1,12 @@
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.team.remove_member_port import RemoveMemberPort
 from core.context import Context
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.team_status import TeamStatus
 from domain.enums.user_role import UserRole
 from domain.exceptions.business_exception import BusinessException
@@ -17,10 +19,12 @@ class RemoveMemberAdapter(RemoveMemberPort):
         team_repository: TeamRepositoryPort,
         team_member_repository: TeamMemberRepositoryPort,
         user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
         self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> TeamMember:
         team_id = context.get_property("team_id", UUID)
@@ -46,8 +50,6 @@ class RemoveMemberAdapter(RemoveMemberPort):
             UserRole.ADMIN,
         )
 
-        # Monitor pode remover membros em qualquer status do time (BR13/25).
-        # Owner só pode remover membros durante DRAFT (BR12).
         if not is_monitor_operation:
             if team.owner_id != requesting_user_id:
                 raise BusinessException(
@@ -85,9 +87,20 @@ class RemoveMemberAdapter(RemoveMemberPort):
         context.put_property("removed_user", target_user)
         context.put_property("administrative_operation", is_monitor_operation)
 
-        # TODO (débito técnico assumido, mesmo padrão das demais fases):
-        # registrar a operação em auditoria (autor, data/hora, ação,
-        # incluindo o marcador de operação administrativa quando aplicável).
-        # Não há infraestrutura de auditoria no projeto ainda.
+        actor_role = (
+            requesting_user.role.value
+            if requesting_user is not None and requesting_user.role
+            else None
+        )
+        operation_kind = "administrativa" if is_monitor_operation else "pelo dono"
+        await self.audit_logger.log(
+            action=AuditAction.TEAM_MEMBER_REMOVED,
+            description=(
+                f"Membro removido do time '{team.name}' "
+                f"(operação {operation_kind})"
+            ),
+            actor_id=requesting_user_id,
+            actor_role=actor_role,
+        )
 
         return target_member

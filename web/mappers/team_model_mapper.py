@@ -1,9 +1,9 @@
 from typing import Optional
 
-from domain.modality import Modality
-from domain.team import Team
+from domain.modality.modality import Modality
+from domain.team.team import Team
 from domain.team.team_member import TeamMember
-from domain.user import User
+from domain.user.user import User
 from web.models.response.team.team_invite_preview_response import (
     TeamInvitePreviewResponse,
 )

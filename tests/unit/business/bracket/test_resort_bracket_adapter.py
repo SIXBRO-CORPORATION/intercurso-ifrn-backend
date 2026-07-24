@@ -5,14 +5,14 @@ import pytest
 
 from business.bracket.resort_bracket_adapter import ResortBracketAdapter
 from core.context import Context
-from domain.bracket import Bracket
+from domain.bracket.bracket import Bracket
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.match_status import MatchStatus
 from domain.enums.modality_format import ModalityFormat
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
-from domain.team import Team
+from domain.match.match import Match
+from domain.team.team import Team
 
 
 def make_adapter():
@@ -21,6 +21,8 @@ def make_adapter():
     bracket_group_team_repository = AsyncMock()
     match_repository = AsyncMock()
     team_repository = AsyncMock()
+    user_repository = AsyncMock()
+    audit_logger = AsyncMock()
 
     adapter = ResortBracketAdapter(
         bracket_repository,
@@ -28,6 +30,8 @@ def make_adapter():
         bracket_group_team_repository,
         match_repository,
         team_repository,
+        user_repository,
+        audit_logger,
     )
     return (
         adapter,

@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
 from domain.enums.season_status import SeasonStatus
-from domain.season import Season
+from domain.season.season import Season
 
 
 class SeasonRepositoryPort(BaseRepositoryPort[Season]):

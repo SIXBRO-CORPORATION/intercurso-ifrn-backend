@@ -1,7 +1,7 @@
 from typing import Optional
 
-from domain.security.refresh_token import RefreshToken
-from persistence.model.refresh_token_entity import RefreshTokenEntity
+from domain.auth.refresh_token import RefreshToken
+from persistence.model.auth.refresh_token_entity import RefreshTokenEntity
 
 
 class RefreshTokenMapper:

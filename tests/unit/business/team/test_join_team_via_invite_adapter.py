@@ -6,16 +6,17 @@ import pytest
 
 from business.team.join_team_via_invite_adapter import JoinTeamViaInviteAdapter
 from core.context import Context
+from domain.enums.audit_action import AuditAction
 from domain.enums.donation_status import DonationStatus
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.modality import Modality
-from domain.season import Season
-from domain.team import Team
+from domain.modality.modality import Modality
+from domain.season.season import Season
+from domain.team.team import Team
 from domain.team.team_member import TeamMember
-from domain.user import User
+from domain.user.user import User
 
 
 def make_adapter():
@@ -24,6 +25,7 @@ def make_adapter():
     user_repository = AsyncMock()
     season_repository = AsyncMock()
     modality_repository = AsyncMock()
+    audit_logger = AsyncMock()
 
     adapter = JoinTeamViaInviteAdapter(
         team_repository,
@@ -31,6 +33,7 @@ def make_adapter():
         user_repository,
         season_repository,
         modality_repository,
+        audit_logger,
     )
     return (
         adapter,
@@ -39,6 +42,7 @@ def make_adapter():
         user_repository,
         season_repository,
         modality_repository,
+        audit_logger,
     )
 
 
@@ -101,6 +105,7 @@ class TestJoinTeamViaInviteAdapter:
             user_repository,
             season_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         season = make_open_season()
@@ -127,6 +132,15 @@ class TestJoinTeamViaInviteAdapter:
         user_repository.save.assert_awaited_once()
         assert context.get_property("team", Team).id == team.id
 
+        audit_logger.log.assert_awaited_once()
+        assert (
+            audit_logger.log.await_args.kwargs["action"]
+            == AuditAction.TEAM_MEMBER_JOINED
+        )
+        assert (
+            audit_logger.log.await_args.kwargs["actor_id"] == requesting_user_id
+        )
+
     async def test_does_not_resave_user_already_atleta(self):
         (
             adapter,
@@ -135,6 +149,7 @@ class TestJoinTeamViaInviteAdapter:
             user_repository,
             season_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         season = make_open_season()
@@ -197,6 +212,7 @@ class TestJoinTeamViaInviteAdapter:
             user_repository,
             season_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         season = make_open_season()
@@ -220,6 +236,7 @@ class TestJoinTeamViaInviteAdapter:
             user_repository,
             season_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         season = make_open_season()
@@ -250,6 +267,7 @@ class TestJoinTeamViaInviteAdapter:
             user_repository,
             season_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         season = make_open_season()
@@ -279,6 +297,7 @@ class TestJoinTeamViaInviteAdapter:
             user_repository,
             season_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         season = make_open_season()

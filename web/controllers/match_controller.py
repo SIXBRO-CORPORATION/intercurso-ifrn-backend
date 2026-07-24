@@ -13,11 +13,11 @@ from core.business.match.end_period_port import EndPeriodPort
 from core.business.match.start_period_port import StartPeriodPort
 from core.business.match.end_set_port import EndSetPort
 from core.context import Context
-from domain.modality import Modality
+from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
 from domain.match.match_event import MatchEvent
-from domain.team import Team
-from domain.user import User
+from domain.team.team import Team
+from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import (
     get_end_period_port,

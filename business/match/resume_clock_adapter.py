@@ -14,7 +14,7 @@ from core.persistence.team.team_member_repository_port import TeamMemberReposito
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.exceptions.business_exception import BusinessException
-from domain.match import Match
+from domain.match.match import Match
 
 
 class ResumeClockAdapter(ResumeClockPort):
