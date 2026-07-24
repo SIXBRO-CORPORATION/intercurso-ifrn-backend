@@ -5,8 +5,12 @@ from fastapi.params import Depends
 
 from core.business.modality.create_modality_port import CreateModalityPort
 from core.context import Context
+from domain.enums.score_type import ScoreType
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
+from domain.modality.volleyball_modality_configuration import (
+    VolleyballModalityConfiguration,
+)
 from web.commons.api_response import ApiResponse
 from web.dependencies import require_monitor
 from web.dependencies.business.modality_dependencies import get_create_modality_port
@@ -47,12 +51,27 @@ async def create_modality(
     context = Context(data=modality_domain)
     context.put_property("modality_configuration", configuration_domain)
 
+    if request.score_type == ScoreType.SETS:
+        context.put_property(
+            "volleyball_configuration",
+            VolleyballModalityConfiguration(
+                points_per_set=request.points_per_set,
+                final_set_points=request.final_set_points,
+                sets_to_win=request.sets_to_win,
+            ),
+        )
+
     saved_modality = await create_modality_port.execute(context)
     saved_configuration = context.get_property(
         "modality_configuration", ModalityConfiguration
     )
+    saved_volleyball_configuration = context.get_property(
+        "volleyball_configuration", VolleyballModalityConfiguration
+    )
 
-    response_data = mapper.to_create_response(saved_modality, saved_configuration)
+    response_data = mapper.to_create_response(
+        saved_modality, saved_configuration, saved_volleyball_configuration
+    )
 
     return ApiResponse(
         data=response_data, message="Modalidade cadastrada com sucesso!"

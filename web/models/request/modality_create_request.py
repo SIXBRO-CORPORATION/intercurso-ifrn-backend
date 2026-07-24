@@ -21,6 +21,12 @@ class ModalityCreateRequest(BaseModel):
     has_third_place_match: bool = Field(default=False)
     metadata: Optional[Any] = Field(default=None)
 
+    # ADR 0002 - configuração específica do vôlei (obrigatória quando
+    # score_type == SETS; validado no adapter de negócio, não aqui).
+    points_per_set: Optional[int] = Field(default=None, ge=1)
+    final_set_points: Optional[int] = Field(default=None, ge=1)
+    sets_to_win: Optional[int] = Field(default=None, ge=1)
+
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:

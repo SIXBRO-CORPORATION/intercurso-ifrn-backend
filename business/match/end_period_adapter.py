@@ -18,6 +18,10 @@ from core.persistence.modality_repository_port import ModalityRepositoryPort
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.match_set_repository_port import MatchSetRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import (
+    VolleyballModalityConfigurationRepositoryPort,
+)
 from domain.enums.event_type import EventType
 from domain.match.match import Match
 from domain.match.match_event import MatchEvent
@@ -34,6 +38,8 @@ class EndPeriodAdapter(EndPeriodPort):
         bracket_repository: BracketRepositoryPort,
         modality_repository: ModalityRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
+        volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
+        match_set_repository: MatchSetRepositoryPort,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -43,6 +49,10 @@ class EndPeriodAdapter(EndPeriodPort):
         self.bracket_repository = bracket_repository
         self.modality_repository = modality_repository
         self.modality_configuration_repository = modality_configuration_repository
+        self.volleyball_modality_configuration_repository = (
+            volleyball_modality_configuration_repository
+        )
+        self.match_set_repository = match_set_repository
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -77,6 +87,8 @@ class EndPeriodAdapter(EndPeriodPort):
             self.modality_repository,
             self.modality_configuration_repository,
             self.match_event_repository,
+            self.volleyball_modality_configuration_repository,
+            self.match_set_repository,
         )
 
         return saved_match
