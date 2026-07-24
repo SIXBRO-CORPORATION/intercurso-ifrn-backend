@@ -4,14 +4,14 @@ from uuid import UUID
 
 from core.business.team.create_team_port import CreateTeamPort
 from core.context import Context
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.donation_status import DonationStatus

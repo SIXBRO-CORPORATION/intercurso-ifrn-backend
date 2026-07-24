@@ -32,9 +32,9 @@ from web.dependencies import (
     require_monitor,
 )
 from web.mappers.match_model_mapper import MatchModelMapper
-from web.models.request.match_card_request import MatchCardRequest
-from web.models.request.match_goal_request import MatchGoalRequest
-from web.models.response.match_management_response import MatchManagementResponse
+from web.models.request.match.match_card_request import MatchCardRequest
+from web.models.request.match.match_goal_request import MatchGoalRequest
+from web.models.response.match.match_management_response import MatchManagementResponse
 
 router = APIRouter(prefix="/api/match", tags=["match"])
 

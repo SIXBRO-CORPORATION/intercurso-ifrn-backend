@@ -9,12 +9,12 @@ from core.business.bracket.get_bracket_config_suggestion_port import (
     GetBracketConfigSuggestionPort,
 )
 from core.context import Context
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.modality_format import ModalityFormat
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException

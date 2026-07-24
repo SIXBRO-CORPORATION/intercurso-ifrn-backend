@@ -1,12 +1,15 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.context import Context
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.donation_status import DonationStatus
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
@@ -21,11 +24,15 @@ class SubmitTeamAdapter(SubmitTeamPort):
         team_member_repository: TeamMemberRepositoryPort,
         season_repository: SeasonRepositoryPort,
         modality_repository: ModalityRepositoryPort,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
         self.season_repository = season_repository
         self.modality_repository = modality_repository
+        self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Team:
         team_id = context.get_property("team_id", UUID)
@@ -95,9 +102,20 @@ class SubmitTeamAdapter(SubmitTeamPort):
 
         context.put_property("members", members)
 
-        # TODO (débito técnico assumido, mesmo padrão das demais fases):
-        # registrar a operação em auditoria (owner, temporada, data/hora, ação).
-        # Notificação ao monitor: escopo futuro (fora do alcance desta fase).
-        # Não há infraestrutura de auditoria/notificação no projeto ainda.
+        requesting_user = await self.user_repository.get(requesting_user_id)
+        actor_role = (
+            requesting_user.role.value
+            if requesting_user is not None and requesting_user.role
+            else None
+        )
+        await self.audit_logger.log(
+            action=AuditAction.TEAM_SUBMITTED,
+            description=(
+                f"Time '{saved_team.name}' submetido para aprovação na "
+                f"temporada '{active_season.name}'"
+            ),
+            actor_id=requesting_user_id,
+            actor_role=actor_role,
+        )
 
         return saved_team

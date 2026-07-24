@@ -1,6 +1,6 @@
 from core.business.users.create_user_by_admin_port import CreateUserByAdminPort
 from core.context import Context
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.user_role import UserRole
 from domain.exceptions.business_exception import BusinessException
 from domain.user.user import User

@@ -6,6 +6,7 @@ import pytest
 
 from business.season.close_registration_adapter import CloseRegistrationAdapter
 from core.context import Context
+from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season.season import Season
@@ -13,8 +14,10 @@ from domain.season.season import Season
 
 def make_adapter():
     season_repository = AsyncMock()
-    adapter = CloseRegistrationAdapter(season_repository)
-    return adapter, season_repository
+    user_repository = AsyncMock()
+    audit_logger = AsyncMock()
+    adapter = CloseRegistrationAdapter(season_repository, user_repository, audit_logger)
+    return adapter, season_repository, user_repository, audit_logger
 
 
 def make_context(season_id=None):
@@ -27,7 +30,7 @@ def make_context(season_id=None):
 @pytest.mark.unit
 class TestCloseRegistrationAdapter:
     async def test_closes_registration_open_season(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, user_repository, audit_logger = make_adapter()
         season = Season(
             id=uuid4(),
             name="Intercurso 2026",
@@ -42,9 +45,14 @@ class TestCloseRegistrationAdapter:
         assert result.status == SeasonStatus.REGISTRATION_CLOSED
         assert result.registration_closed_at is not None
         season_repository.save.assert_awaited_once()
+        audit_logger.log.assert_awaited_once()
+        assert (
+            audit_logger.log.await_args.kwargs["action"]
+            == AuditAction.SEASON_REGISTRATION_CLOSED
+        )
 
     async def test_blocks_closing_draft_season(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_ = make_adapter()
         season = Season(id=uuid4(), name="X", status=SeasonStatus.DRAFT)
         season_repository.get.return_value = season
 
@@ -52,7 +60,7 @@ class TestCloseRegistrationAdapter:
             await adapter.execute(make_context(season.id))
 
     async def test_blocks_closing_already_closed_season(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_ = make_adapter()
         season = Season(id=uuid4(), name="X", status=SeasonStatus.REGISTRATION_CLOSED)
         season_repository.get.return_value = season
 
@@ -60,7 +68,7 @@ class TestCloseRegistrationAdapter:
             await adapter.execute(make_context(season.id))
 
     async def test_blocks_when_season_not_found(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_ = make_adapter()
         season_repository.get.return_value = None
 
         with pytest.raises(BusinessException):

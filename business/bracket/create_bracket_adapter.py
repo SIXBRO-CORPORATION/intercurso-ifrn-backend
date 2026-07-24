@@ -7,21 +7,24 @@ from business.bracket.engine.config_suggester import (
 )
 from business.bracket.engine.draw_engine import build_draw
 from core.business.bracket.create_bracket_port import CreateBracketPort
+from core.business.audit.audit_logger import AuditLogger
 from core.context import Context
-from core.persistence.bracket_group_repository_port import BracketGroupRepositoryPort
-from core.persistence.bracket_group_team_repository_port import (
+from core.persistence.bracket.bracket_group_repository_port import BracketGroupRepositoryPort
+from core.persistence.bracket.bracket_group_team_repository_port import (
     BracketGroupTeamRepositoryPort,
 )
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.bracket.bracket import Bracket
 from domain.bracket.bracket_group import BracketGroup
 from domain.bracket.bracket_group_team import BracketGroupTeam
+from domain.enums.audit_action import AuditAction
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
@@ -38,6 +41,8 @@ class CreateBracketAdapter(CreateBracketPort):
         team_repository: TeamRepositoryPort,
         season_repository: SeasonRepositoryPort,
         season_modality_repository: SeasonModalityRepositoryPort,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.bracket_repository = bracket_repository
         self.bracket_group_repository = bracket_group_repository
@@ -46,6 +51,8 @@ class CreateBracketAdapter(CreateBracketPort):
         self.team_repository = team_repository
         self.season_repository = season_repository
         self.season_modality_repository = season_modality_repository
+        self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Bracket:
         bracket_shell = context.get_data(Bracket)
@@ -188,11 +195,24 @@ class CreateBracketAdapter(CreateBracketPort):
             await self.season_repository.save(active_season)
             season_transitioned = True
 
-        # TODO (débito técnico, mesmo padrão das fases anteriores): notificação
-        # "🏆 Chaveamento publicado!" / "🏆 Fase de jogos iniciada!" aos alunos e
-        # registro de auditoria (monitor, data/hora, configuração) dependem de
-        # infraestrutura ainda inexistente no projeto (mesma dívida já assumida
-        # nas Fases 1 e 3).
+
+        created_by_user = (
+            await self.user_repository.get(created_by) if created_by else None
+        )
+        actor_role = (
+            created_by_user.role.value
+            if created_by_user is not None and created_by_user.role
+            else None
+        )
+        await self.audit_logger.log(
+            action=AuditAction.BRACKET_CREATED,
+            description=(
+                f"Chaveamento criado para a temporada '{active_season.name}' "
+                f"com {team_count} time(s)"
+            ),
+            actor_id=created_by,
+            actor_role=actor_role,
+        )
 
         context.put_property("teams_count", team_count)
         context.put_property("groups_created", len(draw_plan.groups))

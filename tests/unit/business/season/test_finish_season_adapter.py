@@ -6,6 +6,7 @@ import pytest
 from business.season.finish_season_adapter import FinishSeasonAdapter
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
+from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
 from domain.season.season import Season
 from domain.team.team import Team
@@ -14,8 +15,12 @@ from domain.team.team import Team
 def make_adapter():
     season_repository = AsyncMock()
     team_repository = AsyncMock()
-    adapter = FinishSeasonAdapter(season_repository, team_repository)
-    return adapter, season_repository, team_repository
+    user_repository = AsyncMock()
+    audit_logger = AsyncMock()
+    adapter = FinishSeasonAdapter(
+        season_repository, team_repository, user_repository, audit_logger
+    )
+    return adapter, season_repository, team_repository, user_repository, audit_logger
 
 
 def make_context(season_id=None, confirmation_name="Intercurso 2026"):
@@ -29,7 +34,9 @@ def make_context(season_id=None, confirmation_name="Intercurso 2026"):
 @pytest.mark.unit
 class TestFinishSeasonAdapter:
     async def test_finishes_in_progress_season_and_deactivates_invites(self):
-        adapter, season_repository, team_repository = make_adapter()
+        adapter, season_repository, team_repository, user_repository, audit_logger = (
+            make_adapter()
+        )
         season = Season(
             id=uuid4(),
             name="Intercurso 2026",
@@ -55,9 +62,14 @@ class TestFinishSeasonAdapter:
         # Apenas o time com convite ativo deve ser salvo novamente.
         team_repository.save.assert_awaited_once()
         assert team_one.token_active is False
+        audit_logger.log.assert_awaited_once()
+        assert (
+            audit_logger.log.await_args.kwargs["action"]
+            == AuditAction.SEASON_FINISHED
+        )
 
     async def test_blocks_when_confirmation_name_does_not_match(self):
-        adapter, season_repository, team_repository = make_adapter()
+        adapter, season_repository, team_repository, *_rest = make_adapter()
         season = Season(
             id=uuid4(), name="Intercurso 2026", status=SeasonStatus.IN_PROGRESS
         )
@@ -72,7 +84,7 @@ class TestFinishSeasonAdapter:
         team_repository.find_by_season_id.assert_not_awaited()
 
     async def test_blocks_when_confirmation_name_differs_only_by_case(self):
-        adapter, season_repository, team_repository = make_adapter()
+        adapter, season_repository, team_repository, *_rest = make_adapter()
         season = Season(
             id=uuid4(), name="Intercurso 2026", status=SeasonStatus.IN_PROGRESS
         )
@@ -84,7 +96,7 @@ class TestFinishSeasonAdapter:
             )
 
     async def test_blocks_finishing_season_not_in_progress(self):
-        adapter, season_repository, team_repository = make_adapter()
+        adapter, season_repository, team_repository, *_rest = make_adapter()
         season = Season(
             id=uuid4(), name="Intercurso 2026", status=SeasonStatus.DRAFT
         )
@@ -98,14 +110,14 @@ class TestFinishSeasonAdapter:
         season_repository.save.assert_not_awaited()
 
     async def test_blocks_when_season_not_found(self):
-        adapter, season_repository, team_repository = make_adapter()
+        adapter, season_repository, team_repository, *_rest = make_adapter()
         season_repository.get.return_value = None
 
         with pytest.raises(BusinessException):
             await adapter.execute(make_context())
 
     async def test_blocks_when_confirmation_name_is_missing(self):
-        adapter, season_repository, team_repository = make_adapter()
+        adapter, season_repository, team_repository, *_rest = make_adapter()
 
         context = Context()
         context.put_property("season_id", uuid4())

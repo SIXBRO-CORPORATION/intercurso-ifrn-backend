@@ -8,16 +8,16 @@ from business.match._shared import (
 )
 from core.business.match.end_set_port import EndSetPort
 from core.context import Context
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_event_repository_port import MatchEventRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.modality_configuration_repository_port import (
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.event_type import EventType
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException

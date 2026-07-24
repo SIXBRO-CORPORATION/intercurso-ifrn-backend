@@ -204,7 +204,7 @@ uv run task test              # todos os testes
 uv run task test_unit          # apenas unitários
 uv run task test_integration   # apenas integração
 uv run task test_e2e           # apenas e2e
-uv run task coverage           # com cobertura (core, domain, business, security, persistence)
+uv run task coverage           # com cobertura (core, domain, business, auth, persistence)
 ```
 
 ## Documentação

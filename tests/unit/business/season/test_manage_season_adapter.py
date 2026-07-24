@@ -7,14 +7,17 @@ import pytest
 from business.season.manage_season_adapter import ManageSeasonAdapter
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
+from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
 from domain.season.season import Season
 
 
 def make_adapter():
     season_repository = AsyncMock()
-    adapter = ManageSeasonAdapter(season_repository)
-    return adapter, season_repository
+    user_repository = AsyncMock()
+    audit_logger = AsyncMock()
+    adapter = ManageSeasonAdapter(season_repository, user_repository, audit_logger)
+    return adapter, season_repository, user_repository, audit_logger
 
 
 def make_context(season_id=None, new_start=None, new_end=None, reason=None):
@@ -30,7 +33,7 @@ def make_context(season_id=None, new_start=None, new_end=None, reason=None):
 @pytest.mark.unit
 class TestManageSeasonAdapter:
     async def test_edits_both_dates_in_draft(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, user_repository, audit_logger = make_adapter()
         now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
@@ -51,9 +54,14 @@ class TestManageSeasonAdapter:
         assert result.registration_start_date == new_start
         assert result.registration_end_date == new_end
         season_repository.save.assert_awaited_once()
+        audit_logger.log.assert_awaited_once()
+        assert (
+            audit_logger.log.await_args.kwargs["action"]
+            == AuditAction.SEASON_DATES_UPDATED
+        )
 
     async def test_edits_only_end_date_in_registration_open(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
@@ -74,7 +82,7 @@ class TestManageSeasonAdapter:
         season_repository.save.assert_awaited_once()
 
     async def test_blocks_editing_start_date_in_registration_open(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
@@ -91,7 +99,7 @@ class TestManageSeasonAdapter:
             await adapter.execute(context)
 
     async def test_blocks_editing_in_progress_season(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         season = Season(id=uuid4(), name="X", status=SeasonStatus.IN_PROGRESS)
         season_repository.get.return_value = season
 
@@ -101,7 +109,7 @@ class TestManageSeasonAdapter:
             await adapter.execute(context)
 
     async def test_blocks_editing_finished_season(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         season = Season(id=uuid4(), name="X", status=SeasonStatus.FINISHED)
         season_repository.get.return_value = season
 
@@ -111,7 +119,7 @@ class TestManageSeasonAdapter:
             await adapter.execute(context)
 
     async def test_blocks_start_date_in_the_past(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
@@ -128,7 +136,7 @@ class TestManageSeasonAdapter:
             await adapter.execute(context)
 
     async def test_blocks_end_date_before_start_date(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),
@@ -145,14 +153,14 @@ class TestManageSeasonAdapter:
             await adapter.execute(context)
 
     async def test_blocks_when_no_dates_informed(self):
-        adapter, _ = make_adapter()
+        adapter, _, *_rest = make_adapter()
         context = make_context()
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
 
     async def test_blocks_when_season_not_found(self):
-        adapter, season_repository = make_adapter()
+        adapter, season_repository, *_rest = make_adapter()
         season_repository.get.return_value = None
 
         context = make_context(new_end=datetime.now(timezone.utc) + timedelta(days=10))

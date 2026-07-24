@@ -20,12 +20,12 @@ from domain.team.team_member import TeamMember
 from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.mappers.team_model_mapper import TeamModelMapper
-from web.models.request.team_register_request import TeamRegisterRequest
-from web.models.response.team_invite_preview_response import (
+from web.models.request.team.team_register_request import TeamRegisterRequest
+from web.models.response.team.team_invite_preview_response import (
     TeamInvitePreviewResponse,
 )
-from web.models.response.team_join_response import TeamJoinResponse
-from web.models.response.team_register_response import TeamRegisterResponse
+from web.models.response.team.team_join_response import TeamJoinResponse
+from web.models.response.team.team_register_response import TeamRegisterResponse
 from web.dependencies import (
     get_create_team_port,
     get_approve_team_port,

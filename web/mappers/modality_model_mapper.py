@@ -2,7 +2,7 @@ from typing import Optional
 
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
-from web.models.response.modality_create_response import (
+from web.models.response.modality.modality_create_response import (
     ModalityConfigurationResponse,
     ModalityCreateResponse,
 )

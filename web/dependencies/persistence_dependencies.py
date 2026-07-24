@@ -3,66 +3,71 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from persistence.adapters.user_repository_adapter import UserRepositoryAdapter
-from persistence.adapters.team_repository_adapter import TeamRepositoryAdapter
-from persistence.adapters.team_member_repository_adapter import (
+from persistence.adapters.user.user_repository_adapter import UserRepositoryAdapter
+from persistence.adapters.team.team_repository_adapter import TeamRepositoryAdapter
+from persistence.adapters.team.team_member_repository_adapter import (
     TeamMemberRepositoryAdapter,
 )
-from persistence.adapters.season_repository_adapter import SeasonRepositoryAdapter
-from persistence.adapters.season_modality_repository_adapter import (
+from persistence.adapters.season.season_repository_adapter import SeasonRepositoryAdapter
+from persistence.adapters.season.season_modality_repository_adapter import (
     SeasonModalityRepositoryAdapter,
 )
-from persistence.adapters.modality_repository_adapter import ModalityRepositoryAdapter
-from persistence.adapters.refresh_token_adapter import RefreshTokenRepositoryAdapter
-from persistence.adapters.bracket_repository_adapter import BracketRepositoryAdapter
-from persistence.adapters.bracket_group_repository_adapter import (
+from persistence.adapters.modality.modality_repository_adapter import ModalityRepositoryAdapter
+from persistence.adapters.auth.refresh_token_adapter import RefreshTokenRepositoryAdapter
+from persistence.adapters.bracket.bracket_repository_adapter import BracketRepositoryAdapter
+from persistence.adapters.bracket.bracket_group_repository_adapter import (
     BracketGroupRepositoryAdapter,
 )
-from persistence.adapters.bracket_group_team_repository_adapter import (
+from persistence.adapters.bracket.bracket_group_team_repository_adapter import (
     BracketGroupTeamRepositoryAdapter,
 )
-from persistence.adapters.match_repository_adapter import MatchRepositoryAdapter
-from persistence.adapters.match_event_repository_adapter import (
+from persistence.adapters.match.match_repository_adapter import MatchRepositoryAdapter
+from persistence.adapters.match.match_event_repository_adapter import (
     MatchEventRepositoryAdapter,
 )
-from persistence.adapters.modality_configuration_repository_adapter import (
+from persistence.adapters.modality.modality_configuration_repository_adapter import (
     ModalityConfigurationRepositoryAdapter,
 )
-from core.persistence.user_repository_port import UserRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from persistence.adapters.audit.audit_log_repository_adapter import (
+    AuditLogRepositoryAdapter,
+)
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.refresh_token_repository_port import RefreshTokenRepositoryPort
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.bracket_group_repository_port import BracketGroupRepositoryPort
-from core.persistence.bracket_group_team_repository_port import (
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.auth.refresh_token_repository_port import RefreshTokenRepositoryPort
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.bracket.bracket_group_repository_port import BracketGroupRepositoryPort
+from core.persistence.bracket.bracket_group_team_repository_port import (
     BracketGroupTeamRepositoryPort,
 )
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.match_event_repository_port import MatchEventRepositoryPort
-from core.persistence.modality_configuration_repository_port import (
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
+from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
+from core.persistence.audit.audit_log_repository_port import AuditLogRepositoryPort
 from persistence.database import get_db
-from persistence.mappers.team_mapper import TeamMapper
-from persistence.mappers.team_member_mapper import TeamMemberMapper
-from persistence.mappers.user_mapper import UserMapper
-from persistence.mappers.season_mapper import SeasonMapper
-from persistence.mappers.season_modality_mapper import SeasonModalityMapper
-from persistence.mappers.modality_mapper import ModalityMapper
-from persistence.mappers.refresh_token_mapper import RefreshTokenMapper
-from persistence.mappers.bracket_mapper import BracketMapper
-from persistence.mappers.bracket_group_mapper import BracketGroupMapper
-from persistence.mappers.bracket_group_team_mapper import BracketGroupTeamMapper
-from persistence.mappers.match_mapper import MatchMapper
-from persistence.mappers.match_event_mapper import MatchEventMapper
-from persistence.mappers.modality_configuration_mapper import (
+from persistence.mappers.team.team_mapper import TeamMapper
+from persistence.mappers.team.team_member_mapper import TeamMemberMapper
+from persistence.mappers.user.user_mapper import UserMapper
+from persistence.mappers.season.season_mapper import SeasonMapper
+from persistence.mappers.season.season_modality_mapper import SeasonModalityMapper
+from persistence.mappers.modality.modality_mapper import ModalityMapper
+from persistence.mappers.auth.refresh_token_mapper import RefreshTokenMapper
+from persistence.mappers.bracket.bracket_mapper import BracketMapper
+from persistence.mappers.bracket.bracket_group_mapper import BracketGroupMapper
+from persistence.mappers.bracket.bracket_group_team_mapper import BracketGroupTeamMapper
+from persistence.mappers.match.match_mapper import MatchMapper
+from persistence.mappers.match.match_event_mapper import MatchEventMapper
+from persistence.mappers.modality.modality_configuration_mapper import (
     ModalityConfigurationMapper,
 )
+from persistence.mappers.audit.audit_log_mapper import AuditLogMapper
 
 
 def get_user_repository(
@@ -168,3 +173,11 @@ def get_modality_configuration_repository(
     mapper = ModalityConfigurationMapper()
 
     return ModalityConfigurationRepositoryAdapter(session, mapper)
+
+
+def get_audit_log_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> AuditLogRepositoryPort:
+    mapper = AuditLogMapper()
+
+    return AuditLogRepositoryAdapter(session, mapper)
