@@ -1,7 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
-from business.match._shared import load_management_context, validate_match_in_progress
+from business.match._shared import (
+    load_management_context,
+    pause_clock,
+    validate_match_in_progress,
+)
 from core.business.match.end_period_port import EndPeriodPort
 from core.context import Context
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
@@ -59,8 +63,7 @@ class EndPeriodAdapter(EndPeriodPort):
         )
         await self.match_event_repository.save(period_end_event)
 
-        match.clock_seconds = clock_seconds
-        match.clock_running = False
+        pause_clock(match, now)
         match.current_period = (match.current_period or 0) + 1
         saved_match = await self.match_repository.save(match)
 

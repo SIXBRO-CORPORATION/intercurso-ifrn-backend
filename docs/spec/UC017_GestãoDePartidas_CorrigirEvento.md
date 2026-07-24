@@ -214,7 +214,7 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 25. Ao deletar GOAL/POINT: placar decrementa (`team_score--`);
 26. Ao deletar PENALTY_GOAL/PENALTY_MISS: atualiza apenas `penalty_result`, não placar oficial;
 27. Sistema mantém consistência entre eventos e placar;
-28. Para vôlei: sistema atualiza pontuação do set em `metadata`.
+28. Para vôlei: sistema recalcula a pontuação do set afetado pela correção.
 
 ### Correções Pós-Jogo (CRÍTICO):
 29. Correções em partidas FINISHED são permitidas;
@@ -316,3 +316,6 @@ Este caso de uso permite que o monitor corrija erros durante ou após uma partid
 - [UC015 - Finalizar Partida](UC015_FinalizarPartida.md)
 - [UC016 - Visualizar Partida em Tempo Real](UC016_VisualizarPartida.md)
 - [UC012 - Gerenciar Chaveamento](UC012_GerenciarChaveamento.md)
+- [ADR 0002 - Normalização de Configuração por Modalidade e Histórico de Sets](../adr/ADR002_NormalizacaoModalidade.md) —
+  decisão técnica (proposta) sobre como a regra 28 (recálculo de set no vôlei) deve persistir o
+  histórico de sets da partida.
