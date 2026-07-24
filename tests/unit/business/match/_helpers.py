@@ -9,7 +9,7 @@ from domain.match.match import Match
 
 
 def make_mocks():
-    return {
+    mocks = {
         "match_repository": AsyncMock(),
         "match_event_repository": AsyncMock(),
         "team_repository": AsyncMock(),
@@ -21,6 +21,12 @@ def make_mocks():
         "volleyball_modality_configuration_repository": AsyncMock(),
         "match_set_repository": AsyncMock(),
     }
+
+    mocks["match_repository"].lock_for_update.side_effect = (
+        lambda match_id: mocks["match_repository"].get.return_value
+    )
+
+    return mocks
 
 
 def make_adapter(adapter_cls, mocks: dict):

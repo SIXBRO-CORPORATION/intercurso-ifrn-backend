@@ -50,3 +50,7 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
     @abstractmethod
     async def find_tbd_matches_by_bracket(self, bracket_id: UUID) -> List[Match]:
         pass
+
+    @abstractmethod
+    async def lock_for_update(self, match_id: UUID) -> Optional[Match]:
+        pass

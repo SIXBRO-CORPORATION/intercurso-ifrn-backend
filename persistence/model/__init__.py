@@ -9,11 +9,15 @@ from .modality_configuration_entity import ModalityConfigurationEntity
 from .volleyball_modality_configuration_entity import VolleyballModalityConfigurationEntity
 from .match_entity import MatchEntity
 from .match_event_entity import MatchEventEntity
-from .match_set_entity import MatchSetEntity
+from .match_set_entity import MatchSetEntity, PG_ENTITIES as MATCH_SET_PG_ENTITIES
 from .bracket_entity import BracketEntity
 from .bracket_group_entity import BracketGroupEntity
 from .bracket_group_team_entity import BracketGroupTeamEntity
 
+
+PG_ENTITIES = [
+    *MATCH_SET_PG_ENTITIES,
+]
 
 __all__ = [
     "UserEntity",
@@ -31,4 +35,5 @@ __all__ = [
     "BracketEntity",
     "BracketGroupEntity",
     "BracketGroupTeamEntity",
+    "PG_ENTITIES",
 ]

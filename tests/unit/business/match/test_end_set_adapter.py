@@ -221,9 +221,6 @@ class TestEndSetAdapter:
         mocks["modality_configuration_repository"].find_by_modality.return_value = (
             modality_configuration
         )
-        # Nenhuma configuração de vôlei específica cadastrada ainda: o adapter
-        # deve recorrer aos valores padrão (25 pontos, 15 no set decisivo,
-        # melhor de 5 sets).
         mocks[
             "volleyball_modality_configuration_repository"
         ].find_by_modality_configuration_id.return_value = None
@@ -235,3 +232,42 @@ class TestEndSetAdapter:
 
         assert result.team1_sets_won == 1
         assert result.team2_sets_won == 0
+
+    @pytest.mark.asyncio
+    async def test_end_set_locks_match_row_before_writing_the_set(self):
+        mocks = make_mocks()
+        adapter = make_adapter(EndSetAdapter, mocks)
+        stub_empty_management_context(mocks)
+
+        monitor_id = uuid4()
+        match = make_in_progress_match(monitor_id=monitor_id)
+        match.team1_score = 25
+        match.team2_score = 20
+        mocks["match_repository"].get.return_value = match
+        mocks["match_repository"].save.side_effect = lambda m: m
+        setup_volleyball(mocks, match)
+
+        context = make_context(match.id, monitor_id)
+        await adapter.execute(context)
+
+        mocks["match_repository"].lock_for_update.assert_awaited_once_with(match.id)
+
+    @pytest.mark.asyncio
+    async def test_end_set_rejects_when_locked_match_no_longer_exists(self):
+        mocks = make_mocks()
+        adapter = make_adapter(EndSetAdapter, mocks)
+
+        monitor_id = uuid4()
+        match = make_in_progress_match(monitor_id=monitor_id)
+        match.team1_score = 25
+        match.team2_score = 20
+        mocks["match_repository"].get.return_value = match
+        setup_volleyball(mocks, match)
+        # A partida foi removida entre a validação inicial e o lock.
+        mocks["match_repository"].lock_for_update.side_effect = None
+        mocks["match_repository"].lock_for_update.return_value = None
+
+        context = make_context(match.id, monitor_id)
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)

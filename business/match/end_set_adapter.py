@@ -66,6 +66,11 @@ class EndSetAdapter(EndSetPort):
             self.match_repository, match_id, monitor_id
         )
 
+        locked_match = await self.match_repository.lock_for_update(match_id)
+        if locked_match is None:
+            raise BusinessException("Partida não encontrada")
+        match = locked_match
+
         _, modality_configuration = await load_modality_configuration(
             self.bracket_repository,
             self.modality_repository,
