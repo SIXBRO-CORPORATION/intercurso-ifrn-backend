@@ -9,15 +9,26 @@ from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
+from domain.modality.volleyball_modality_configuration import (
+    VolleyballModalityConfiguration,
+)
 
 
 def make_adapter():
     modality_repository = AsyncMock()
     modality_configuration_repository = AsyncMock()
+    volleyball_modality_configuration_repository = AsyncMock()
     adapter = CreateModalityAdapter(
-        modality_repository, modality_configuration_repository
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
     )
-    return adapter, modality_repository, modality_configuration_repository
+    return (
+        adapter,
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+    )
 
 
 def make_context(
@@ -46,9 +57,12 @@ def make_valid_configuration(**overrides):
 @pytest.mark.unit
 class TestCreateModalityAdapter:
     async def test_creates_modality_and_configuration_successfully(self):
-        adapter, modality_repository, modality_configuration_repository = (
-            make_adapter()
-        )
+        (
+            adapter,
+            modality_repository,
+            modality_configuration_repository,
+            _volleyball_modality_configuration_repository,
+        ) = make_adapter()
         modality_repository.find_by_name.return_value = None
         saved_modality_id = uuid4()
         modality_repository.save.return_value = Modality(
@@ -113,7 +127,7 @@ class TestCreateModalityAdapter:
             await adapter.execute(context)
 
     async def test_blocks_duplicated_name(self):
-        adapter, modality_repository, _ = make_adapter()
+        adapter, modality_repository, *_ = make_adapter()
         modality_repository.find_by_name.return_value = Modality(
             id=uuid4(), name="Futsal", min_members=5, max_members=10
         )
@@ -163,3 +177,126 @@ class TestCreateModalityAdapter:
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
+
+    async def test_blocks_missing_volleyball_configuration_for_sets(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = make_context(
+            name="Vôlei", configuration=make_valid_configuration(score_type=ScoreType.SETS)
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+    async def test_blocks_points_per_set_below_one(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = make_context(
+            name="Vôlei", configuration=make_valid_configuration(score_type=ScoreType.SETS)
+        )
+        context.put_property(
+            "volleyball_configuration",
+            VolleyballModalityConfiguration(
+                points_per_set=0, final_set_points=15, sets_to_win=2
+            ),
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+    async def test_blocks_final_set_points_below_one(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = make_context(
+            name="Vôlei", configuration=make_valid_configuration(score_type=ScoreType.SETS)
+        )
+        context.put_property(
+            "volleyball_configuration",
+            VolleyballModalityConfiguration(
+                points_per_set=25, final_set_points=0, sets_to_win=2
+            ),
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+    async def test_blocks_sets_to_win_below_one(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = make_context(
+            name="Vôlei", configuration=make_valid_configuration(score_type=ScoreType.SETS)
+        )
+        context.put_property(
+            "volleyball_configuration",
+            VolleyballModalityConfiguration(
+                points_per_set=25, final_set_points=15, sets_to_win=0
+            ),
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+    async def test_creates_volleyball_configuration_when_score_type_is_sets(self):
+        (
+            adapter,
+            modality_repository,
+            modality_configuration_repository,
+            volleyball_modality_configuration_repository,
+        ) = make_adapter()
+        modality_repository.find_by_name.return_value = None
+        saved_modality_id = uuid4()
+        modality_repository.save.return_value = Modality(
+            id=saved_modality_id,
+            name="Vôlei",
+            min_members=6,
+            max_members=12,
+            active=True,
+        )
+        saved_configuration_id = uuid4()
+
+        def save_configuration(config):
+            config.id = saved_configuration_id
+            return config
+
+        modality_configuration_repository.save.side_effect = save_configuration
+        volleyball_modality_configuration_repository.save.side_effect = (
+            lambda config: config
+        )
+
+        context = make_context(
+            name="Vôlei",
+            min_members=6,
+            max_members=12,
+            configuration=make_valid_configuration(score_type=ScoreType.SETS),
+        )
+        context.put_property(
+            "volleyball_configuration",
+            VolleyballModalityConfiguration(
+                points_per_set=25, final_set_points=15, sets_to_win=2
+            ),
+        )
+
+        result = await adapter.execute(context)
+
+        assert result.name == "Vôlei"
+        volleyball_modality_configuration_repository.save.assert_awaited_once()
+        saved_volleyball_arg = (
+            volleyball_modality_configuration_repository.save.await_args.args[0]
+        )
+        assert (
+            saved_volleyball_arg.modality_configuration_id == saved_configuration_id
+        )
+        assert saved_volleyball_arg.points_per_set == 25
+        assert saved_volleyball_arg.final_set_points == 15
+        assert saved_volleyball_arg.sets_to_win == 2
+
+        assert (
+            context.get_property(
+                "volleyball_configuration", VolleyballModalityConfiguration
+            ).modality_configuration_id
+            == saved_configuration_id
+        )

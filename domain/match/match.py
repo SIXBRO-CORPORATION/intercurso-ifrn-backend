@@ -31,6 +31,8 @@ class Match(AbstractDomain):
     current_period: int = None
     is_bye: bool = None
     metadata_json: dict = field(default_factory=dict)
+    team1_sets_won: int = None
+    team2_sets_won: int = None
 
     def current_clock_seconds(self, now: datetime = None) -> int:
         base = self.clock_seconds or 0

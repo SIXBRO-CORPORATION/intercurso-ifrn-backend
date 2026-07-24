@@ -7,6 +7,7 @@ from core.context import Context
 from core.persistence.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match_event_repository_port import MatchEventRepositoryPort
 from core.persistence.match_repository_port import MatchRepositoryPort
+from core.persistence.match_set_repository_port import MatchSetRepositoryPort
 from core.persistence.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
@@ -14,8 +15,12 @@ from core.persistence.modality_repository_port import ModalityRepositoryPort
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import (
+    VolleyballModalityConfigurationRepositoryPort,
+)
 from domain.enums.event_type import EventType
 from domain.enums.match_status import MatchStatus
+from domain.enums.score_type import ScoreType
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.match.match import Match
@@ -35,6 +40,8 @@ class StartMatchAdapter(StartMatchPort):
         bracket_repository: BracketRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
         modality_repository: ModalityRepositoryPort,
+        volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
+        match_set_repository: MatchSetRepositoryPort,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -44,6 +51,10 @@ class StartMatchAdapter(StartMatchPort):
         self.bracket_repository = bracket_repository
         self.modality_configuration_repository = modality_configuration_repository
         self.modality_repository = modality_repository
+        self.volleyball_modality_configuration_repository = (
+            volleyball_modality_configuration_repository
+        )
+        self.match_set_repository = match_set_repository
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -103,6 +114,22 @@ class StartMatchAdapter(StartMatchPort):
         match.team2_score = 0
         match.monitor_id = monitor_id
 
+        bracket = await self.bracket_repository.get(match.bracket_id)
+
+        modality = None
+        modality_configuration = None
+        if bracket is not None:
+            modality = await self.modality_repository.get(bracket.modality_id)
+            modality_configuration = (
+                await self.modality_configuration_repository.find_by_modality(
+                    bracket.modality_id
+                )
+            )
+
+        if modality_configuration is not None and modality_configuration.score_type == ScoreType.SETS:
+            match.team1_sets_won = 0
+            match.team2_sets_won = 0
+
         # TODO (débito técnico, mesmo padrão das fases anteriores): registro de
         # auditoria da operação (monitor, partida, data/hora) depende de
         # infraestrutura de auditoria ainda inexistente no projeto.
@@ -121,18 +148,6 @@ class StartMatchAdapter(StartMatchPort):
         # e Push Notification para alunos (regra de negócio 10) dependem de
         # infraestrutura ainda inexistente no projeto (ver Fase 6 do planejamento).
 
-        bracket = await self.bracket_repository.get(saved_match.bracket_id)
-
-        modality = None
-        modality_configuration = None
-        if bracket is not None:
-            modality = await self.modality_repository.get(bracket.modality_id)
-            modality_configuration = (
-                await self.modality_configuration_repository.find_by_modality(
-                    bracket.modality_id
-                )
-            )
-
         team1_players = await self._load_players(team1.id)
         team2_players = await self._load_players(team2.id)
 
@@ -145,6 +160,18 @@ class StartMatchAdapter(StartMatchPort):
         if modality_configuration is not None:
             context.put_property("modality_configuration", modality_configuration)
         context.put_property("match_start_event", saved_event)
+
+        if modality_configuration is not None and modality_configuration.score_type == ScoreType.SETS:
+            volleyball_configuration = (
+                await self.volleyball_modality_configuration_repository.find_by_modality_configuration_id(
+                    modality_configuration.id
+                )
+            )
+            if volleyball_configuration is not None:
+                context.put_property(
+                    "volleyball_configuration", volleyball_configuration
+                )
+            context.put_property("match_sets", [])
 
         return saved_match
 

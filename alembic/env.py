@@ -5,8 +5,10 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from persistence.model.abstract_entity import Base
+from persistence.model import PG_ENTITIES
 
 from alembic import context
+from alembic_utils.replaceable_entity import register_entities
 
 load_dotenv()
 DATABASE_URL_SYNC = os.getenv("DATABASE_URL_SYNC")
@@ -25,6 +27,12 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
+
+# Registra funções/triggers/etc. declarados junto aos models (ver
+# persistence/model/__init__.py::PG_ENTITIES) para que
+# `alembic revision --autogenerate` também detecte mudanças nelas, e não
+# apenas em tabelas/colunas.
+register_entities(PG_ENTITIES)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

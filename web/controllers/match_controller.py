@@ -13,8 +13,12 @@ from core.business.match.end_period_port import EndPeriodPort
 from core.business.match.start_period_port import StartPeriodPort
 from core.business.match.end_set_port import EndSetPort
 from core.context import Context
+from domain.match.match_set import MatchSet
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
+from domain.modality.volleyball_modality_configuration import (
+    VolleyballModalityConfiguration,
+)
 from domain.match.match_event import MatchEvent
 from domain.team.team import Team
 from domain.user.user import User
@@ -63,6 +67,10 @@ def _build_response(
     timeline_events: List[MatchEvent] = (
         context.get_property("timeline_events", list) or []
     )
+    volleyball_configuration = context.get_property(
+        "volleyball_configuration", VolleyballModalityConfiguration
+    )
+    match_sets: List[MatchSet] = context.get_property("match_sets", list) or []
     match_point_reached = context.get("match_point_reached")
 
     response_data = mapper.to_management_response(
@@ -74,7 +82,9 @@ def _build_response(
         modality,
         modality_configuration,
         timeline_events,
-        match_point_reached,
+        volleyball_configuration=volleyball_configuration,
+        match_sets=match_sets,
+        match_point_reached=match_point_reached,
     )
 
     return ApiResponse(data=response_data, message=default_message)
@@ -97,30 +107,13 @@ async def start_match(
 
     started_match = await start_match_port.execute(context)
 
-    team1 = context.get_property("team1", Team)
-    team2 = context.get_property("team2", Team)
-    team1_players = context.get_property("team1_players", list) or []
-    team2_players = context.get_property("team2_players", list) or []
-    modality = context.get_property("modality", Modality)
-    modality_configuration = context.get_property(
-        "modality_configuration", ModalityConfiguration
-    )
     match_start_event = context.get_property("match_start_event", MatchEvent)
-    timeline_events = [match_start_event] if match_start_event else []
+    if match_start_event is not None:
+        existing_timeline = context.get_property("timeline_events", list) or []
+        context.put_property("timeline_events", existing_timeline + [match_start_event])
 
-    response_data = mapper.to_management_response(
-        started_match,
-        team1,
-        team2,
-        team1_players,
-        team2_players,
-        modality,
-        modality_configuration,
-        timeline_events,
-    )
-
-    return ApiResponse(
-        data=response_data, message="Partida iniciada com sucesso!"
+    return _build_response(
+        context, mapper, started_match, "Partida iniciada com sucesso!"
     )
 
 

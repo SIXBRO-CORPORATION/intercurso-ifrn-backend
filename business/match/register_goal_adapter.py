@@ -14,6 +14,7 @@ from core.context import Context
 from core.persistence.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match_event_repository_port import MatchEventRepositoryPort
 from core.persistence.match_repository_port import MatchRepositoryPort
+from core.persistence.match_set_repository_port import MatchSetRepositoryPort
 from core.persistence.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
@@ -21,6 +22,9 @@ from core.persistence.modality_repository_port import ModalityRepositoryPort
 from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team_repository_port import TeamRepositoryPort
 from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import (
+    VolleyballModalityConfigurationRepositoryPort,
+)
 from domain.enums.event_type import EventType
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
@@ -39,6 +43,8 @@ class RegisterGoalAdapter(RegisterGoalPort):
         bracket_repository: BracketRepositoryPort,
         modality_repository: ModalityRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
+        volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
+        match_set_repository: MatchSetRepositoryPort,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -48,6 +54,10 @@ class RegisterGoalAdapter(RegisterGoalPort):
         self.bracket_repository = bracket_repository
         self.modality_repository = modality_repository
         self.modality_configuration_repository = modality_configuration_repository
+        self.volleyball_modality_configuration_repository = (
+            volleyball_modality_configuration_repository
+        )
+        self.match_set_repository = match_set_repository
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -83,9 +93,6 @@ class RegisterGoalAdapter(RegisterGoalPort):
         else:
             match.team2_score = (match.team2_score or 0) + 1
 
-        if score_type == ScoreType.SETS:
-            self._update_set_score(match, team_id)
-
         match.sync_clock(now)
         saved_match = await self.match_repository.save(match)
 
@@ -108,17 +115,8 @@ class RegisterGoalAdapter(RegisterGoalPort):
             self.modality_repository,
             self.modality_configuration_repository,
             self.match_event_repository,
+            self.volleyball_modality_configuration_repository,
+            self.match_set_repository,
         )
 
         return saved_match
-
-    def _update_set_score(self, match: Match, team_id: UUID) -> None:
-        metadata = dict(match.metadata_json or {})
-        current_set_score = dict(metadata.get("current_set_score") or {"team1": 0, "team2": 0})
-        key = "team1" if team_id == match.team1_id else "team2"
-        current_set_score[key] = current_set_score.get(key, 0) + 1
-        metadata["current_set_score"] = current_set_score
-        metadata.setdefault("current_set_number", 1)
-        metadata.setdefault("sets", [])
-        metadata.setdefault("sets_won", {"team1": 0, "team2": 0})
-        match.metadata_json = metadata

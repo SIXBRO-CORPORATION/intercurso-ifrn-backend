@@ -73,7 +73,7 @@ class TestRegisterGoalAdapter:
         assert saved_event.team_id == match.team1_id
 
     @pytest.mark.asyncio
-    async def test_register_point_for_volleyball_updates_set_metadata(self):
+    async def test_register_point_for_volleyball_updates_team_score(self):
         mocks = make_mocks()
         adapter = make_adapter(RegisterGoalAdapter, mocks)
         stub_empty_management_context(mocks)
@@ -102,7 +102,8 @@ class TestRegisterGoalAdapter:
 
         saved_event: MatchEvent = mocks["match_event_repository"].save.call_args[0][0]
         assert saved_event.event_type == EventType.POINT
-        assert result.metadata_json["current_set_score"] == {"team1": 0, "team2": 1}
+        assert result.team1_score == 0
+        assert result.team2_score == 1
 
     @pytest.mark.asyncio
     async def test_blocks_when_match_not_in_progress(self):
