@@ -18,6 +18,8 @@ def make_mocks():
         "bracket_repository": AsyncMock(),
         "modality_repository": AsyncMock(),
         "modality_configuration_repository": AsyncMock(),
+        "volleyball_modality_configuration_repository": AsyncMock(),
+        "match_set_repository": AsyncMock(),
     }
 
 
@@ -31,6 +33,8 @@ def make_adapter(adapter_cls, mocks: dict):
         mocks["bracket_repository"],
         mocks["modality_repository"],
         mocks["modality_configuration_repository"],
+        mocks["volleyball_modality_configuration_repository"],
+        mocks["match_set_repository"],
     )
 
 
