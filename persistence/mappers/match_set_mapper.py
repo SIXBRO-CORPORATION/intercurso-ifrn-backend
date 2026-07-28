@@ -1,7 +1,7 @@
 from typing import Optional
 
 from domain.match.match_set import MatchSet
-from persistence.model.match_set_entity import MatchSetEntity
+from persistence.model.match.match_set_entity import MatchSetEntity
 
 
 class MatchSetMapper:

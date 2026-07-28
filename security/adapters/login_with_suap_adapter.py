@@ -3,7 +3,7 @@ from typing import Optional
 from security.services.refresh_token_service import RefreshTokenService
 from core.security.login_with_suap_port import LoginWithSuapPort
 from core.context import Context
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.security.oauth_provider_port import OAuthProviderPort
 from domain.auth.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException

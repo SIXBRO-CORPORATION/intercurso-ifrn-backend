@@ -9,8 +9,8 @@ from security.services.refresh_token_service import RefreshTokenService
 from core.security.login_with_suap_port import LoginWithSuapPort
 from core.security.logout_port import LogoutPort
 from core.security.refresh_access_token_port import RefreshAccessTokenPort
-from core.persistence.refresh_token_repository_port import RefreshTokenRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.auth.refresh_token_repository_port import RefreshTokenRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.security.jwt_provider_port import JWTProviderPort
 from core.security.oauth_provider_port import OAuthProviderPort
 from security.adapters.suap_oauth_adapter import SUAPOAuthAdapter

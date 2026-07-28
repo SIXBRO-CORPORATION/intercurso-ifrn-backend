@@ -7,6 +7,11 @@ from web.dependencies.persistence_dependencies import (
     get_bracket_group_repository,
     get_bracket_group_team_repository,
     get_match_repository,
+    get_audit_log_repository,
+)
+
+from web.dependencies.commons_dependencies import (
+    get_audit_logger,
 )
 
 from web.dependencies.security_dependencies import (
@@ -96,6 +101,10 @@ __all__ = [
     "get_bracket_group_repository",
     "get_bracket_group_team_repository",
     "get_match_repository",
+    "get_audit_log_repository",
+
+    # Commons Dependencies
+    "get_audit_logger",
 
     # Security Dependencies
     "get_jwt_provider",

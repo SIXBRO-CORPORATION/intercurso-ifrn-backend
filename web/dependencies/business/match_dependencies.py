@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import Depends
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.match.start_match_port import StartMatchPort
 from core.business.match.register_goal_port import RegisterGoalPort
 from core.business.match.register_card_port import RegisterCardPort
@@ -9,20 +10,17 @@ from core.business.match.resume_clock_port import ResumeClockPort
 from core.business.match.end_period_port import EndPeriodPort
 from core.business.match.start_period_port import StartPeriodPort
 from core.business.match.end_set_port import EndSetPort
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_event_repository_port import MatchEventRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.modality_configuration_repository_port import (
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.match_set_repository_port import MatchSetRepositoryPort
+from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
-from core.persistence.volleyball_modality_configuration_repository_port import (
-    VolleyballModalityConfigurationRepositoryPort,
-)
-from core.persistence.match_set_repository_port import MatchSetRepositoryPort
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from business.match.start_match_adapter import StartMatchAdapter
 from business.match.register_goal_adapter import RegisterGoalAdapter
 from business.match.register_card_adapter import RegisterCardAdapter
@@ -31,6 +29,9 @@ from business.match.resume_clock_adapter import ResumeClockAdapter
 from business.match.end_period_adapter import EndPeriodAdapter
 from business.match.start_period_adapter import StartPeriodAdapter
 from business.match.end_set_adapter import EndSetAdapter
+from core.persistence.volleyball_modality_configuration_repository_port import \
+    VolleyballModalityConfigurationRepositoryPort
+from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
     get_bracket_repository,
     get_match_event_repository,
@@ -63,6 +64,7 @@ def get_start_match_port(
     modality_repository: Annotated[
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
     volleyball_modality_configuration_repository: Annotated[
         VolleyballModalityConfigurationRepositoryPort,
         Depends(get_volleyball_modality_configuration_repository),
@@ -82,6 +84,7 @@ def get_start_match_port(
         modality_repository,
         volleyball_modality_configuration_repository,
         match_set_repository,
+        audit_logger,
     )
 
 

@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from typing import Tuple
 from uuid import UUID
 
-from core.persistence.refresh_token_repository_port import RefreshTokenRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
+from core.persistence.auth.refresh_token_repository_port import RefreshTokenRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.security.jwt_provider_port import JWTProviderPort
 from domain.auth.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException

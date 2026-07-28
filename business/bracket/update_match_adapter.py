@@ -2,10 +2,12 @@ from datetime import datetime
 from uuid import UUID
 
 from core.business.bracket.update_match_port import UpdateMatchPort
+from core.business.audit.audit_logger import AuditLogger
 from core.context import Context
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.match_status import MatchStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
@@ -18,16 +20,19 @@ class UpdateMatchAdapter(UpdateMatchPort):
         match_repository: MatchRepositoryPort,
         bracket_repository: BracketRepositoryPort,
         team_repository: TeamRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.match_repository = match_repository
         self.bracket_repository = bracket_repository
         self.team_repository = team_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
         new_scheduled_date = context.get_property("scheduled_date", datetime)
         new_team1_id = context.get_property("team1_id", UUID)
         new_team2_id = context.get_property("team2_id", UUID)
+        updated_by = context.get_property("updated_by", UUID)
 
         if match_id is None:
             raise BusinessException("Partida é obrigatória")
@@ -79,8 +84,23 @@ class UpdateMatchAdapter(UpdateMatchPort):
         if new_scheduled_date is not None:
             match.scheduled_date = new_scheduled_date
 
-        # TODO (débito técnico, mesmo padrão das fases anteriores): registro de
-        # auditoria da edição (monitor, alterações, data/hora) depende de
-        # infraestrutura ainda inexistente no projeto.
+        saved_match = await self.match_repository.save(match)
 
-        return await self.match_repository.save(match)
+        changed_fields = [
+            field_name
+            for field_name, value in (
+                ("data agendada", new_scheduled_date),
+                ("time 1", new_team1_id),
+                ("time 2", new_team2_id),
+            )
+            if value is not None
+        ]
+        await self.audit_logger.log(
+            action=AuditAction.MATCH_UPDATED,
+            description=(
+                f"Partida atualizada ({', '.join(changed_fields)})"
+            ),
+            actor_id=updated_by,
+        )
+
+        return saved_match

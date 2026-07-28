@@ -8,16 +8,15 @@ from core.context import Context
 from domain.enums.score_type import ScoreType
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
-from domain.modality.volleyball_modality_configuration import (
-    VolleyballModalityConfiguration,
-)
+from domain.modality.volleyball_modality_configuration import VolleyballModalityConfiguration
+from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import require_monitor
 from web.dependencies.business.modality_dependencies import get_create_modality_port
 from web.dependencies.mapper_dependencies import get_modality_model_mapper
 from web.mappers.modality_model_mapper import ModalityModelMapper
-from web.models.request.modality_create_request import ModalityCreateRequest
-from web.models.response.modality_create_response import ModalityCreateResponse
+from web.models.request.modality.modality_create_request import ModalityCreateRequest
+from web.models.response.modality.modality_create_response import ModalityCreateResponse
 
 router = APIRouter(prefix="/api/modality", tags=["modality"])
 
@@ -26,7 +25,6 @@ router = APIRouter(prefix="/api/modality", tags=["modality"])
     "/",
     response_model=ApiResponse[ModalityCreateResponse],
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_monitor)]
 )
 async def create_modality(
     request: ModalityCreateRequest,
@@ -34,6 +32,7 @@ async def create_modality(
         CreateModalityPort, Depends(get_create_modality_port)
     ],
     mapper: Annotated[ModalityModelMapper, Depends(get_modality_model_mapper)],
+    current_user: User = Depends(require_monitor),
 ):
     modality_domain = Modality(
         name=request.name,
@@ -50,6 +49,7 @@ async def create_modality(
 
     context = Context(data=modality_domain)
     context.put_property("modality_configuration", configuration_domain)
+    context.put_property("created_by", current_user.id)
 
     if request.score_type == ScoreType.SETS:
         context.put_property(

@@ -6,6 +6,7 @@ import pytest
 from business.match.start_match_adapter import StartMatchAdapter
 from core.context import Context
 from domain.bracket.bracket import Bracket
+from domain.enums.audit_action import AuditAction
 from domain.enums.event_type import EventType
 from domain.enums.match_category import MatchCategory
 from domain.enums.match_status import MatchStatus
@@ -34,6 +35,8 @@ def make_adapter():
     volleyball_modality_configuration_repository = AsyncMock()
     match_set_repository = AsyncMock()
 
+    audit_logger = AsyncMock()
+
     adapter = StartMatchAdapter(
         match_repository,
         match_event_repository,
@@ -45,6 +48,7 @@ def make_adapter():
         modality_repository,
         volleyball_modality_configuration_repository,
         match_set_repository,
+        audit_logger,
     )
 
     return (
@@ -59,6 +63,7 @@ def make_adapter():
         modality_repository,
         volleyball_modality_configuration_repository,
         match_set_repository,
+        audit_logger,
     )
 
 
@@ -98,6 +103,7 @@ class TestStartMatchAdapter:
             modality_repository,
             volleyball_modality_configuration_repository,
             match_set_repository,
+            audit_logger,
         ) = make_adapter()
 
         team1 = make_team()
@@ -166,6 +172,12 @@ class TestStartMatchAdapter:
         modality_configuration_repository.find_by_modality.assert_awaited_once_with(
             bracket.modality_id
         )
+
+        audit_logger.log.assert_awaited_once()
+        assert (
+            audit_logger.log.await_args.kwargs["action"] == AuditAction.MATCH_STARTED
+        )
+        assert audit_logger.log.await_args.kwargs["actor_id"] == monitor_id
 
     @pytest.mark.asyncio
     async def test_blocks_when_not_scheduled(self):
@@ -267,6 +279,7 @@ class TestStartMatchAdapter:
             modality_repository,
             volleyball_modality_configuration_repository,
             match_set_repository,
+            audit_logger,
         ) = make_adapter()
 
         team1 = make_team()

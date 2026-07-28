@@ -25,13 +25,13 @@ from web.dependencies.business.season_dependencies import (
 )
 from web.dependencies.mapper_dependencies import get_season_model_mapper
 from web.mappers.season_model_mapper import SeasonModelMapper
-from web.models.request.season_create_request import SeasonCreateRequest
-from web.models.request.season_edit_dates_request import SeasonEditDatesRequest
-from web.models.request.season_finish_request import SeasonFinishRequest
-from web.models.request.season_reopen_request import SeasonReopenRequest
-from web.models.response.season_create_response import SeasonCreateResponse
-from web.models.response.season_details_response import SeasonDetailsResponse
-from web.models.response.season_status_response import SeasonStatusResponse
+from web.models.request.season.season_create_request import SeasonCreateRequest
+from web.models.request.season.season_edit_dates_request import SeasonEditDatesRequest
+from web.models.request.season.season_finish_request import SeasonFinishRequest
+from web.models.request.season.season_reopen_request import SeasonReopenRequest
+from web.models.response.season.season_create_response import SeasonCreateResponse
+from web.models.response.season.season_details_response import SeasonDetailsResponse
+from web.models.response.season.season_status_response import SeasonStatusResponse
 
 router = APIRouter(prefix="/api/season", tags=["season"])
 

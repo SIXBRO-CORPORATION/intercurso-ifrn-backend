@@ -1,10 +1,12 @@
 from datetime import datetime
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.season.finish_season_port import FinishSeasonPort
 from core.context import Context
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season.season import Season
@@ -15,13 +17,16 @@ class FinishSeasonAdapter(FinishSeasonPort):
         self,
         season_repository: SeasonRepositoryPort,
         team_repository: TeamRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.season_repository = season_repository
         self.team_repository = team_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
         season_id = context.get_property("season_id", UUID)
         confirmation_name = context.get_property("confirmation_name", str)
+        finished_by = context.get_property("finished_by", UUID)
 
         if season_id is None:
             raise BusinessException("Identificador da temporada é obrigatório")
@@ -45,12 +50,6 @@ class FinishSeasonAdapter(FinishSeasonPort):
                 "Nome de confirmação não corresponde ao nome da temporada"
             )
 
-        # TODO (débito técnico assumido nesta fase, mesmo padrão das demais
-        # regras "futuras" do UC001/UC002): validar que todos os jogos da
-        # temporada estão finalizados (Fluxo Alternativo 3 / Regra 3). Essa
-        # validação depende da camada de Partidas (Fase 5 do planejamento),
-        # que ainda não existe no projeto.
-
         now = datetime.now()
         season.status = SeasonStatus.FINISHED
         season.finished_at = now
@@ -64,9 +63,10 @@ class FinishSeasonAdapter(FinishSeasonPort):
                 team.token_active = False
                 await self.team_repository.save(team)
 
-        # TODO (débito técnico assumido nesta fase, mesmo padrão do UC001/
-        # UC002): registrar a operação em auditoria (monitor responsável,
-        # data/hora, ação). Não há infraestrutura de auditoria no projeto
-        # ainda.
+        await self.audit_logger.log(
+            action=AuditAction.SEASON_FINISHED,
+            description=f"Temporada '{updated_season.name}' finalizada",
+            actor_id=finished_by,
+        )
 
         return updated_season

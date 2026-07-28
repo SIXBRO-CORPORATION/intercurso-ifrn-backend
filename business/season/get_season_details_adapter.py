@@ -2,11 +2,11 @@ from uuid import UUID
 
 from core.business.season.get_season_details_port import GetSeasonDetailsPort
 from core.context import Context
-from core.persistence.season_modality_repository_port import (
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException

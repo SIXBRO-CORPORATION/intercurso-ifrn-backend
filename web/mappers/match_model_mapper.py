@@ -11,7 +11,7 @@ from domain.modality.volleyball_modality_configuration import (
 from domain.team.team import Team
 from domain.team.team_member import TeamMember
 from domain.user.user import User
-from web.models.response.match_management_response import (
+from web.models.response.match.match_management_response import (
     MatchManagementResponse,
     MatchModalityConfigurationResponse,
     MatchPlayerResponse,

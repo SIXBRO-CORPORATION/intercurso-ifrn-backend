@@ -3,8 +3,8 @@ from uuid import UUID
 
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.context import Context
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.donation_status import DonationStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException

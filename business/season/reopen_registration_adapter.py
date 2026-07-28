@@ -1,21 +1,29 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
 from core.context import Context
-from core.persistence.season_repository_port import SeasonRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season.season import Season
 
 
 class ReopenRegistrationAdapter(ReopenRegistrationPort):
-    def __init__(self, season_repository: SeasonRepositoryPort):
+    def __init__(
+        self,
+        season_repository: SeasonRepositoryPort,
+        audit_logger: AuditLogger,
+    ):
         self.season_repository = season_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
         season_id = context.get_property("season_id", UUID)
         new_end = context.get_property("new_registration_end_date", datetime)
+        reopened_by = context.get_property("reopened_by", UUID)
 
         if season_id is None:
             raise BusinessException("Identificador da temporada é obrigatório")
@@ -54,11 +62,13 @@ class ReopenRegistrationAdapter(ReopenRegistrationPort):
 
         updated_season = await self.season_repository.save(season)
 
-        # TODO (débito técnico assumido nesta fase, mesmo padrão do UC001):
-        # enviar notificação aos alunos e registrar a operação em auditoria
-        # (regras 17 e 22/23). O novo agendamento do job de encerramento
-        # (regra 16) é natural: o job de encerramento faz polling em
-        # temporadas REGISTRATION_OPEN, então esta temporada volta a ser
-        # verificada automaticamente no próximo ciclo.
+        await self.audit_logger.log(
+            action=AuditAction.SEASON_REGISTRATION_REOPENED,
+            description=(
+                f"Inscrições da temporada '{updated_season.name}' reabertas "
+                f"até {updated_season.registration_end_date}"
+            ),
+            actor_id=reopened_by,
+        )
 
         return updated_season

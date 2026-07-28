@@ -3,7 +3,7 @@ from typing import Optional
 from domain.modality.volleyball_modality_configuration import (
     VolleyballModalityConfiguration,
 )
-from persistence.model.volleyball_modality_configuration_entity import (
+from persistence.model.modality.volleybal.volleyball_modality_configuration_entity import (
     VolleyballModalityConfigurationEntity,
 )
 

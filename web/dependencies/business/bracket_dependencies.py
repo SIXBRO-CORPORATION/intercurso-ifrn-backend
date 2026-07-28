@@ -8,17 +8,18 @@ from core.business.bracket.get_bracket_config_suggestion_port import (
 )
 from core.business.bracket.resort_bracket_port import ResortBracketPort
 from core.business.bracket.update_match_port import UpdateMatchPort
-from core.persistence.bracket_group_repository_port import BracketGroupRepositoryPort
-from core.persistence.bracket_group_team_repository_port import (
+from core.business.audit.audit_logger import AuditLogger
+from core.persistence.bracket.bracket_group_repository_port import BracketGroupRepositoryPort
+from core.persistence.bracket.bracket_group_team_repository_port import (
     BracketGroupTeamRepositoryPort,
 )
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
-from core.persistence.season_modality_repository_port import (
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
-from core.persistence.season_repository_port import SeasonRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
+from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
 from business.bracket.create_bracket_adapter import CreateBracketAdapter
 from business.bracket.delete_match_adapter import DeleteMatchAdapter
 from business.bracket.get_bracket_config_suggestion_adapter import (
@@ -26,6 +27,7 @@ from business.bracket.get_bracket_config_suggestion_adapter import (
 )
 from business.bracket.resort_bracket_adapter import ResortBracketAdapter
 from business.bracket.update_match_adapter import UpdateMatchAdapter
+from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
     get_bracket_group_repository,
     get_bracket_group_team_repository,
@@ -67,6 +69,7 @@ def get_create_bracket_port(
     season_modality_repository: Annotated[
         SeasonModalityRepositoryPort, Depends(get_season_modality_repository)
     ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> CreateBracketPort:
     return CreateBracketAdapter(
         bracket_repository,
@@ -76,6 +79,7 @@ def get_create_bracket_port(
         team_repository,
         season_repository,
         season_modality_repository,
+        audit_logger,
     )
 
 
@@ -89,6 +93,7 @@ def get_resort_bracket_port(
     ],
     match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
     team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> ResortBracketPort:
     return ResortBracketAdapter(
         bracket_repository,
@@ -96,6 +101,7 @@ def get_resort_bracket_port(
         bracket_group_team_repository,
         match_repository,
         team_repository,
+        audit_logger,
     )
 
 
@@ -103,11 +109,15 @@ def get_update_match_port(
     match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
     bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
     team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> UpdateMatchPort:
-    return UpdateMatchAdapter(match_repository, bracket_repository, team_repository)
+    return UpdateMatchAdapter(
+        match_repository, bracket_repository, team_repository, audit_logger
+    )
 
 
 def get_delete_match_port(
     match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> DeleteMatchPort:
-    return DeleteMatchAdapter(match_repository)
+    return DeleteMatchAdapter(match_repository, audit_logger)

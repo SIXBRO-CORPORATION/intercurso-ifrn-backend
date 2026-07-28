@@ -13,7 +13,7 @@ from domain.modality.volleyball_modality_configuration import (
 from persistence.mappers.volleyball_modality_configuration_mapper import (
     VolleyballModalityConfigurationMapper,
 )
-from persistence.model.volleyball_modality_configuration_entity import (
+from persistence.model.modality.volleybal.volleyball_modality_configuration_entity import (
     VolleyballModalityConfigurationEntity,
 )
 

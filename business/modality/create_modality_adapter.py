@@ -1,19 +1,20 @@
+from uuid import UUID
+
+from core.business.audit.audit_logger import AuditLogger
 from core.business.modality.create_modality_port import CreateModalityPort
 from core.context import Context
-from core.persistence.modality_configuration_repository_port import (
+from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.volleyball_modality_configuration_repository_port import (
-    VolleyballModalityConfigurationRepositoryPort,
-)
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import \
+    VolleyballModalityConfigurationRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
-from domain.modality.volleyball_modality_configuration import (
-    VolleyballModalityConfiguration,
-)
+from domain.modality.volleyball_modality_configuration import VolleyballModalityConfiguration
 
 
 class CreateModalityAdapter(CreateModalityPort):
@@ -21,19 +22,20 @@ class CreateModalityAdapter(CreateModalityPort):
         self,
         modality_repository: ModalityRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
+        audit_logger: AuditLogger,
         volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
     ):
         self.modality_repository = modality_repository
         self.modality_configuration_repository = modality_configuration_repository
-        self.volleyball_modality_configuration_repository = (
-            volleyball_modality_configuration_repository
-        )
+        self.audit_logger = audit_logger
+        self.volleyball_modality_configuration_repository = volleyball_modality_configuration_repository
 
     async def execute(self, context: Context) -> Modality:
         modality = context.get_data(Modality)
         configuration = context.get_property(
             "modality_configuration", ModalityConfiguration
         )
+        created_by = context.get_property("created_by", UUID)
 
         if modality is None:
             raise BusinessException("Dados da modalidade são obrigatórios")
@@ -116,10 +118,6 @@ class CreateModalityAdapter(CreateModalityPort):
             active=True,
         )
 
-        # TODO (débito técnico assumido nesta fase): registrar a operação em
-        # auditoria (monitor responsável, data/hora e ação), conforme exigido
-        # pelo UC004. Não há infraestrutura de auditoria no projeto ainda.
-
         saved_modality = await self.modality_repository.save(new_modality)
 
         new_configuration = ModalityConfiguration(
@@ -135,6 +133,12 @@ class CreateModalityAdapter(CreateModalityPort):
             new_configuration
         )
         context.put_property("modality_configuration", saved_configuration)
+
+        await self.audit_logger.log(
+            action=AuditAction.MODALITY_CREATED,
+            description=f"Modalidade '{saved_modality.name}' cadastrada",
+            actor_id=created_by,
+        )
 
         if volleyball_configuration is not None:
             new_volleyball_configuration = VolleyballModalityConfiguration(

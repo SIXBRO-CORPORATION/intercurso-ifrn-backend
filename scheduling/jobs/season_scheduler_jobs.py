@@ -2,9 +2,9 @@ import logging
 from datetime import datetime
 
 from domain.enums.season_status import SeasonStatus
-from persistence.adapters.season_repository_adapter import SeasonRepositoryAdapter
+from persistence.adapters.season.season_repository_adapter import SeasonRepositoryAdapter
 from persistence.database import AsyncSessionLocal
-from persistence.mappers.season_mapper import SeasonMapper
+from persistence.mappers.season.season_mapper import SeasonMapper
 
 logger = logging.getLogger(__name__)
 

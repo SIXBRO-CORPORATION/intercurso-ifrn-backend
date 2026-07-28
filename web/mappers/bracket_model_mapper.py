@@ -1,10 +1,10 @@
 from domain.bracket.bracket import Bracket
 from domain.match.match import Match
-from web.models.response.bracket_config_suggestion_response import (
+from web.models.response.bracket.bracket_config_suggestion_response import (
     BracketConfigSuggestionResponse,
 )
-from web.models.response.bracket_response import BracketResponse
-from web.models.response.match_response import MatchResponse
+from web.models.response.bracket.bracket_response import BracketResponse
+from web.models.response.match.match_response import MatchResponse
 
 
 class BracketModelMapper:

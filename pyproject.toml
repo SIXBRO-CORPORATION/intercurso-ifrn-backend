@@ -23,7 +23,8 @@ dependencies = [
     "alembic>=1.18.5",
     "alembic-utils>=0.8.8",
     "psycopg[binary]>=3.3.4",
-    "taskipy>=1.14.1"
+    "taskipy>=1.14.1",
+    "psycopg2-binary>=2.9.12",
 ]
 
 [dependency-groups]

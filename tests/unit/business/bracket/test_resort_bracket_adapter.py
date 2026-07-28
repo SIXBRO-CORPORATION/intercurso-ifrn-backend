@@ -21,6 +21,7 @@ def make_adapter():
     bracket_group_team_repository = AsyncMock()
     match_repository = AsyncMock()
     team_repository = AsyncMock()
+    audit_logger = AsyncMock()
 
     adapter = ResortBracketAdapter(
         bracket_repository,
@@ -28,6 +29,7 @@ def make_adapter():
         bracket_group_team_repository,
         match_repository,
         team_repository,
+        audit_logger,
     )
     return (
         adapter,

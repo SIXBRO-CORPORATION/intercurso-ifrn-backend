@@ -2,22 +2,23 @@ from datetime import datetime
 from typing import List, Tuple
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.match.start_match_port import StartMatchPort
 from core.context import Context
-from core.persistence.bracket_repository_port import BracketRepositoryPort
-from core.persistence.match_event_repository_port import MatchEventRepositoryPort
-from core.persistence.match_repository_port import MatchRepositoryPort
+from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
+from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
 from core.persistence.match_set_repository_port import MatchSetRepositoryPort
-from core.persistence.modality_configuration_repository_port import (
+from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
-from core.persistence.modality_repository_port import ModalityRepositoryPort
-from core.persistence.team_member_repository_port import TeamMemberRepositoryPort
-from core.persistence.team_repository_port import TeamRepositoryPort
-from core.persistence.user_repository_port import UserRepositoryPort
-from core.persistence.volleyball_modality_configuration_repository_port import (
-    VolleyballModalityConfigurationRepositoryPort,
-)
+from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import \
+    VolleyballModalityConfigurationRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.event_type import EventType
 from domain.enums.match_status import MatchStatus
 from domain.enums.score_type import ScoreType
@@ -42,6 +43,7 @@ class StartMatchAdapter(StartMatchPort):
         modality_repository: ModalityRepositoryPort,
         volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
         match_set_repository: MatchSetRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -51,6 +53,7 @@ class StartMatchAdapter(StartMatchPort):
         self.bracket_repository = bracket_repository
         self.modality_configuration_repository = modality_configuration_repository
         self.modality_repository = modality_repository
+        self.audit_logger = audit_logger
         self.volleyball_modality_configuration_repository = (
             volleyball_modality_configuration_repository
         )
@@ -130,10 +133,13 @@ class StartMatchAdapter(StartMatchPort):
             match.team1_sets_won = 0
             match.team2_sets_won = 0
 
-        # TODO (débito técnico, mesmo padrão das fases anteriores): registro de
-        # auditoria da operação (monitor, partida, data/hora) depende de
-        # infraestrutura de auditoria ainda inexistente no projeto.
         saved_match = await self.match_repository.save(match)
+
+        await self.audit_logger.log(
+            action=AuditAction.MATCH_STARTED,
+            description=f"Partida entre '{team1.name}' e '{team2.name}' iniciada",
+            actor_id=monitor_id,
+        )
 
         match_start_event = MatchEvent(
             match_id=saved_match.id,
@@ -142,11 +148,6 @@ class StartMatchAdapter(StartMatchPort):
             metadata_json={"monitor_id": str(monitor_id)},
         )
         saved_event = await self.match_event_repository.save(match_start_event)
-
-        # TODO (débito técnico Fase 5/6): notificação via WebSocket para os canais
-        # /matches/{match_id}/live e /seasons/{season_id}/live (regra de negócio 9)
-        # e Push Notification para alunos (regra de negócio 10) dependem de
-        # infraestrutura ainda inexistente no projeto (ver Fase 6 do planejamento).
 
         team1_players = await self._load_players(team1.id)
         team2_players = await self._load_players(team2.id)
@@ -160,18 +161,6 @@ class StartMatchAdapter(StartMatchPort):
         if modality_configuration is not None:
             context.put_property("modality_configuration", modality_configuration)
         context.put_property("match_start_event", saved_event)
-
-        if modality_configuration is not None and modality_configuration.score_type == ScoreType.SETS:
-            volleyball_configuration = (
-                await self.volleyball_modality_configuration_repository.find_by_modality_configuration_id(
-                    modality_configuration.id
-                )
-            )
-            if volleyball_configuration is not None:
-                context.put_property(
-                    "volleyball_configuration", volleyball_configuration
-                )
-            context.put_property("match_sets", [])
 
         return saved_match
 
