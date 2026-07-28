@@ -13,6 +13,7 @@ from core.business.match.end_set_port import EndSetPort
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.match_set_repository_port import MatchSetRepositoryPort
 from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
@@ -28,16 +29,20 @@ from business.match.resume_clock_adapter import ResumeClockAdapter
 from business.match.end_period_adapter import EndPeriodAdapter
 from business.match.start_period_adapter import StartPeriodAdapter
 from business.match.end_set_adapter import EndSetAdapter
+from core.persistence.volleyball_modality_configuration_repository_port import \
+    VolleyballModalityConfigurationRepositoryPort
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
     get_bracket_repository,
     get_match_event_repository,
     get_match_repository,
+    get_match_set_repository,
     get_modality_configuration_repository,
     get_modality_repository,
     get_team_member_repository,
     get_team_repository,
     get_user_repository,
+    get_volleyball_modality_configuration_repository,
 )
 
 
@@ -60,6 +65,13 @@ def get_start_match_port(
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
 ) -> StartMatchPort:
     return StartMatchAdapter(
         match_repository,
@@ -70,6 +82,8 @@ def get_start_match_port(
         bracket_repository,
         modality_configuration_repository,
         modality_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
         audit_logger,
     )
 
@@ -92,6 +106,13 @@ def get_register_goal_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
 ) -> RegisterGoalPort:
     return RegisterGoalAdapter(
         match_repository,
@@ -102,6 +123,8 @@ def get_register_goal_port(
         bracket_repository,
         modality_repository,
         modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
     )
 
 
@@ -123,6 +146,13 @@ def get_register_card_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
 ) -> RegisterCardPort:
     return RegisterCardAdapter(
         match_repository,
@@ -133,6 +163,8 @@ def get_register_card_port(
         bracket_repository,
         modality_repository,
         modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
     )
 
 
@@ -154,6 +186,13 @@ def get_pause_clock_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
 ) -> PauseClockPort:
     return PauseClockAdapter(
         match_repository,
@@ -164,6 +203,8 @@ def get_pause_clock_port(
         bracket_repository,
         modality_repository,
         modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
     )
 
 
@@ -185,6 +226,13 @@ def get_resume_clock_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
 ) -> ResumeClockPort:
     return ResumeClockAdapter(
         match_repository,
@@ -195,6 +243,8 @@ def get_resume_clock_port(
         bracket_repository,
         modality_repository,
         modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
     )
 
 
@@ -216,6 +266,13 @@ def get_end_period_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
 ) -> EndPeriodPort:
     return EndPeriodAdapter(
         match_repository,
@@ -226,6 +283,8 @@ def get_end_period_port(
         bracket_repository,
         modality_repository,
         modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
     )
 
 
@@ -247,6 +306,13 @@ def get_start_period_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
 ) -> StartPeriodPort:
     return StartPeriodAdapter(
         match_repository,
@@ -257,6 +323,8 @@ def get_start_period_port(
         bracket_repository,
         modality_repository,
         modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
     )
 
 
@@ -278,6 +346,13 @@ def get_end_set_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
 ) -> EndSetPort:
     return EndSetAdapter(
         match_repository,
@@ -288,4 +363,6 @@ def get_end_set_port(
         bracket_repository,
         modality_repository,
         modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
     )

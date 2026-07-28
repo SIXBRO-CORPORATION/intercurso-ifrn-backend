@@ -25,6 +25,16 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
 
+    async def lock_for_update(self, match_id: UUID) -> Optional[Match]:
+        query = (
+            select(MatchEntity)
+            .where(MatchEntity.id == match_id, MatchEntity.deleted_at.is_(None))
+            .with_for_update()
+        )
+        result = await self.session.execute(query)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None
+
     async def save(self, match: Match) -> Match:
         entity = self.mapper.to_entity(match)
         entity = await self.session.merge(entity)

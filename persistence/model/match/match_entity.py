@@ -45,3 +45,7 @@ class MatchEntity(AbstractEntity):
     is_bye = Column(Boolean, default=False, nullable=False)
 
     metadata_json = Column(JSONB, nullable=True)
+
+    team1_sets_won = Column(Integer, nullable=True)
+
+    team2_sets_won = Column(Integer, nullable=True)

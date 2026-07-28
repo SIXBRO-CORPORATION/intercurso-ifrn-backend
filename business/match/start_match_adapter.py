@@ -8,6 +8,7 @@ from core.context import Context
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.match_set_repository_port import MatchSetRepositoryPort
 from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
@@ -15,9 +16,12 @@ from core.persistence.modality.modality_repository_port import ModalityRepositor
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import \
+    VolleyballModalityConfigurationRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.event_type import EventType
 from domain.enums.match_status import MatchStatus
+from domain.enums.score_type import ScoreType
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.match.match import Match
@@ -37,6 +41,8 @@ class StartMatchAdapter(StartMatchPort):
         bracket_repository: BracketRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
         modality_repository: ModalityRepositoryPort,
+        volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
+        match_set_repository: MatchSetRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.match_repository = match_repository
@@ -48,6 +54,10 @@ class StartMatchAdapter(StartMatchPort):
         self.modality_configuration_repository = modality_configuration_repository
         self.modality_repository = modality_repository
         self.audit_logger = audit_logger
+        self.volleyball_modality_configuration_repository = (
+            volleyball_modality_configuration_repository
+        )
+        self.match_set_repository = match_set_repository
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -107,6 +117,22 @@ class StartMatchAdapter(StartMatchPort):
         match.team2_score = 0
         match.monitor_id = monitor_id
 
+        bracket = await self.bracket_repository.get(match.bracket_id)
+
+        modality = None
+        modality_configuration = None
+        if bracket is not None:
+            modality = await self.modality_repository.get(bracket.modality_id)
+            modality_configuration = (
+                await self.modality_configuration_repository.find_by_modality(
+                    bracket.modality_id
+                )
+            )
+
+        if modality_configuration is not None and modality_configuration.score_type == ScoreType.SETS:
+            match.team1_sets_won = 0
+            match.team2_sets_won = 0
+
         saved_match = await self.match_repository.save(match)
 
         await self.audit_logger.log(
@@ -122,18 +148,6 @@ class StartMatchAdapter(StartMatchPort):
             metadata_json={"monitor_id": str(monitor_id)},
         )
         saved_event = await self.match_event_repository.save(match_start_event)
-
-        bracket = await self.bracket_repository.get(saved_match.bracket_id)
-
-        modality = None
-        modality_configuration = None
-        if bracket is not None:
-            modality = await self.modality_repository.get(bracket.modality_id)
-            modality_configuration = (
-                await self.modality_configuration_repository.find_by_modality(
-                    bracket.modality_id
-                )
-            )
 
         team1_players = await self._load_players(team1.id)
         team2_players = await self._load_players(team2.id)

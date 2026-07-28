@@ -4,6 +4,7 @@ from uuid import UUID
 
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
+from core.persistence.match_set_repository_port import MatchSetRepositoryPort
 from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
@@ -11,12 +12,19 @@ from core.persistence.modality.modality_repository_port import ModalityRepositor
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import \
+    VolleyballModalityConfigurationRepositoryPort
 from domain.enums.event_type import EventType
 from domain.enums.match_status import MatchStatus
+from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
 from domain.match.match import Match
+from domain.match.match_set import MatchSet
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
+from domain.modality.volleyball_modality_configuration import (
+    VolleyballModalityConfiguration,
+)
 from domain.team.team_member import TeamMember
 from domain.user.user import User
 
@@ -105,6 +113,23 @@ async def load_modality_configuration(
     return modality, modality_configuration
 
 
+async def load_volleyball_configuration(
+    volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
+    modality_configuration: Optional[ModalityConfiguration],
+) -> Optional[VolleyballModalityConfiguration]:
+    if modality_configuration is None or modality_configuration.score_type != ScoreType.SETS:
+        return None
+
+    volleyball_configuration = (
+        await volleyball_modality_configuration_repository.find_by_modality_configuration_id(
+            modality_configuration.id
+        )
+    )
+    return volleyball_configuration or VolleyballModalityConfiguration(
+        modality_configuration_id=modality_configuration.id
+    )
+
+
 async def load_players(
     team_member_repository: TeamMemberRepositoryPort,
     user_repository: UserRepositoryPort,
@@ -129,6 +154,10 @@ async def load_management_context(
     modality_repository: ModalityRepositoryPort,
     modality_configuration_repository: ModalityConfigurationRepositoryPort,
     match_event_repository: MatchEventRepositoryPort,
+    volleyball_modality_configuration_repository: Optional[
+        VolleyballModalityConfigurationRepositoryPort
+    ] = None,
+    match_set_repository: Optional[MatchSetRepositoryPort] = None,
 ) -> None:
 
     team1 = await team_repository.get(match.team1_id)
@@ -155,3 +184,17 @@ async def load_management_context(
     if modality_configuration is not None:
         context.put_property("modality_configuration", modality_configuration)
     context.put_property("timeline_events", timeline_events)
+
+    if volleyball_modality_configuration_repository is not None:
+        volleyball_configuration = await load_volleyball_configuration(
+            volleyball_modality_configuration_repository, modality_configuration
+        )
+        if volleyball_configuration is not None:
+            context.put_property("volleyball_configuration", volleyball_configuration)
+
+    if match_set_repository is not None and (
+        modality_configuration is not None
+        and modality_configuration.score_type == ScoreType.SETS
+    ):
+        match_sets: List[MatchSet] = await match_set_repository.find_by_match(match.id)
+        context.put_property("match_sets", match_sets)

@@ -3,6 +3,10 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
+from core.persistence.match_set_repository_port import MatchSetRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import \
+    VolleyballModalityConfigurationRepositoryPort
+from persistence.adapters.match_set_repository_adapter import MatchSetRepositoryAdapter
 from persistence.adapters.user.user_repository_adapter import UserRepositoryAdapter
 from persistence.adapters.team.team_repository_adapter import TeamRepositoryAdapter
 from persistence.adapters.team.team_member_repository_adapter import (
@@ -51,7 +55,10 @@ from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.audit.audit_log_repository_port import AuditLogRepositoryPort
+from persistence.adapters.volleyball_modality_configuration_repository_adapter import \
+    VolleyballModalityConfigurationRepositoryAdapter
 from persistence.database import get_db
+from persistence.mappers.match_set_mapper import MatchSetMapper
 from persistence.mappers.team.team_mapper import TeamMapper
 from persistence.mappers.team.team_member_mapper import TeamMemberMapper
 from persistence.mappers.user.user_mapper import UserMapper
@@ -68,6 +75,7 @@ from persistence.mappers.modality.modality_configuration_mapper import (
     ModalityConfigurationMapper,
 )
 from persistence.mappers.audit.audit_log_mapper import AuditLogMapper
+from persistence.mappers.volleyball_modality_configuration_mapper import VolleyballModalityConfigurationMapper
 
 
 def get_user_repository(
@@ -181,3 +189,18 @@ def get_audit_log_repository(
     mapper = AuditLogMapper()
 
     return AuditLogRepositoryAdapter(session, mapper)
+
+def get_volleyball_modality_configuration_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> VolleyballModalityConfigurationRepositoryPort:
+    mapper = VolleyballModalityConfigurationMapper()
+
+    return VolleyballModalityConfigurationRepositoryAdapter(session, mapper)
+
+
+def get_match_set_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> MatchSetRepositoryPort:
+    mapper = MatchSetMapper()
+
+    return MatchSetRepositoryAdapter(session, mapper)

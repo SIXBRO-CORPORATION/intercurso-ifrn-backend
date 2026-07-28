@@ -7,10 +7,14 @@ from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.volleyball_modality_configuration_repository_port import \
+    VolleyballModalityConfigurationRepositoryPort
 from domain.enums.audit_action import AuditAction
+from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
+from domain.modality.volleyball_modality_configuration import VolleyballModalityConfiguration
 
 
 class CreateModalityAdapter(CreateModalityPort):
@@ -19,10 +23,12 @@ class CreateModalityAdapter(CreateModalityPort):
         modality_repository: ModalityRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
         audit_logger: AuditLogger,
+        volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
     ):
         self.modality_repository = modality_repository
         self.modality_configuration_repository = modality_configuration_repository
         self.audit_logger = audit_logger
+        self.volleyball_modality_configuration_repository = volleyball_modality_configuration_repository
 
     async def execute(self, context: Context) -> Modality:
         modality = context.get_data(Modality)
@@ -62,6 +68,39 @@ class CreateModalityAdapter(CreateModalityPort):
         if configuration.score_type is None:
             raise BusinessException("Sistema de pontuação é obrigatório")
 
+        volleyball_configuration = None
+        if configuration.score_type == ScoreType.SETS:
+            volleyball_configuration = context.get_property(
+                "volleyball_configuration", VolleyballModalityConfiguration
+            )
+            if volleyball_configuration is None:
+                raise BusinessException(
+                    "Para modalidades com sistema de pontuação por sets, é "
+                    "obrigatório informar points_per_set, final_set_points e "
+                    "sets_to_win"
+                )
+            if (
+                volleyball_configuration.points_per_set is None
+                or volleyball_configuration.points_per_set < 1
+            ):
+                raise BusinessException(
+                    "points_per_set deve ser maior ou igual a 1"
+                )
+            if (
+                volleyball_configuration.final_set_points is None
+                or volleyball_configuration.final_set_points < 1
+            ):
+                raise BusinessException(
+                    "final_set_points deve ser maior ou igual a 1"
+                )
+            if (
+                volleyball_configuration.sets_to_win is None
+                or volleyball_configuration.sets_to_win < 1
+            ):
+                raise BusinessException(
+                    "sets_to_win deve ser maior ou igual a 1"
+                )
+
         normalized_name = modality.name.strip()
 
         existing_modality = await self.modality_repository.find_by_name(
@@ -100,5 +139,22 @@ class CreateModalityAdapter(CreateModalityPort):
             description=f"Modalidade '{saved_modality.name}' cadastrada",
             actor_id=created_by,
         )
+
+        if volleyball_configuration is not None:
+            new_volleyball_configuration = VolleyballModalityConfiguration(
+                modality_configuration_id=saved_configuration.id,
+                points_per_set=volleyball_configuration.points_per_set,
+                final_set_points=volleyball_configuration.final_set_points,
+                sets_to_win=volleyball_configuration.sets_to_win,
+                active=True,
+            )
+            saved_volleyball_configuration = (
+                await self.volleyball_modality_configuration_repository.save(
+                    new_volleyball_configuration
+                )
+            )
+            context.put_property(
+                "volleyball_configuration", saved_volleyball_configuration
+            )
 
         return saved_modality

@@ -11,7 +11,13 @@ from persistence.model.match.match_event_entity import MatchEventEntity
 from persistence.model.bracket.bracket_entity import BracketEntity
 from persistence.model.bracket.bracket_group_entity import BracketGroupEntity
 from persistence.model.bracket.bracket_group_team_entity import BracketGroupTeamEntity
+from persistence.model.modality.volleybal. volleyball_modality_configuration_entity import VolleyballModalityConfigurationEntity
+from persistence.model.match.match_set_entity import MatchSetEntity, PG_ENTITIES as MATCH_SET_PG_ENTITIES
 
+
+PG_ENTITIES = [
+    *MATCH_SET_PG_ENTITIES,
+]
 
 __all__ = [
     "UserEntity",
@@ -22,8 +28,10 @@ __all__ = [
     "RefreshTokenEntity",
     "ModalityEntity",
     "ModalityConfigurationEntity",
+    "VolleyballModalityConfigurationEntity",
     "MatchEntity",
     "MatchEventEntity",
+    "MatchSetEntity",
     "BracketEntity",
     "BracketGroupEntity",
     "BracketGroupTeamEntity",

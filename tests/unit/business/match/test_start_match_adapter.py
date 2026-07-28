@@ -32,6 +32,8 @@ def make_adapter():
     bracket_repository = AsyncMock()
     modality_configuration_repository = AsyncMock()
     modality_repository = AsyncMock()
+    volleyball_modality_configuration_repository = AsyncMock()
+    match_set_repository = AsyncMock()
 
     audit_logger = AsyncMock()
 
@@ -44,6 +46,8 @@ def make_adapter():
         bracket_repository,
         modality_configuration_repository,
         modality_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
         audit_logger,
     )
 
@@ -57,6 +61,8 @@ def make_adapter():
         bracket_repository,
         modality_configuration_repository,
         modality_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
         audit_logger,
     )
 
@@ -95,6 +101,8 @@ class TestStartMatchAdapter:
             bracket_repository,
             modality_configuration_repository,
             modality_repository,
+            volleyball_modality_configuration_repository,
+            match_set_repository,
             audit_logger,
         ) = make_adapter()
 
@@ -121,7 +129,9 @@ class TestStartMatchAdapter:
 
         bracket = Bracket(id=match.bracket_id, season_id=uuid4(), modality_id=uuid4())
         bracket_repository.get.return_value = bracket
-        modality_repository.get.return_value = Modality(id=bracket.modality_id, name="Futsal")
+        modality_repository.get.return_value = Modality(
+            id=bracket.modality_id, name="Futsal"
+        )
 
         modality_configuration_repository.find_by_modality.return_value = (
             ModalityConfiguration(
@@ -267,6 +277,8 @@ class TestStartMatchAdapter:
             bracket_repository,
             modality_configuration_repository,
             modality_repository,
+            volleyball_modality_configuration_repository,
+            match_set_repository,
             audit_logger,
         ) = make_adapter()
 
