@@ -19,13 +19,11 @@ def make_adapter():
     match_repository = AsyncMock()
     bracket_repository = AsyncMock()
     team_repository = AsyncMock()
-    user_repository = AsyncMock()
     audit_logger = AsyncMock()
     adapter = UpdateMatchAdapter(
         match_repository,
         bracket_repository,
         team_repository,
-        user_repository,
         audit_logger,
     )
     return (
@@ -33,7 +31,6 @@ def make_adapter():
         match_repository,
         bracket_repository,
         team_repository,
-        user_repository,
         audit_logger,
     )
 
@@ -41,7 +38,7 @@ def make_adapter():
 class TestUpdateMatchAdapter:
     @pytest.mark.asyncio
     async def test_updates_scheduled_date_only(self):
-        adapter, match_repository, bracket_repository, team_repository, user_repository, audit_logger = make_adapter()
+        adapter, match_repository, bracket_repository, team_repository, audit_logger = make_adapter()
         match = Match(id=uuid4(), bracket_id=uuid4(), status=MatchStatus.SCHEDULED)
         match_repository.get.return_value = match
         match_repository.save.side_effect = lambda m: m
@@ -64,7 +61,7 @@ class TestUpdateMatchAdapter:
 
     @pytest.mark.asyncio
     async def test_swaps_team_when_approved_and_same_modality(self):
-        adapter, match_repository, bracket_repository, team_repository, user_repository, audit_logger = make_adapter()
+        adapter, match_repository, bracket_repository, team_repository, audit_logger = make_adapter()
         bracket = Bracket(id=uuid4(), season_id=uuid4(), modality_id=uuid4())
         match = Match(id=uuid4(), bracket_id=bracket.id, status=MatchStatus.SCHEDULED)
         match_repository.get.return_value = match
@@ -89,7 +86,7 @@ class TestUpdateMatchAdapter:
 
     @pytest.mark.asyncio
     async def test_blocks_team_from_different_modality(self):
-        adapter, match_repository, bracket_repository, team_repository, user_repository, audit_logger = make_adapter()
+        adapter, match_repository, bracket_repository, team_repository, audit_logger = make_adapter()
         bracket = Bracket(id=uuid4(), season_id=uuid4(), modality_id=uuid4())
         match = Match(id=uuid4(), bracket_id=bracket.id, status=MatchStatus.SCHEDULED)
         match_repository.get.return_value = match
@@ -112,7 +109,7 @@ class TestUpdateMatchAdapter:
 
     @pytest.mark.asyncio
     async def test_blocks_team_not_approved(self):
-        adapter, match_repository, bracket_repository, team_repository, user_repository, audit_logger = make_adapter()
+        adapter, match_repository, bracket_repository, team_repository, audit_logger = make_adapter()
         bracket = Bracket(id=uuid4(), season_id=uuid4(), modality_id=uuid4())
         match = Match(id=uuid4(), bracket_id=bracket.id, status=MatchStatus.SCHEDULED)
         match_repository.get.return_value = match
@@ -135,7 +132,7 @@ class TestUpdateMatchAdapter:
 
     @pytest.mark.asyncio
     async def test_blocks_when_match_not_scheduled(self):
-        adapter, match_repository, bracket_repository, team_repository, user_repository, audit_logger = make_adapter()
+        adapter, match_repository, bracket_repository, team_repository, audit_logger = make_adapter()
         match = Match(id=uuid4(), bracket_id=uuid4(), status=MatchStatus.IN_PROGRESS)
         match_repository.get.return_value = match
 
@@ -148,7 +145,7 @@ class TestUpdateMatchAdapter:
 
     @pytest.mark.asyncio
     async def test_blocks_when_no_fields_provided(self):
-        adapter, match_repository, bracket_repository, team_repository, user_repository, audit_logger = make_adapter()
+        adapter, match_repository, bracket_repository, team_repository, audit_logger = make_adapter()
 
         context = Context()
         context.put_property("match_id", uuid4())

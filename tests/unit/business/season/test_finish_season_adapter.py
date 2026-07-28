@@ -15,12 +15,11 @@ from domain.team.team import Team
 def make_adapter():
     season_repository = AsyncMock()
     team_repository = AsyncMock()
-    user_repository = AsyncMock()
     audit_logger = AsyncMock()
     adapter = FinishSeasonAdapter(
-        season_repository, team_repository, user_repository, audit_logger
+        season_repository, team_repository, audit_logger
     )
-    return adapter, season_repository, team_repository, user_repository, audit_logger
+    return adapter, season_repository, team_repository, audit_logger
 
 
 def make_context(season_id=None, confirmation_name="Intercurso 2026"):
@@ -34,7 +33,7 @@ def make_context(season_id=None, confirmation_name="Intercurso 2026"):
 @pytest.mark.unit
 class TestFinishSeasonAdapter:
     async def test_finishes_in_progress_season_and_deactivates_invites(self):
-        adapter, season_repository, team_repository, user_repository, audit_logger = (
+        adapter, season_repository, team_repository, audit_logger = (
             make_adapter()
         )
         season = Season(

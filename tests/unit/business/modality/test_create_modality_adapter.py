@@ -20,7 +20,6 @@ def make_adapter():
     adapter = CreateModalityAdapter(
         modality_repository,
         modality_configuration_repository,
-        user_repository,
         audit_logger,
     )
     return (

@@ -7,7 +7,6 @@ from core.context import Context
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
-from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.match_status import MatchStatus
 from domain.enums.team_status import TeamStatus
@@ -21,13 +20,11 @@ class UpdateMatchAdapter(UpdateMatchPort):
         match_repository: MatchRepositoryPort,
         bracket_repository: BracketRepositoryPort,
         team_repository: TeamRepositoryPort,
-        user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.match_repository = match_repository
         self.bracket_repository = bracket_repository
         self.team_repository = team_repository
-        self.user_repository = user_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Match:
@@ -89,14 +86,6 @@ class UpdateMatchAdapter(UpdateMatchPort):
 
         saved_match = await self.match_repository.save(match)
 
-        requesting_monitor = (
-            await self.user_repository.get(updated_by) if updated_by else None
-        )
-        actor_role = (
-            requesting_monitor.role.value
-            if requesting_monitor is not None and requesting_monitor.role
-            else None
-        )
         changed_fields = [
             field_name
             for field_name, value in (
@@ -112,7 +101,6 @@ class UpdateMatchAdapter(UpdateMatchPort):
                 f"Partida atualizada ({', '.join(changed_fields)})"
             ),
             actor_id=updated_by,
-            actor_role=actor_role,
         )
 
         return saved_match

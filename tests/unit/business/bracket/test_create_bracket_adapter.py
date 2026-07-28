@@ -24,7 +24,6 @@ def make_adapter():
     team_repository = AsyncMock()
     season_repository = AsyncMock()
     season_modality_repository = AsyncMock()
-    user_repository = AsyncMock()
     audit_logger = AsyncMock()
 
     adapter = CreateBracketAdapter(
@@ -35,7 +34,6 @@ def make_adapter():
         team_repository,
         season_repository,
         season_modality_repository,
-        user_repository,
         audit_logger,
     )
     return (
@@ -47,7 +45,6 @@ def make_adapter():
         team_repository,
         season_repository,
         season_modality_repository,
-        user_repository,
         audit_logger,
     )
 
@@ -118,7 +115,6 @@ class TestCreateBracketAdapterSuccess:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
 
@@ -161,7 +157,6 @@ class TestCreateBracketAdapterSuccess:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
 
@@ -195,7 +190,6 @@ class TestCreateBracketAdapterSuccess:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
 
@@ -234,7 +228,6 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
         season_repository.find_active_season.return_value = None
@@ -254,7 +247,6 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
         season_repository.find_active_season.return_value = make_season(
@@ -276,7 +268,6 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
         season_repository.find_active_season.return_value = make_season()
@@ -297,7 +288,6 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
         season_repository.find_active_season.return_value = make_season()
@@ -319,7 +309,6 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
         modality_id = uuid4()
@@ -346,7 +335,6 @@ class TestCreateBracketAdapterValidations:
             team_repository,
             season_repository,
             season_modality_repository,
-            user_repository,
             audit_logger,
         ) = make_adapter()
         modality_id = uuid4()

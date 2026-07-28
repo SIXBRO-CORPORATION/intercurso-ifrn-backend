@@ -5,7 +5,6 @@ from core.business.audit.audit_logger import AuditLogger
 from core.business.season.close_registration_port import CloseRegistrationPort
 from core.context import Context
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
-from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
@@ -16,11 +15,9 @@ class CloseRegistrationAdapter(CloseRegistrationPort):
     def __init__(
         self,
         season_repository: SeasonRepositoryPort,
-        user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.season_repository = season_repository
-        self.user_repository = user_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
@@ -44,14 +41,6 @@ class CloseRegistrationAdapter(CloseRegistrationPort):
 
         updated_season = await self.season_repository.save(season)
 
-        closing_user = (
-            await self.user_repository.get(closed_by) if closed_by else None
-        )
-        actor_role = (
-            closing_user.role.value
-            if closing_user is not None and closing_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.SEASON_REGISTRATION_CLOSED,
             description=(
@@ -59,7 +48,6 @@ class CloseRegistrationAdapter(CloseRegistrationPort):
                 "antecipadamente"
             ),
             actor_id=closed_by,
-            actor_role=actor_role,
         )
 
         return updated_season

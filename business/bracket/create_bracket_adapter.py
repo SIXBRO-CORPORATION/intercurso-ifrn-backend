@@ -20,7 +20,6 @@ from core.persistence.season.season_modality_repository_port import (
 )
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
-from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.bracket.bracket import Bracket
 from domain.bracket.bracket_group import BracketGroup
 from domain.bracket.bracket_group_team import BracketGroupTeam
@@ -41,7 +40,6 @@ class CreateBracketAdapter(CreateBracketPort):
         team_repository: TeamRepositoryPort,
         season_repository: SeasonRepositoryPort,
         season_modality_repository: SeasonModalityRepositoryPort,
-        user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.bracket_repository = bracket_repository
@@ -51,7 +49,6 @@ class CreateBracketAdapter(CreateBracketPort):
         self.team_repository = team_repository
         self.season_repository = season_repository
         self.season_modality_repository = season_modality_repository
-        self.user_repository = user_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Bracket:
@@ -196,14 +193,6 @@ class CreateBracketAdapter(CreateBracketPort):
             season_transitioned = True
 
 
-        created_by_user = (
-            await self.user_repository.get(created_by) if created_by else None
-        )
-        actor_role = (
-            created_by_user.role.value
-            if created_by_user is not None and created_by_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.BRACKET_CREATED,
             description=(
@@ -211,7 +200,6 @@ class CreateBracketAdapter(CreateBracketPort):
                 f"com {team_count} time(s)"
             ),
             actor_id=created_by,
-            actor_role=actor_role,
         )
 
         context.put_property("teams_count", team_count)

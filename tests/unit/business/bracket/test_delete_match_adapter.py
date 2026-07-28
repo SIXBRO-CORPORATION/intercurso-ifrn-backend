@@ -12,9 +12,8 @@ from domain.match.match import Match
 
 def make_adapter():
     match_repository = AsyncMock()
-    user_repository = AsyncMock()
     audit_logger = AsyncMock()
-    return DeleteMatchAdapter(match_repository, user_repository, audit_logger), match_repository
+    return DeleteMatchAdapter(match_repository, audit_logger), match_repository
 
 
 class TestDeleteMatchAdapter:

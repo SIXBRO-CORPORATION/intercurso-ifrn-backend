@@ -7,7 +7,6 @@ from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
-from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
@@ -19,12 +18,10 @@ class CreateModalityAdapter(CreateModalityPort):
         self,
         modality_repository: ModalityRepositoryPort,
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
-        user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.modality_repository = modality_repository
         self.modality_configuration_repository = modality_configuration_repository
-        self.user_repository = user_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Modality:
@@ -98,19 +95,10 @@ class CreateModalityAdapter(CreateModalityPort):
         )
         context.put_property("modality_configuration", saved_configuration)
 
-        created_by_user = (
-            await self.user_repository.get(created_by) if created_by else None
-        )
-        actor_role = (
-            created_by_user.role.value
-            if created_by_user is not None and created_by_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.MODALITY_CREATED,
             description=f"Modalidade '{saved_modality.name}' cadastrada",
             actor_id=created_by,
-            actor_role=actor_role,
         )
 
         return saved_modality

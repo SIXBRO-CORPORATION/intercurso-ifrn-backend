@@ -10,7 +10,6 @@ from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
-from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
@@ -24,13 +23,11 @@ class CreateSeasonAdapter(CreateSeasonPort):
         season_repository: SeasonRepositoryPort,
         season_modality_repository: SeasonModalityRepositoryPort,
         modality_repository: ModalityRepositoryPort,
-        user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.season_repository = season_repository
         self.season_modality_repository = season_modality_repository
         self.modality_repository = modality_repository
-        self.user_repository = user_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
@@ -94,19 +91,20 @@ class CreateSeasonAdapter(CreateSeasonPort):
         new_season = Season(
             name=season.name.strip(),
             year=season.year,
-            registration_start_date=(
-                now if open_immediately else season.registration_start_date
-            ),
-            registration_end_date=season.registration_end_date,
-            registration_opened_at=now if open_immediately else None,
-            rules_document=season.rules_document,
-            created_by=created_by,
             status=(
                 SeasonStatus.REGISTRATION_OPEN
                 if open_immediately
                 else SeasonStatus.DRAFT
             ),
-            active=open_immediately,
+            registration_start_date=(
+                now
+                if open_immediately
+                else season.registration_start_date
+            ),
+            registration_end_date=season.registration_end_date,
+            registration_opened_at=season.registration_opened_at,
+            rules_document=season.rules_document,
+            created_by=season.created_by,
         )
 
         if open_immediately:
@@ -130,14 +128,6 @@ class CreateSeasonAdapter(CreateSeasonPort):
 
         context.put_property("season_modalities", season_modalities)
 
-        creating_user = (
-            await self.user_repository.get(created_by) if created_by else None
-        )
-        actor_role = (
-            creating_user.role.value
-            if creating_user is not None and creating_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.SEASON_CREATED,
             description=(
@@ -145,7 +135,6 @@ class CreateSeasonAdapter(CreateSeasonPort):
                 + (" com abertura imediata das inscrições" if open_immediately else "")
             ),
             actor_id=created_by,
-            actor_role=actor_role,
         )
 
         return saved_season

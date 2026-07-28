@@ -109,17 +109,10 @@ class StartMatchAdapter(StartMatchPort):
 
         saved_match = await self.match_repository.save(match)
 
-        monitor_user = await self.user_repository.get(monitor_id)
-        actor_role = (
-            monitor_user.role.value
-            if monitor_user is not None and monitor_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.MATCH_STARTED,
             description=f"Partida entre '{team1.name}' e '{team2.name}' iniciada",
             actor_id=monitor_id,
-            actor_role=actor_role,
         )
 
         match_start_event = MatchEvent(

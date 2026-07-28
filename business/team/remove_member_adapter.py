@@ -87,11 +87,6 @@ class RemoveMemberAdapter(RemoveMemberPort):
         context.put_property("removed_user", target_user)
         context.put_property("administrative_operation", is_monitor_operation)
 
-        actor_role = (
-            requesting_user.role.value
-            if requesting_user is not None and requesting_user.role
-            else None
-        )
         operation_kind = "administrativa" if is_monitor_operation else "pelo dono"
         await self.audit_logger.log(
             action=AuditAction.TEAM_MEMBER_REMOVED,
@@ -100,7 +95,7 @@ class RemoveMemberAdapter(RemoveMemberPort):
                 f"(operação {operation_kind})"
             ),
             actor_id=requesting_user_id,
-            actor_role=actor_role,
+            actor=requesting_user,
         )
 
         return target_member

@@ -103,11 +103,6 @@ class SubmitTeamAdapter(SubmitTeamPort):
         context.put_property("members", members)
 
         requesting_user = await self.user_repository.get(requesting_user_id)
-        actor_role = (
-            requesting_user.role.value
-            if requesting_user is not None and requesting_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.TEAM_SUBMITTED,
             description=(
@@ -115,7 +110,7 @@ class SubmitTeamAdapter(SubmitTeamPort):
                 f"temporada '{active_season.name}'"
             ),
             actor_id=requesting_user_id,
-            actor_role=actor_role,
+            actor=requesting_user,
         )
 
         return saved_team

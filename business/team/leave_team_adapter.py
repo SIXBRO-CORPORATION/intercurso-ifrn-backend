@@ -75,16 +75,11 @@ class LeaveTeamAdapter(LeaveTeamPort):
 
         context.put_property("team", team)
 
-        actor_role = (
-            requesting_user.role.value
-            if requesting_user is not None and requesting_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.TEAM_MEMBER_LEFT,
             description=f"Usuário saiu do time '{team.name}'",
             actor_id=requesting_user_id,
-            actor_role=actor_role,
+            actor=requesting_user,
         )
 
         return member

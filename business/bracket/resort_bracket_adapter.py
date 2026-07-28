@@ -15,7 +15,6 @@ from core.persistence.bracket.bracket_group_team_repository_port import (
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
-from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.bracket.bracket import Bracket
 from domain.bracket.bracket_group import BracketGroup
 from domain.bracket.bracket_group_team import BracketGroupTeam
@@ -35,7 +34,6 @@ class ResortBracketAdapter(ResortBracketPort):
         bracket_group_team_repository: BracketGroupTeamRepositoryPort,
         match_repository: MatchRepositoryPort,
         team_repository: TeamRepositoryPort,
-        user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.bracket_repository = bracket_repository
@@ -43,7 +41,6 @@ class ResortBracketAdapter(ResortBracketPort):
         self.bracket_group_team_repository = bracket_group_team_repository
         self.match_repository = match_repository
         self.team_repository = team_repository
-        self.user_repository = user_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Bracket:
@@ -149,21 +146,12 @@ class ResortBracketAdapter(ResortBracketPort):
         bracket.configuration = resolved_config
         saved_bracket = await self.bracket_repository.save(bracket)
 
-        requesting_monitor = (
-            await self.user_repository.get(requested_by) if requested_by else None
-        )
-        actor_role = (
-            requesting_monitor.role.value
-            if requesting_monitor is not None and requesting_monitor.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.BRACKET_RESORTED,
             description=(
                 f"Chaveamento re-sorteado para {team_count} time(s) aprovado(s)"
             ),
             actor_id=requested_by,
-            actor_role=actor_role,
         )
 
         context.put_property("teams_count", team_count)

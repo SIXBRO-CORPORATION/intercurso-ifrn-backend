@@ -14,10 +14,9 @@ from domain.season.season import Season
 
 def make_adapter():
     season_repository = AsyncMock()
-    user_repository = AsyncMock()
     audit_logger = AsyncMock()
-    adapter = ReopenRegistrationAdapter(season_repository, user_repository, audit_logger)
-    return adapter, season_repository, user_repository, audit_logger
+    adapter = ReopenRegistrationAdapter(season_repository, audit_logger)
+    return adapter, season_repository, audit_logger
 
 
 def make_context(season_id=None, new_end=None):
@@ -31,7 +30,7 @@ def make_context(season_id=None, new_end=None):
 @pytest.mark.unit
 class TestReopenRegistrationAdapter:
     async def test_reopens_closed_season(self):
-        adapter, season_repository, user_repository, audit_logger = make_adapter()
+        adapter, season_repository, audit_logger = make_adapter()
         now = datetime.now(timezone.utc)
         season = Season(
             id=uuid4(),

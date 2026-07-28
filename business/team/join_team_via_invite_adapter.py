@@ -101,16 +101,11 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
             requesting_user.atleta = True
             await self.user_repository.save(requesting_user)
 
-        actor_role = (
-            requesting_user.role.value
-            if requesting_user is not None and requesting_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.TEAM_MEMBER_JOINED,
             description=f"Aluno entrou no time '{team.name}' via convite",
             actor_id=requesting_user_id,
-            actor_role=actor_role,
+            actor=requesting_user,
         )
 
         context.put_property("team", team)

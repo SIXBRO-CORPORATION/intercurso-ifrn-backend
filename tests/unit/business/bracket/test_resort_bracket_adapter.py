@@ -30,7 +30,6 @@ def make_adapter():
         bracket_group_team_repository,
         match_repository,
         team_repository,
-        user_repository,
         audit_logger,
     )
     return (

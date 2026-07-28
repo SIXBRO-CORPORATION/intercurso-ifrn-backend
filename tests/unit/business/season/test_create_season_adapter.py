@@ -24,7 +24,6 @@ def make_adapter():
         season_repository,
         season_modality_repository,
         modality_repository,
-        user_repository,
         audit_logger,
     )
     return (

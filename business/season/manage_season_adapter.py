@@ -5,7 +5,6 @@ from core.business.audit.audit_logger import AuditLogger
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.context import Context
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
-from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
@@ -16,11 +15,9 @@ class ManageSeasonAdapter(ManageSeasonPort):
     def __init__(
         self,
         season_repository: SeasonRepositoryPort,
-        user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.season_repository = season_repository
-        self.user_repository = user_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
@@ -75,14 +72,6 @@ class ManageSeasonAdapter(ManageSeasonPort):
 
         updated_season = await self.season_repository.save(season)
 
-        updating_user = (
-            await self.user_repository.get(updated_by) if updated_by else None
-        )
-        actor_role = (
-            updating_user.role.value
-            if updating_user is not None and updating_user.role
-            else None
-        )
         description = (
             f"Datas da temporada '{updated_season.name}' atualizadas "
             f"(abertura: {old_start} -> {updated_season.registration_start_date}, "
@@ -94,7 +83,6 @@ class ManageSeasonAdapter(ManageSeasonPort):
             action=AuditAction.SEASON_DATES_UPDATED,
             description=description,
             actor_id=updated_by,
-            actor_role=actor_role,
         )
 
         return updated_season

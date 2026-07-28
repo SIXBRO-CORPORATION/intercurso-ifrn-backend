@@ -59,16 +59,11 @@ class SelectCaptainAdapter(SelectCaptainPort):
         context.put_property("captain_member", target_member)
 
         requesting_user = await self.user_repository.get(requesting_user_id)
-        actor_role = (
-            requesting_user.role.value
-            if requesting_user is not None and requesting_user.role
-            else None
-        )
         await self.audit_logger.log(
             action=AuditAction.TEAM_CAPTAIN_SELECTED,
             description=f"Capitão selecionado para o time '{saved_team.name}'",
             actor_id=requesting_user_id,
-            actor_role=actor_role,
+            actor=requesting_user,
         )
 
         return saved_team
