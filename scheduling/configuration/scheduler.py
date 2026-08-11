@@ -1,7 +1,7 @@
 import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 
 from scheduling.jobs.season_scheduler_jobs import (
     run_close_seasons_job,
@@ -17,7 +17,7 @@ def start_scheduler() -> None:
 
     scheduler.add_job(
         run_open_seasons_job,
-        trigger=IntervalTrigger(minutes=1),
+        trigger=CronTrigger(hour=0, minute=0),
         id="open_seasons_job",
         name="Abertura automática de inscrições de temporadas",
         replace_existing=True,
@@ -26,7 +26,7 @@ def start_scheduler() -> None:
     )
     scheduler.add_job(
         run_close_seasons_job,
-        trigger=IntervalTrigger(minutes=1),
+        trigger=CronTrigger(hour=0, minute=0),
         id="close_seasons_job",
         name="Encerramento automático de inscrições de temporadas",
         replace_existing=True,
@@ -35,7 +35,7 @@ def start_scheduler() -> None:
     )
 
     scheduler.start()
-    logger.info("Scheduler de temporadas iniciado (verificação a cada 1 minuto)")
+    logger.info("Scheduler de temporadas iniciado (verificação a cada 1 dia)")
 
 
 def stop_scheduler() -> None:
