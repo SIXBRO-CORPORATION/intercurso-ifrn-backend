@@ -7,6 +7,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from scheduling.configuration.scheduler import start_scheduler, stop_scheduler
 from persistence.database import close_db
+from security.config import settings
 from web.commons.exception_handler import register_exception_handler
 from web.controllers.team_controller import router as team_router
 from web.controllers.auth_controller import router as auth_router
@@ -48,6 +49,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        settings.frontend_url
     ],
     allow_credentials=True,
     allow_methods=["*"],
