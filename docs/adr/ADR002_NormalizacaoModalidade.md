@@ -1,7 +1,7 @@
 # ADR 0002: Normalização de Configuração por Modalidade e Histórico de Sets
 
 ## Status
-Proposta (ainda não implementada — aguardando priorização de migrations)
+Aceito
 
 ## Contexto
 
