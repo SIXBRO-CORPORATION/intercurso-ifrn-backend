@@ -104,7 +104,7 @@ class CreateSeasonAdapter(CreateSeasonPort):
             registration_end_date=season.registration_end_date,
             registration_opened_at=season.registration_opened_at,
             rules_document=season.rules_document,
-            created_by=season.created_by,
+            created_by=created_by,
         )
 
         if open_immediately:
