@@ -27,7 +27,7 @@ class AuditLogEntity(Base):
     description = Column(String(500), nullable=False)
 
     created_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(),
         index=True,
