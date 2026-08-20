@@ -125,6 +125,75 @@ class TestKnockoutDraw:
         assert len(seen) == len(set(seen))
 
 
+class TestNextMatchIndexLinking:
+    """UC015 - avanço automático no chaveamento: cada partida deve apontar
+    (via índice em plan.matches) para a partida da rodada seguinte que
+    receberá o vencedor."""
+
+    def test_power_of_two_links_every_round_to_the_next(self):
+        teams = make_team_ids(8)
+        plan = build_draw(ModalityFormat.KNOCKOUT, teams, {})
+
+        regulars = [m for m in plan.matches if m.match_type == MatchType.REGULAR]
+        semis = [m for m in plan.matches if m.match_type == MatchType.SEMIFINAL]
+        finals = [m for m in plan.matches if m.match_type == MatchType.FINAL]
+        thirds = [m for m in plan.matches if m.match_type == MatchType.THIRD_PLACE]
+
+        # quartas -> semifinal correspondente
+        for m in regulars:
+            assert m.next_match_index is not None
+            assert plan.matches[m.next_match_index] in semis
+
+        # cada semifinal aponta para a mesma final (única partida FINAL)
+        for m in semis:
+            assert m.next_match_index is not None
+            assert plan.matches[m.next_match_index] is finals[0]
+
+        # duas partidas de quartas devem convergir para a MESMA semifinal
+        semi_targets = [m.next_match_index for m in regulars]
+        assert len(set(semi_targets)) == len(regulars) // 2
+
+        # final e 3º lugar não têm próxima fase
+        assert finals[0].next_match_index is None
+        assert thirds[0].next_match_index is None
+
+    def test_two_teams_final_only_has_no_next_match(self):
+        teams = make_team_ids(2)
+        plan = build_draw(ModalityFormat.KNOCKOUT, teams, {})
+
+        assert plan.matches[0].next_match_index is None
+
+    def test_bye_match_also_gets_linked_to_next_round(self):
+        teams = make_team_ids(6)
+        plan = build_draw(ModalityFormat.KNOCKOUT, teams, {})
+
+        bye_matches = [m for m in plan.matches if m.is_bye]
+        for bye_match in bye_matches:
+            assert bye_match.next_match_index is not None
+
+    def test_group_stage_knockout_offsets_knockout_indices_past_group_matches(self):
+        teams = make_team_ids(8)
+        config = resolve_configuration(
+            ModalityFormat.GROUP_STAGE_KNOCKOUT, len(teams), None
+        )
+        plan = build_draw(ModalityFormat.GROUP_STAGE_KNOCKOUT, teams, config)
+
+        group_matches = [m for m in plan.matches if m.match_category == MatchCategory.GROUP]
+        knockout_matches = [
+            m for m in plan.matches if m.match_category == MatchCategory.KNOCKOUT
+        ]
+
+        # jogos de grupo nunca avançam automaticamente (a classificação decide)
+        assert all(m.next_match_index is None for m in group_matches)
+
+        quarters = [m for m in knockout_matches if m.match_type == MatchType.REGULAR]
+        for m in quarters:
+            assert m.next_match_index is not None
+            # o índice deve cair dentro da faixa de knockout_matches, nunca
+            # sobre um jogo de grupo
+            assert plan.matches[m.next_match_index] in knockout_matches
+
+
 class TestGroupStageKnockoutDraw:
     def test_twelve_teams_default_config(self):
         teams = make_team_ids(12)

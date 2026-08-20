@@ -12,6 +12,7 @@ from core.business.match.resume_clock_port import ResumeClockPort
 from core.business.match.end_period_port import EndPeriodPort
 from core.business.match.start_period_port import StartPeriodPort
 from core.business.match.end_set_port import EndSetPort
+from core.business.match.finish_match_port import FinishMatchPort
 from core.context import Context
 from domain.match.match_set import MatchSet
 from domain.modality.modality import Modality
@@ -26,6 +27,7 @@ from web.commons.api_response import ApiResponse
 from web.dependencies import (
     get_end_period_port,
     get_end_set_port,
+    get_finish_match_port,
     get_match_model_mapper,
     get_pause_clock_port,
     get_register_card_port,
@@ -43,11 +45,12 @@ from web.models.response.match.match_management_response import MatchManagementR
 router = APIRouter(prefix="/api/match", tags=["match"])
 
 # TODO (débito técnico Fase 5): endpoints de consulta (GET de partida por id,
-# GET de partidas por temporada/time) e os demais casos de uso da fase
-# (UC015 - Finalizar Partida, UC017 - Corrigir Evento) ficam para as próximas
-# rodadas desta fase, conforme o planejamento em docs/ai/planejamento.md.
+# GET de partidas por temporada/time) e o UC017 (Corrigir Evento) ficam para
+# as próximas rodadas desta fase, conforme o planejamento em docs/ai/planejamento.md.
 # UC016 (WebSocket) e Push Notifications também são débito técnico (Fase 6):
-# nenhum evento abaixo dispara notificação em tempo real ainda.
+# nenhum evento abaixo (incluindo o /finish do UC015) dispara notificação em
+# tempo real ainda — RN7 e os critérios de aceitação correspondentes do UC015
+# seguem pendentes até a Fase 6.
 
 
 def _build_response(
@@ -262,3 +265,23 @@ async def end_set(
     match = await end_set_port.execute(context)
 
     return _build_response(context, mapper, match, "Set finalizado com sucesso!")
+
+
+@router.post(
+    "/{match_id}/finish",
+    response_model=ApiResponse[MatchManagementResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def finish_match(
+    match_id: UUID,
+    finish_match_port: Annotated[FinishMatchPort, Depends(get_finish_match_port)],
+    mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    context.put_property("match_id", match_id)
+    context.put_property("monitor_id", current_user.id)
+
+    match = await finish_match_port.execute(context)
+
+    return _build_response(context, mapper, match, "Partida finalizada com sucesso!")

@@ -85,7 +85,23 @@ class MatchManagementResponse(BaseModel):
     status: str = Field()
     scheduled_date: Optional[datetime] = Field(default=None)
     started_at: Optional[datetime] = Field(default=None)
+    finished_at: Optional[datetime] = Field(default=None)
     monitor_id: Optional[UUID] = Field(default=None)
+    winner_id: Optional[UUID] = Field(
+        default=None,
+        description=(
+            "Time vencedor (UC015). NULL enquanto a partida está em andamento, "
+            "ou em caso de empate em partida de fase de grupos."
+        ),
+    )
+    penalty_result: Optional[Any] = Field(
+        default=None,
+        description=(
+            "Resultado da disputa de pênaltis (UC015, Fluxo Alternativo 1): "
+            '{"team1_penalties": 5, "team2_penalties": 4, "winner_id": "..."}. '
+            "O placar oficial (team1.score/team2.score) NÃO é alterado pelos pênaltis."
+        ),
+    )
 
     team1: MatchTeamResponse = Field()
     team2: MatchTeamResponse = Field()

@@ -73,6 +73,7 @@ from web.dependencies.business.match_dependencies import (
     get_end_period_port,
     get_start_period_port,
     get_end_set_port,
+    get_finish_match_port,
 )
 
 from web.dependencies.business.auth_dependencies import (
@@ -159,6 +160,7 @@ __all__ = [
     "get_end_period_port",
     "get_start_period_port",
     "get_end_set_port",
+    "get_finish_match_port",
 
     # Business Dependencies - Auth
     "get_oauth_provider",

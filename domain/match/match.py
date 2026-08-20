@@ -26,6 +26,7 @@ class Match(AbstractDomain):
     team2_score: int = None
     penality_result: dict = field(default_factory=dict)
     winner_id: UUID = None
+    next_match_id: UUID = None
     clock_seconds: int = None
     clock_running: bool = None
     current_period: int = None

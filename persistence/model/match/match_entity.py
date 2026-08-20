@@ -16,6 +16,8 @@ class MatchEntity(AbstractEntity):
 
     winner_id = Column(ForeignKey("teams.id"), nullable=True)
 
+    next_match_id = Column(ForeignKey("matches.id"), nullable=True)
+
     monitor_id = Column(ForeignKey("users.id"), nullable=True)
 
     match_type = Column(String(20), nullable=False)

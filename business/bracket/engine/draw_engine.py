@@ -21,6 +21,9 @@ class MatchSpec:
     winner_id: Optional[UUID] = None
     finished_at: Optional[datetime] = None
     group_index: Optional[int] = None  # índice do grupo em DrawPlan.groups, se houver
+    next_match_index: Optional[int] = None  # índice em DrawPlan.matches da partida
+    # que recebe o vencedor (avanço automático no chaveamento, UC015). None quando
+    # não há próxima fase (ex.: FINAL, THIRD_PLACE) ou quando a categoria é GROUP.
 
 
 @dataclass
@@ -146,6 +149,23 @@ def build_knockout_tree(
         for match_spec in matches_in_round:
             match_spec.match_type = match_type
 
+    # Avanço automático (UC015): cada partida de uma rodada aponta, via índice
+    # dentro da lista final `all_matches`, para a partida da rodada seguinte que
+    # deve receber o time vencedor. A rodada final (índice total_rounds - 1) não
+    # aponta para nada — não há próxima fase depois dela.
+    round_start_offsets: List[int] = []
+    offset = 0
+    for matches_in_round in rounds:
+        round_start_offsets.append(offset)
+        offset += len(matches_in_round)
+
+    for round_index in range(total_rounds - 1):
+        for local_index, match_spec in enumerate(rounds[round_index]):
+            parent_local_index = local_index // 2
+            match_spec.next_match_index = (
+                round_start_offsets[round_index + 1] + parent_local_index
+            )
+
     all_matches: List[MatchSpec] = [m for round_matches in rounds for m in round_matches]
 
     if has_third_place and total_rounds >= 2:
@@ -263,6 +283,14 @@ def build_draw(
         knockout_matches = build_knockout_tree(
             knockout_first_round_pairs, has_third_place=True, group_index=None
         )
+
+        # Os índices de next_match_index calculados em build_knockout_tree são
+        # relativos apenas a `knockout_matches`; precisam ser deslocados pela
+        # quantidade de partidas de grupo, já que no plano final elas vêm antes.
+        knockout_offset = len(group_matches)
+        for match_spec in knockout_matches:
+            if match_spec.next_match_index is not None:
+                match_spec.next_match_index += knockout_offset
 
         return DrawPlan(
             groups=groups, matches=group_matches + knockout_matches, byes_created=0

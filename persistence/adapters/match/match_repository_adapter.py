@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.match.match_repository_port import MatchRepositoryPort
 from domain.enums.match_status import MatchStatus
+from domain.enums.match_type import MatchType
 from domain.match.match import Match
 from persistence.mappers.match.match_mapper import MatchMapper
 from persistence.model.match.match_entity import MatchEntity
@@ -172,6 +173,18 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         result = await self.session.execute(query)
         await self.session.flush()
         return result.rowcount
+
+    async def find_by_bracket_and_type(
+        self, bracket_id: UUID, match_type: MatchType
+    ) -> Optional[Match]:
+        query = select(MatchEntity).where(
+            MatchEntity.bracket_id == bracket_id,
+            MatchEntity.match_type == match_type.value,
+            MatchEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None
 
     async def find_tbd_matches_by_bracket(self, bracket_id: UUID) -> List[Match]:
         query = (

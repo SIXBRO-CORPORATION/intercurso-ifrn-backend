@@ -5,6 +5,7 @@ from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
 from domain.enums.match_status import MatchStatus
+from domain.enums.match_type import MatchType
 from domain.match.match import Match
 
 
@@ -53,4 +54,10 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
 
     @abstractmethod
     async def lock_for_update(self, match_id: UUID) -> Optional[Match]:
+        pass
+
+    @abstractmethod
+    async def find_by_bracket_and_type(
+        self, bracket_id: UUID, match_type: MatchType
+    ) -> Optional[Match]:
         pass

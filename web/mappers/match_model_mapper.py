@@ -135,7 +135,10 @@ class MatchModelMapper:
             status=match.status.value,
             scheduled_date=match.scheduled_date,
             started_at=match.started_at,
+            finished_at=match.finished_at,
             monitor_id=match.monitor_id,
+            winner_id=match.winner_id,
+            penalty_result=match.penality_result or None,
             team1=self._to_team_response(
                 team1, match.team1_score, match.team1_sets_won
             ),

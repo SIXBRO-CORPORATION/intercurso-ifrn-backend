@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from business.bracket._shared import persist_draw_matches
 from business.bracket.engine.config_suggester import (
     resolve_configuration,
     validate_team_count_for_format,
@@ -23,7 +24,6 @@ from domain.enums.bracket_status import BracketStatus
 from domain.enums.match_status import MatchStatus
 from domain.enums.modality_format import ModalityFormat
 from domain.exceptions.business_exception import BusinessException
-from domain.match.match import Match
 
 
 class ResortBracketAdapter(ResortBracketPort):
@@ -117,31 +117,9 @@ class ResortBracketAdapter(ResortBracketPort):
                     )
                 )
 
-        for match_spec in draw_plan.matches:
-            bracket_group_id = (
-                saved_group_ids[match_spec.group_index]
-                if match_spec.group_index is not None
-                else None
-            )
-            await self.match_repository.save(
-                Match(
-                    bracket_id=bracket.id,
-                    bracket_group_id=bracket_group_id,
-                    team1_id=match_spec.team1_id,
-                    team2_id=match_spec.team2_id,
-                    match_type=match_spec.match_type,
-                    match_category=match_spec.match_category,
-                    status=match_spec.status,
-                    is_bye=match_spec.is_bye,
-                    winner_id=match_spec.winner_id,
-                    finished_at=match_spec.finished_at,
-                    team1_score=0,
-                    team2_score=0,
-                    clock_seconds=0,
-                    clock_running=False,
-                    current_period=1,
-                )
-            )
+        await persist_draw_matches(
+            self.match_repository, bracket.id, saved_group_ids, draw_plan.matches
+        )
 
         bracket.configuration = resolved_config
         saved_bracket = await self.bracket_repository.save(bracket)
