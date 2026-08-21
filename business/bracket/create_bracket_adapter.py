@@ -115,10 +115,9 @@ class CreateBracketAdapter(CreateBracketPort):
         team_ids = [team.id for team in approved_teams]
         draw_plan = build_draw(bracket_shell.format, team_ids, resolved_config)
 
-        existing_brackets_in_season = await self.bracket_repository.find_by_season(
+        is_first_bracket_of_season = not await self.bracket_repository.exists_by_season(
             active_season.id
         )
-        is_first_bracket_of_season = len(existing_brackets_in_season) == 0
 
         new_bracket = Bracket(
             season_id=active_season.id,

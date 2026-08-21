@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
@@ -96,6 +96,30 @@ class MatchEventRepositoryAdapter(MatchEventRepositoryPort):
         result = await self.session.execute(query)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def exists_by_match_player_and_type(
+        self, match_id: UUID, player_id: UUID, event_type: EventType
+    ) -> bool:
+        query = select(MatchEventEntity.id).where(
+            MatchEventEntity.match_id == match_id,
+            MatchEventEntity.player_id == player_id,
+            MatchEventEntity.event_type == event_type.value,
+            MatchEventEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none() is not None
+
+    async def count_by_match_player_and_type(
+        self, match_id: UUID, player_id: UUID, event_type: EventType
+    ) -> int:
+        query = select(func.count(MatchEventEntity.id)).where(
+            MatchEventEntity.match_id == match_id,
+            MatchEventEntity.player_id == player_id,
+            MatchEventEntity.event_type == event_type.value,
+            MatchEventEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        return result.scalar() or 0
 
     async def find_last_event_by_match(self, match_id: UUID) -> Optional[MatchEvent]:
         query = (

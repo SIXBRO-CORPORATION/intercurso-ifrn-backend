@@ -21,7 +21,6 @@ from domain.bracket.bracket_group import BracketGroup
 from domain.bracket.bracket_group_team import BracketGroupTeam
 from domain.enums.audit_action import AuditAction
 from domain.enums.bracket_status import BracketStatus
-from domain.enums.match_status import MatchStatus
 from domain.enums.modality_format import ModalityFormat
 from domain.exceptions.business_exception import BusinessException
 
@@ -58,14 +57,13 @@ class ResortBracketAdapter(ResortBracketPort):
                 "Somente chaveamentos em rascunho ou ativos podem ser re-sorteados"
             )
 
-        existing_matches = await self.match_repository.find_by_bracket(bracket.id)
-        started_matches = [
-            match for match in existing_matches if match.status != MatchStatus.SCHEDULED
-        ]
-        if started_matches:
+        has_started_matches = await self.match_repository.exists_non_scheduled_by_bracket(
+            bracket.id
+        )
+        if has_started_matches:
             raise BusinessException(
-                f"Não é possível re-sortear: {len(started_matches)} partida(s) já "
-                "foram iniciadas ou finalizadas"
+                "Não é possível re-sortear: já existem partida(s) iniciadas ou "
+                "finalizadas neste chaveamento"
             )
 
         approved_teams = (

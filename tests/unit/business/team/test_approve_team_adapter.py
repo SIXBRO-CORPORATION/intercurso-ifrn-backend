@@ -38,7 +38,8 @@ class TestApproveTeamAdapter:
         members = [make_member(), make_member()]
 
         team_repository.get.return_value = team
-        team_member_repository.find_members_by_team_id.return_value = members
+        team_member_repository.count_by_team.return_value = len(members)
+        team_member_repository.count_pending_donations_by_team.return_value = 0
         team_repository.save.return_value = team
 
         result = await adapter.execute(make_context(team.id))
@@ -68,7 +69,7 @@ class TestApproveTeamAdapter:
         adapter, team_repository, team_member_repository = make_adapter()
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
         team_repository.get.return_value = team
-        team_member_repository.find_members_by_team_id.return_value = []
+        team_member_repository.count_by_team.return_value = 0
 
         with pytest.raises(BusinessException):
             await adapter.execute(make_context(team.id))
@@ -83,7 +84,8 @@ class TestApproveTeamAdapter:
             make_member(donation_status=DonationStatus.PENDING_DONATION),
         ]
         team_repository.get.return_value = team
-        team_member_repository.find_members_by_team_id.return_value = members
+        team_member_repository.count_by_team.return_value = len(members)
+        team_member_repository.count_pending_donations_by_team.return_value = 1
 
         with pytest.raises(BusinessException):
             await adapter.execute(make_context(team.id))

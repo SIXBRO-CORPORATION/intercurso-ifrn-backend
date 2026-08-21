@@ -15,7 +15,6 @@ from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
 from domain.season.season import Season
 from domain.team.team import Team
-from domain.team.team_member import TeamMember
 from domain.user.user import User
 
 
@@ -84,13 +83,20 @@ def setup_happy_path(
     modality_repository, team, season, requesting_user_id, existing_members=None,
     other_teams=None,
 ):
+    existing_members = existing_members or []
+    other_teams = other_teams or []
     team_repository.find_by_invite_token.return_value = team
     season_repository.get.return_value = season
-    team_member_repository.find_members_by_team_id.return_value = existing_members or []
+    team_member_repository.exists_by_team_and_user.return_value = False
+    team_member_repository.count_by_team.return_value = len(existing_members)
     modality_repository.get.return_value = Modality(
         id=team.modality_id, name="Futsal", min_members=5, max_members=10
     )
-    team_repository.find_teams_by_user_id.return_value = other_teams or []
+    team_repository.exists_by_user_season_and_modality.return_value = any(
+        other_team.season_id == team.season_id
+        and other_team.modality_id == team.modality_id
+        for other_team in other_teams
+    )
     team_member_repository.save.side_effect = lambda member: member
     user_repository.get.return_value = User(id=requesting_user_id, atleta=False)
 
@@ -246,13 +252,7 @@ class TestJoinTeamViaInviteAdapter:
 
         team_repository.find_by_invite_token.return_value = team
         season_repository.get.return_value = season
-        team_member_repository.find_members_by_team_id.return_value = [
-            TeamMember(
-                team_id=team.id,
-                user_id=requesting_user_id,
-                role=TeamMemberRole.MEMBER,
-            )
-        ]
+        team_member_repository.exists_by_team_and_user.return_value = True
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
@@ -276,10 +276,8 @@ class TestJoinTeamViaInviteAdapter:
 
         team_repository.find_by_invite_token.return_value = team
         season_repository.get.return_value = season
-        team_member_repository.find_members_by_team_id.return_value = [
-            TeamMember(team_id=team.id, user_id=uuid4(), role=TeamMemberRole.OWNER)
-            for _ in range(2)
-        ]
+        team_member_repository.exists_by_team_and_user.return_value = False
+        team_member_repository.count_by_team.return_value = 2
         modality_repository.get.return_value = Modality(
             id=team.modality_id, name="Futsal", min_members=1, max_members=2
         )

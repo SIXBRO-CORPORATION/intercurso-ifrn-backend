@@ -78,8 +78,7 @@ async def validate_player_in_team(
     if player_id is None:
         raise BusinessException("Jogador é obrigatório")
 
-    members = await team_member_repository.find_members_by_team_id(team_id)
-    member = next((m for m in members if m.user_id == player_id), None)
+    member = await team_member_repository.find_by_team_and_user(team_id, player_id)
     if member is None:
         raise BusinessException("Jogador informado não pertence ao time")
     return member
@@ -90,10 +89,9 @@ async def is_player_expelled(
     match_id: UUID,
     player_id: UUID,
 ) -> bool:
-    expulsions = await match_event_repository.find_by_match_and_type(
-        match_id, EventType.EXPULSION
+    return await match_event_repository.exists_by_match_player_and_type(
+        match_id, player_id, EventType.EXPULSION
     )
-    return any(event.player_id == player_id for event in expulsions)
 
 
 async def load_modality_configuration(
@@ -136,9 +134,15 @@ async def load_players(
     team_id: UUID,
 ) -> List[Tuple[TeamMember, User]]:
     members = await team_member_repository.find_members_by_team_id(team_id)
+    if not members:
+        return []
+
+    users = await user_repository.find_by_ids([member.user_id for member in members])
+    users_by_id = {user.id: user for user in users}
+
     players: List[Tuple[TeamMember, User]] = []
     for member in members:
-        user = await user_repository.get(member.user_id)
+        user = users_by_id.get(member.user_id)
         if user is not None:
             players.append((member, user))
     return players

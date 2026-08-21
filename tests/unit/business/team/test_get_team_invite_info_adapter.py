@@ -7,13 +7,11 @@ import pytest
 from business.team.get_team_invite_info_adapter import GetTeamInviteInfoAdapter
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
-from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
 from domain.season.season import Season
 from domain.team.team import Team
-from domain.team.team_member import TeamMember
 from domain.user.user import User
 
 
@@ -93,13 +91,8 @@ class TestGetTeamInviteInfoAdapter:
 
         team_repository.find_by_invite_token.return_value = team
         season_repository.get.return_value = season
-        team_member_repository.find_members_by_team_id.return_value = [
-            TeamMember(
-                team_id=team.id,
-                user_id=team.owner_id,
-                role=TeamMemberRole.OWNER,
-            )
-        ]
+        team_member_repository.exists_by_team_and_user.return_value = False
+        team_member_repository.count_by_team.return_value = 1
         modality_repository.get.return_value = Modality(
             id=team.modality_id, name="Futsal", min_members=5, max_members=10
         )
@@ -191,13 +184,7 @@ class TestGetTeamInviteInfoAdapter:
 
         team_repository.find_by_invite_token.return_value = team
         season_repository.get.return_value = season
-        team_member_repository.find_members_by_team_id.return_value = [
-            TeamMember(
-                team_id=team.id,
-                user_id=requesting_user_id,
-                role=TeamMemberRole.MEMBER,
-            )
-        ]
+        team_member_repository.exists_by_team_and_user.return_value = True
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)

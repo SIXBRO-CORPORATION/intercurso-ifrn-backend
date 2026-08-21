@@ -57,11 +57,7 @@ class FinishSeasonAdapter(FinishSeasonPort):
 
         updated_season = await self.season_repository.save(season)
 
-        teams = await self.team_repository.find_by_season_id(season_id)
-        for team in teams:
-            if team.token_active:
-                team.token_active = False
-                await self.team_repository.save(team)
+        await self.team_repository.deactivate_tokens_by_season(season_id)
 
         await self.audit_logger.log(
             action=AuditAction.SEASON_FINISHED,

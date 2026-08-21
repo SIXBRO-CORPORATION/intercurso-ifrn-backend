@@ -123,9 +123,9 @@ class TestStartMatchAdapter:
             id=uuid4(), team_id=team1.id, user_id=uuid4(), role=TeamMemberRole.CAPTAIN
         )
         team_member_repository.find_members_by_team_id.return_value = [member]
-        user_repository.get.return_value = User(
-            id=member.user_id, name="Aluno Teste", matricula="20231010001"
-        )
+        user_repository.find_by_ids.return_value = [
+            User(id=member.user_id, name="Aluno Teste", matricula="20231010001")
+        ]
 
         bracket = Bracket(id=match.bracket_id, season_id=uuid4(), modality_id=uuid4())
         bracket_repository.get.return_value = bracket

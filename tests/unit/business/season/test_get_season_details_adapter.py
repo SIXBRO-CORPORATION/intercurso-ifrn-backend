@@ -6,11 +6,9 @@ import pytest
 from business.season.get_season_details_adapter import GetSeasonDetailsAdapter
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
-from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season.season import Season
 from domain.season.season_modality import SeasonModality
-from domain.team.team import Team
 
 
 def make_adapter():
@@ -40,12 +38,11 @@ class TestGetSeasonDetailsAdapter:
         season_modality_repository.find_by_season.return_value = [
             SeasonModality(id=uuid4(), modality_id=uuid4())
         ]
-        team_repository.find_by_season_id.return_value = [
-            Team(id=uuid4(), status=TeamStatus.DRAFT),
-            Team(id=uuid4(), status=TeamStatus.SUBMITTED),
-            Team(id=uuid4(), status=TeamStatus.APPROVED),
-            Team(id=uuid4(), status=TeamStatus.REJECTED),
-        ]
+        team_repository.count_teams_summary_by_season.return_value = {
+            "total_teams_created": 4,
+            "total_teams_submitted": 3,
+            "total_teams_approved": 1,
+        }
 
         context = make_context(season.id)
         result = await adapter.execute(context)

@@ -25,6 +25,8 @@ def make_mocks():
     mocks["match_repository"].lock_for_update.side_effect = (
         lambda match_id: mocks["match_repository"].get.return_value
     )
+    mocks["match_event_repository"].exists_by_match_player_and_type.return_value = False
+    mocks["match_event_repository"].count_by_match_player_and_type.return_value = 0
 
     return mocks
 

@@ -8,7 +8,6 @@ from domain.enums.card_type import CardType
 from domain.enums.event_type import EventType
 from domain.enums.team_member_role import TeamMemberRole
 from domain.exceptions.business_exception import BusinessException
-from domain.match.match_event import MatchEvent
 from domain.team.team_member import TeamMember
 
 from tests.unit.business.match._helpers import (
@@ -47,7 +46,10 @@ class TestRegisterCardAdapter:
         mocks["team_member_repository"].find_members_by_team_id.return_value = [
             make_team_member(match.team1_id, player_id)
         ]
-        mocks["match_event_repository"].find_by_match_and_type.return_value = []
+        mocks["team_member_repository"].find_by_team_and_user.return_value = (
+            make_team_member(match.team1_id, player_id)
+        )
+        mocks["match_event_repository"].count_by_match_player_and_type.return_value = 0
 
         context = make_context(
             match.id, monitor_id, match.team1_id, player_id, CardType.YELLOW
@@ -75,23 +77,10 @@ class TestRegisterCardAdapter:
         mocks["team_member_repository"].find_members_by_team_id.return_value = [
             make_team_member(match.team1_id, player_id)
         ]
-
-        # find_by_match_and_type é chamado 2x: 1) checar expulsão prévia
-        # (EXPULSION) 2) contar amarelos anteriores (CARD_YELLOW).
-        def find_by_type(match_id, event_type):
-            if event_type == EventType.EXPULSION:
-                return []
-            if event_type == EventType.CARD_YELLOW:
-                return [
-                    MatchEvent(
-                        match_id=match.id,
-                        player_id=player_id,
-                        event_type=EventType.CARD_YELLOW,
-                    )
-                ]
-            return []
-
-        mocks["match_event_repository"].find_by_match_and_type.side_effect = find_by_type
+        mocks["team_member_repository"].find_by_team_and_user.return_value = (
+            make_team_member(match.team1_id, player_id)
+        )
+        mocks["match_event_repository"].count_by_match_player_and_type.return_value = 1
 
         context = make_context(
             match.id, monitor_id, match.team1_id, player_id, CardType.YELLOW
@@ -121,7 +110,9 @@ class TestRegisterCardAdapter:
         mocks["team_member_repository"].find_members_by_team_id.return_value = [
             make_team_member(match.team1_id, player_id)
         ]
-        mocks["match_event_repository"].find_by_match_and_type.return_value = []
+        mocks["team_member_repository"].find_by_team_and_user.return_value = (
+            make_team_member(match.team1_id, player_id)
+        )
 
         context = make_context(
             match.id, monitor_id, match.team1_id, player_id, CardType.RED
@@ -150,9 +141,10 @@ class TestRegisterCardAdapter:
         mocks["team_member_repository"].find_members_by_team_id.return_value = [
             make_team_member(match.team1_id, player_id)
         ]
-        mocks["match_event_repository"].find_by_match_and_type.return_value = [
-            MatchEvent(match_id=match.id, player_id=player_id, event_type=EventType.EXPULSION)
-        ]
+        mocks["team_member_repository"].find_by_team_and_user.return_value = (
+            make_team_member(match.team1_id, player_id)
+        )
+        mocks["match_event_repository"].exists_by_match_player_and_type.return_value = True
 
         context = make_context(
             match.id, monitor_id, match.team1_id, player_id, CardType.YELLOW

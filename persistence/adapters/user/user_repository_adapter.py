@@ -52,6 +52,14 @@ class UserRepositoryAdapter(UserRepositoryPort):
         result = await self.session.execute(selecionar)
         return result.scalar_one_or_none() is not None
 
+    async def find_by_ids(self, user_ids: List[UUID]) -> List[User]:
+        if not user_ids:
+            return []
+        selecionar = select(UserEntity).where(UserEntity.id.in_(user_ids))
+        result = await self.session.execute(selecionar)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]
+
     async def find_by_matricula(self, matricula: str) -> Optional[User]:
         selecionar = select(UserEntity).where(
             UserEntity.matricula == str(matricula)

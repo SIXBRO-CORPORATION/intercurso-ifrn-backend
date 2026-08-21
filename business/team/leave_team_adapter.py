@@ -47,10 +47,8 @@ class LeaveTeamAdapter(LeaveTeamPort):
         if team.status != TeamStatus.DRAFT:
             raise BusinessException("Este time não aceita mais alterações")
 
-        members = await self.team_member_repository.find_members_by_team_id(team_id)
-        member = next(
-            (member for member in members if member.user_id == requesting_user_id),
-            None,
+        member = await self.team_member_repository.find_by_team_and_user(
+            team_id, requesting_user_id
         )
         if member is None:
             raise BusinessException("Você não é membro deste time")
@@ -61,13 +59,13 @@ class LeaveTeamAdapter(LeaveTeamPort):
             team.captain_id = None
             team = await self.team_repository.save(team)
 
-        other_teams = await self.team_repository.find_teams_by_user_id(
+        has_other_teams = await self.team_repository.exists_by_user_id(
             requesting_user_id
         )
         requesting_user = await self.user_repository.get(requesting_user_id)
         if (
             requesting_user is not None
-            and not other_teams
+            and not has_other_teams
             and requesting_user.atleta
         ):
             requesting_user.atleta = False

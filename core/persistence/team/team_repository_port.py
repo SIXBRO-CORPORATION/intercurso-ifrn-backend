@@ -21,6 +21,16 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
         pass
 
     @abstractmethod
+    async def exists_by_user_id(self, user_id: UUID) -> bool:
+        pass
+
+    @abstractmethod
+    async def exists_by_user_season_and_modality(
+        self, user_id: UUID, season_id: UUID, modality_id: UUID
+    ) -> bool:
+        pass
+
+    @abstractmethod
     async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
         pass
 
@@ -36,4 +46,12 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
     async def find_approved_teams_by_season_and_modality(
         self, season_id: UUID, modality_id: UUID
     ) -> List[Team]:
+        pass
+
+    @abstractmethod
+    async def count_teams_summary_by_season(self, season_id: UUID) -> dict:
+        pass
+
+    @abstractmethod
+    async def deactivate_tokens_by_season(self, season_id: UUID) -> int:
         pass

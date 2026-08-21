@@ -86,7 +86,7 @@ def configure_happy_path(
     season_repository.find_active_season.return_value = season
     season_modality_repository.exists_by_season_and_modality.return_value = True
     bracket_repository.exists_active_bracket_for_modality.return_value = False
-    bracket_repository.find_by_season.return_value = existing_brackets or []
+    bracket_repository.exists_by_season.return_value = bool(existing_brackets)
     approved_teams = make_approved_teams(team_count, season.id, modality_id)
     team_repository.find_approved_teams_by_season_and_modality.return_value = (
         approved_teams

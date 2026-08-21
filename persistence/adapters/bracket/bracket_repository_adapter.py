@@ -61,6 +61,14 @@ class BracketRepositoryAdapter(BracketRepositoryPort):
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
 
+    async def exists_by_season(self, season_id: UUID) -> bool:
+        query = select(BracketEntity.id).where(
+            BracketEntity.season_id == season_id,
+            BracketEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none() is not None
+
     async def find_by_status(self, status: BracketStatus) -> List[Bracket]:
         query = select(BracketEntity).where(
             BracketEntity.status == status.value,

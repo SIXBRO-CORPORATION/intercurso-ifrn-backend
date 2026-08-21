@@ -48,8 +48,8 @@ class TestLeaveTeamAdapter:
         requesting_user = User(id=requesting_user_id, role=UserRole.USER, atleta=True)
 
         team_repository.get.return_value = team
-        team_member_repository.find_members_by_team_id.return_value = [member]
-        team_repository.find_teams_by_user_id.return_value = []
+        team_member_repository.find_by_team_and_user.return_value = member
+        team_repository.exists_by_user_id.return_value = False
         user_repository.get.return_value = requesting_user
 
         context = make_context(team.id, requesting_user_id)
@@ -78,8 +78,8 @@ class TestLeaveTeamAdapter:
         member = TeamMember(id=uuid4(), team_id=team.id, user_id=requesting_user_id)
 
         team_repository.get.return_value = team
-        team_member_repository.find_members_by_team_id.return_value = [member]
-        team_repository.find_teams_by_user_id.return_value = [Team(id=uuid4())]
+        team_member_repository.find_by_team_and_user.return_value = member
+        team_repository.exists_by_user_id.return_value = True
         user_repository.get.return_value = User(
             id=requesting_user_id, role=UserRole.USER, atleta=True
         )
@@ -144,7 +144,7 @@ class TestLeaveTeamAdapter:
             id=uuid4(), name="Turma A", owner_id=owner_id, status=TeamStatus.DRAFT
         )
         team_repository.get.return_value = team
-        team_member_repository.find_members_by_team_id.return_value = []
+        team_member_repository.find_by_team_and_user.return_value = None
 
         context = make_context(team.id, requesting_user_id)
 
