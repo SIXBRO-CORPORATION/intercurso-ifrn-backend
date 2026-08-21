@@ -56,13 +56,13 @@ class GetTeamInviteInfoAdapter(GetTeamInviteInfoPort):
         if season.registration_end_date and now > season.registration_end_date:
             raise BusinessException("O período de inscrição está fechado")
 
-        members = await self.team_member_repository.find_members_by_team_id(team.id)
-
-        already_member = any(
-            member.user_id == requesting_user_id for member in members
+        already_member = await self.team_member_repository.exists_by_team_and_user(
+            team.id, requesting_user_id
         )
         if already_member:
             raise BusinessException("Você já é membro deste time")
+
+        members_count = await self.team_member_repository.count_by_team(team.id)
 
         modality = await self.modality_repository.get(team.modality_id)
         owner_user = await self.user_repository.get(team.owner_id)
@@ -73,7 +73,7 @@ class GetTeamInviteInfoAdapter(GetTeamInviteInfoPort):
         )
 
         context.put_property("modality", modality)
-        context.put_property("members_count", len(members))
+        context.put_property("members_count", members_count)
         context.put_property("owner_user", owner_user)
         context.put_property("captain_user", captain_user)
 

@@ -1,8 +1,9 @@
+from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import case, func, select, update
 
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.team_status import TeamStatus
@@ -79,6 +80,36 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         team_entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in team_entities]
 
+    async def exists_by_user_id(self, user_id: UUID) -> bool:
+        selecionar = (
+            select(TeamEntity.id)
+            .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
+            .where(
+                TeamMemberEntity.user_id == user_id,
+                TeamEntity.deleted_at.is_(None),
+                TeamMemberEntity.deleted_at.is_(None),
+            )
+        )
+        result = await self.session.execute(selecionar)
+        return result.scalar_one_or_none() is not None
+
+    async def exists_by_user_season_and_modality(
+        self, user_id: UUID, season_id: UUID, modality_id: UUID
+    ) -> bool:
+        selecionar = (
+            select(TeamEntity.id)
+            .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
+            .where(
+                TeamMemberEntity.user_id == user_id,
+                TeamEntity.season_id == season_id,
+                TeamEntity.modality_id == modality_id,
+                TeamEntity.deleted_at.is_(None),
+                TeamMemberEntity.deleted_at.is_(None),
+            )
+        )
+        result = await self.session.execute(selecionar)
+        return result.scalar_one_or_none() is not None
+
     async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
         selecionar = (
             select(TeamEntity)
@@ -104,6 +135,41 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in team_entities]
+
+    async def count_teams_summary_by_season(self, season_id: UUID) -> dict:
+        selecionar = select(
+            func.count(TeamEntity.id),
+            func.sum(
+                case((TeamEntity.status != TeamStatus.DRAFT.value, 1), else_=0)
+            ),
+            func.sum(
+                case((TeamEntity.status == TeamStatus.APPROVED.value, 1), else_=0)
+            ),
+        ).where(
+            TeamEntity.season_id == season_id,
+            TeamEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(selecionar)
+        total, submitted, approved = result.one()
+        return {
+            "total_teams_created": total or 0,
+            "total_teams_submitted": submitted or 0,
+            "total_teams_approved": approved or 0,
+        }
+
+    async def deactivate_tokens_by_season(self, season_id: UUID) -> int:
+        statement = (
+            update(TeamEntity)
+            .where(
+                TeamEntity.season_id == season_id,
+                TeamEntity.token_active.is_(True),
+                TeamEntity.deleted_at.is_(None),
+            )
+            .values(token_active=False, modified_at=datetime.now())
+        )
+        result = await self.session.execute(statement)
+        await self.session.flush()
+        return result.rowcount
 
     async def find_by_invite_token(self, invite_token: str) -> Optional[Team]:
         selecionar = select(TeamEntity).where(

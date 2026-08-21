@@ -9,7 +9,6 @@ from domain.enums.season_status import SeasonStatus
 from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
 from domain.season.season import Season
-from domain.team.team import Team
 
 
 def make_adapter():
@@ -42,12 +41,9 @@ class TestFinishSeasonAdapter:
             status=SeasonStatus.IN_PROGRESS,
             active=True,
         )
-        team_one = Team(id=uuid4(), season_id=season.id, token_active=True)
-        team_two = Team(id=uuid4(), season_id=season.id, token_active=False)
 
         season_repository.get.return_value = season
         season_repository.save.return_value = season
-        team_repository.find_by_season_id.return_value = [team_one, team_two]
 
         result = await adapter.execute(
             make_context(season.id, confirmation_name="Intercurso 2026")
@@ -58,9 +54,10 @@ class TestFinishSeasonAdapter:
         assert result.active is False
         season_repository.save.assert_awaited_once()
 
-        # Apenas o time com convite ativo deve ser salvo novamente.
-        team_repository.save.assert_awaited_once()
-        assert team_one.token_active is False
+        # Desativação de tokens é feita em lote, direto no banco.
+        team_repository.deactivate_tokens_by_season.assert_awaited_once_with(
+            season.id
+        )
         audit_logger.log.assert_awaited_once()
         assert (
             audit_logger.log.await_args.kwargs["action"]
@@ -80,7 +77,7 @@ class TestFinishSeasonAdapter:
             )
 
         season_repository.save.assert_not_awaited()
-        team_repository.find_by_season_id.assert_not_awaited()
+        team_repository.deactivate_tokens_by_season.assert_not_awaited()
 
     async def test_blocks_when_confirmation_name_differs_only_by_case(self):
         adapter, season_repository, team_repository, *_rest = make_adapter()

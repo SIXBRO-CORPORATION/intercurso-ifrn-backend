@@ -7,11 +7,9 @@ from business.bracket.resort_bracket_adapter import ResortBracketAdapter
 from core.context import Context
 from domain.bracket.bracket import Bracket
 from domain.enums.bracket_status import BracketStatus
-from domain.enums.match_status import MatchStatus
 from domain.enums.modality_format import ModalityFormat
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
-from domain.match.match import Match
 from domain.team.team import Team
 
 
@@ -67,9 +65,7 @@ class TestResortBracketAdapter:
 
         bracket = make_bracket()
         bracket_repository.get.return_value = bracket
-        match_repository.find_by_bracket.return_value = [
-            Match(id=uuid4(), status=MatchStatus.SCHEDULED)
-        ]
+        match_repository.exists_non_scheduled_by_bracket.return_value = False
         approved_teams = [
             Team(
                 id=uuid4(),
@@ -124,10 +120,7 @@ class TestResortBracketAdapter:
         ) = make_adapter()
         bracket = make_bracket()
         bracket_repository.get.return_value = bracket
-        match_repository.find_by_bracket.return_value = [
-            Match(id=uuid4(), status=MatchStatus.IN_PROGRESS),
-            Match(id=uuid4(), status=MatchStatus.SCHEDULED),
-        ]
+        match_repository.exists_non_scheduled_by_bracket.return_value = True
 
         context = Context()
         context.put_property("bracket_id", bracket.id)

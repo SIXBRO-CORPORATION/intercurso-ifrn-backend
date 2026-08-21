@@ -27,6 +27,18 @@ class MatchEventRepositoryPort(BaseRepositoryPort[MatchEvent]):
         pass
 
     @abstractmethod
+    async def exists_by_match_player_and_type(
+        self, match_id: UUID, player_id: UUID, event_type: EventType
+    ) -> bool:
+        pass
+
+    @abstractmethod
+    async def count_by_match_player_and_type(
+        self, match_id: UUID, player_id: UUID, event_type: EventType
+    ) -> int:
+        pass
+
+    @abstractmethod
     async def find_last_event_by_match(self, match_id: UUID) -> Optional[MatchEvent]:
         pass
 

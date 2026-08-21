@@ -41,6 +41,10 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
         pass
 
     @abstractmethod
+    async def exists_non_scheduled_by_bracket(self, bracket_id: UUID) -> bool:
+        pass
+
+    @abstractmethod
     async def delete_by_bracket(self, bracket_id: UUID) -> int:
         pass
 

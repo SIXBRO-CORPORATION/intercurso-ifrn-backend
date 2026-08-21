@@ -2,10 +2,11 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from domain.enums.donation_status import DonationStatus
 from domain.team.team_member import TeamMember
 from persistence.mappers.team.team_member_mapper import TeamMemberMapper
 from persistence.mappers.user.user_mapper import UserMapper
@@ -59,6 +60,44 @@ class TeamMemberRepositoryAdapter(TeamMemberRepositoryPort):
         return [
             self.team_member_mapper.to_domain(entity) for entity in team_member_entities
         ]
+
+    async def find_by_team_and_user(
+        self, team_id: UUID, user_id: UUID
+    ) -> Optional[TeamMember]:
+        selecionar = select(TeamMemberEntity).where(
+            TeamMemberEntity.team_id == team_id,
+            TeamMemberEntity.user_id == user_id,
+            TeamMemberEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(selecionar)
+        entity = result.scalar_one_or_none()
+        return self.team_member_mapper.to_domain(entity) if entity else None
+
+    async def exists_by_team_and_user(self, team_id: UUID, user_id: UUID) -> bool:
+        selecionar = select(TeamMemberEntity.id).where(
+            TeamMemberEntity.team_id == team_id,
+            TeamMemberEntity.user_id == user_id,
+            TeamMemberEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(selecionar)
+        return result.scalar_one_or_none() is not None
+
+    async def count_by_team(self, team_id: UUID) -> int:
+        selecionar = select(func.count(TeamMemberEntity.id)).where(
+            TeamMemberEntity.team_id == team_id,
+            TeamMemberEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(selecionar)
+        return result.scalar() or 0
+
+    async def count_pending_donations_by_team(self, team_id: UUID) -> int:
+        selecionar = select(func.count(TeamMemberEntity.id)).where(
+            TeamMemberEntity.team_id == team_id,
+            TeamMemberEntity.donation_status != DonationStatus.DONATION_CONFIRMED.value,
+            TeamMemberEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(selecionar)
+        return result.scalar() or 0
 
     async def delete(self, team_member_id: UUID) -> int:
         statement = (

@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Optional
+from typing import List, Optional
+from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
 from domain.user.user import User
@@ -8,6 +9,10 @@ from domain.user.user import User
 class UserRepositoryPort(BaseRepositoryPort[User]):
     @abstractmethod
     async def find_by_email(self, email: str) -> Optional[User]:
+        pass
+
+    @abstractmethod
+    async def find_by_ids(self, user_ids: List[UUID]) -> List[User]:
         pass
 
     @abstractmethod

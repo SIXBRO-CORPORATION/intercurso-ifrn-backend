@@ -53,8 +53,8 @@ class TestRemoveMemberAdapter:
         user_repository.get.side_effect = lambda user_id: (
             owner_user if user_id == owner_id else target_user
         )
-        team_member_repository.find_members_by_team_id.return_value = [member]
-        team_repository.find_teams_by_user_id.return_value = []
+        team_member_repository.find_by_team_and_user.return_value = member
+        team_repository.exists_by_user_id.return_value = False
 
         context = make_context(team.id, target_user_id, owner_id)
 
@@ -90,8 +90,8 @@ class TestRemoveMemberAdapter:
         user_repository.get.side_effect = lambda user_id: (
             monitor_user if user_id == monitor_id else target_user
         )
-        team_member_repository.find_members_by_team_id.return_value = [member]
-        team_repository.find_teams_by_user_id.return_value = []
+        team_member_repository.find_by_team_and_user.return_value = member
+        team_repository.exists_by_user_id.return_value = False
 
         context = make_context(team.id, target_user_id, monitor_id)
 
@@ -195,7 +195,7 @@ class TestRemoveMemberAdapter:
 
         team_repository.get.return_value = team
         user_repository.get.return_value = User(id=owner_id, role=UserRole.USER)
-        team_member_repository.find_members_by_team_id.return_value = []
+        team_member_repository.find_by_team_and_user.return_value = None
 
         context = make_context(team.id, target_user_id, owner_id)
 

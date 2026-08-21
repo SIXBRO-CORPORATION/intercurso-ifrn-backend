@@ -84,11 +84,8 @@ class RegisterCardAdapter(RegisterCardPort):
 
         if card_type == CardType.YELLOW:
 
-            previous_yellows = await self.match_event_repository.find_by_match_and_type(
-                match_id, EventType.CARD_YELLOW
-            )
-            previous_yellow_count = sum(
-                1 for event in previous_yellows if event.player_id == player_id
+            previous_yellow_count = await self.match_event_repository.count_by_match_player_and_type(
+                match_id, player_id, EventType.CARD_YELLOW
             )
             card_event_type = EventType.CARD_YELLOW
             if previous_yellow_count >= 1:

@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import select, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 from core.persistence.match.match_repository_port import MatchRepositoryPort
 from domain.enums.match_status import MatchStatus
 from domain.enums.match_type import MatchType
@@ -134,6 +135,15 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         result = await self.session.execute(query)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def exists_non_scheduled_by_bracket(self, bracket_id: UUID) -> bool:
+        query = select(MatchEntity.id).where(
+            MatchEntity.bracket_id == bracket_id,
+            MatchEntity.status != MatchStatus.SCHEDULED.value,
+            MatchEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none() is not None
 
     async def find_by_bracket_group(self, bracket_group_id: UUID) -> List[Match]:
         query = (

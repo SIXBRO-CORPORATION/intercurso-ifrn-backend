@@ -51,6 +51,9 @@ class TestRegisterGoalAdapter:
         mocks["team_member_repository"].find_members_by_team_id.return_value = [
             make_team_member(match.team1_id, player_id)
         ]
+        mocks["team_member_repository"].find_by_team_and_user.return_value = (
+            make_team_member(match.team1_id, player_id)
+        )
         mocks["match_event_repository"].find_by_match_and_type.return_value = []
         mocks["bracket_repository"].get.return_value = Bracket(
             id=match.bracket_id, modality_id=uuid4()
@@ -87,6 +90,9 @@ class TestRegisterGoalAdapter:
         mocks["team_member_repository"].find_members_by_team_id.return_value = [
             make_team_member(match.team2_id, player_id)
         ]
+        mocks["team_member_repository"].find_by_team_and_user.return_value = (
+            make_team_member(match.team2_id, player_id)
+        )
         mocks["match_event_repository"].find_by_match_and_type.return_value = []
         mocks["bracket_repository"].get.return_value = Bracket(
             id=match.bracket_id, modality_id=uuid4()
@@ -156,6 +162,7 @@ class TestRegisterGoalAdapter:
         match = make_in_progress_match(monitor_id=monitor_id)
         mocks["match_repository"].get.return_value = match
         mocks["team_member_repository"].find_members_by_team_id.return_value = []
+        mocks["team_member_repository"].find_by_team_and_user.return_value = None
 
         context = make_context(match.id, monitor_id, match.team1_id, uuid4())
 
@@ -174,9 +181,13 @@ class TestRegisterGoalAdapter:
         mocks["team_member_repository"].find_members_by_team_id.return_value = [
             make_team_member(match.team1_id, player_id)
         ]
+        mocks["team_member_repository"].find_by_team_and_user.return_value = (
+            make_team_member(match.team1_id, player_id)
+        )
         mocks["match_event_repository"].find_by_match_and_type.return_value = [
             MatchEvent(match_id=match.id, player_id=player_id, event_type=EventType.EXPULSION)
         ]
+        mocks["match_event_repository"].exists_by_match_player_and_type.return_value = True
 
         context = make_context(match.id, monitor_id, match.team1_id, player_id)
 

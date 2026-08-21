@@ -62,25 +62,22 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
         if season.registration_end_date and now > season.registration_end_date:
             raise BusinessException("O período de inscrição está fechado")
 
-        members = await self.team_member_repository.find_members_by_team_id(team.id)
-
-        already_member = any(
-            member.user_id == requesting_user_id for member in members
+        already_member = await self.team_member_repository.exists_by_team_and_user(
+            team.id, requesting_user_id
         )
         if already_member:
             raise BusinessException("Você já é membro deste time")
 
         modality = await self.modality_repository.get(team.modality_id)
-        if modality is not None and len(members) >= modality.max_members:
-            raise BusinessException("Este time já atingiu o limite máximo de membros")
+        if modality is not None:
+            members_count = await self.team_member_repository.count_by_team(team.id)
+            if members_count >= modality.max_members:
+                raise BusinessException(
+                    "Este time já atingiu o limite máximo de membros"
+                )
 
-        existing_teams = await self.team_repository.find_teams_by_user_id(
-            requesting_user_id
-        )
-        already_in_modality = any(
-            existing_team.season_id == team.season_id
-            and existing_team.modality_id == team.modality_id
-            for existing_team in existing_teams
+        already_in_modality = await self.team_repository.exists_by_user_season_and_modality(
+            requesting_user_id, team.season_id, team.modality_id
         )
         if already_in_modality:
             raise BusinessException(

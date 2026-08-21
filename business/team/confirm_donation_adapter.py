@@ -44,9 +44,8 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
         if member_user is None:
             raise BusinessException("Usuário não encontrado")
 
-        members = await self.team_member_repository.find_members_by_team_id(team_id)
-        member = next(
-            (m for m in members if m.user_id == member_user.id), None
+        member = await self.team_member_repository.find_by_team_and_user(
+            team_id, member_user.id
         )
         if member is None:
             raise BusinessException("Esse usuário não é membro do time")

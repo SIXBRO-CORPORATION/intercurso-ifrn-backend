@@ -5,7 +5,6 @@ from core.business.team.approve_team_port import ApproveTeamPort
 from core.context import Context
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
-from domain.enums.donation_status import DonationStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.team.team import Team
@@ -36,16 +35,14 @@ class ApproveTeamAdapter(ApproveTeamPort):
                 "Somente times com aprovação pendente podem ser aprovados"
             )
 
-        members = await self.team_member_repository.find_members_by_team_id(team_id)
-        if not members:
+        members_count = await self.team_member_repository.count_by_team(team_id)
+        if members_count == 0:
             raise BusinessException("Time não possui membros")
 
-        pending_donations = [
-            member
-            for member in members
-            if member.donation_status != DonationStatus.DONATION_CONFIRMED
-        ]
-        if pending_donations:
+        pending_donations_count = (
+            await self.team_member_repository.count_pending_donations_by_team(team_id)
+        )
+        if pending_donations_count > 0:
             raise BusinessException(
                 "Todos os membros devem ter a doação confirmada antes da aprovação"
             )

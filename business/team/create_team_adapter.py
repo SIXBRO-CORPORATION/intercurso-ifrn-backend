@@ -74,13 +74,8 @@ class CreateTeamAdapter(CreateTeamPort):
                 "Modalidade informada não faz parte da temporada ativa"
             )
 
-        existing_teams = await self.team_repository.find_teams_by_user_id(
-            creator_user_id
-        )
-        already_in_modality = any(
-            existing_team.season_id == active_season.id
-            and existing_team.modality_id == team.modality_id
-            for existing_team in existing_teams
+        already_in_modality = await self.team_repository.exists_by_user_season_and_modality(
+            creator_user_id, active_season.id, team.modality_id
         )
         if already_in_modality:
             raise BusinessException(

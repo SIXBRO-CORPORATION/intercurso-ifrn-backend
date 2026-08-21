@@ -19,6 +19,10 @@ class BracketRepositoryPort(BaseRepositoryPort[Bracket]):
         pass
 
     @abstractmethod
+    async def exists_by_season(self, season_id: UUID) -> bool:
+        pass
+
+    @abstractmethod
     async def find_by_status(self, status: BracketStatus) -> List[Bracket]:
         pass
 

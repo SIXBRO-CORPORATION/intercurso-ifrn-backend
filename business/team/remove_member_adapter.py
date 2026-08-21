@@ -64,9 +64,8 @@ class RemoveMemberAdapter(RemoveMemberPort):
                 "O dono do time não pode ser removido. Delete o time para isso."
             )
 
-        members = await self.team_member_repository.find_members_by_team_id(team_id)
-        target_member = next(
-            (member for member in members if member.user_id == target_user_id), None
+        target_member = await self.team_member_repository.find_by_team_and_user(
+            team_id, target_user_id
         )
         if target_member is None:
             raise BusinessException("Esse usuário não é membro do time")
@@ -77,9 +76,9 @@ class RemoveMemberAdapter(RemoveMemberPort):
             team.captain_id = None
             team = await self.team_repository.save(team)
 
-        other_teams = await self.team_repository.find_teams_by_user_id(target_user_id)
+        has_other_teams = await self.team_repository.exists_by_user_id(target_user_id)
         target_user = await self.user_repository.get(target_user_id)
-        if target_user is not None and not other_teams and target_user.atleta:
+        if target_user is not None and not has_other_teams and target_user.atleta:
             target_user.atleta = False
             await self.user_repository.save(target_user)
 

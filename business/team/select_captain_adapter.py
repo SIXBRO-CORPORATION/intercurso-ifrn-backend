@@ -46,9 +46,8 @@ class SelectCaptainAdapter(SelectCaptainPort):
         if team.status != TeamStatus.DRAFT:
             raise BusinessException("Este time não aceita mais alterações")
 
-        members = await self.team_member_repository.find_members_by_team_id(team_id)
-        target_member = next(
-            (member for member in members if member.user_id == target_user_id), None
+        target_member = await self.team_member_repository.find_by_team_and_user(
+            team_id, target_user_id
         )
         if target_member is None:
             raise BusinessException("Esse usuário não é membro do time")
