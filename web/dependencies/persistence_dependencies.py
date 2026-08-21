@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from core.persistence.match_set_repository_port import MatchSetRepositoryPort
 from core.persistence.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
-from persistence.adapters.match_set_repository_adapter import MatchSetRepositoryAdapter
+from persistence.adapters.match.match_set_repository_adapter import MatchSetRepositoryAdapter
 from persistence.adapters.user.user_repository_adapter import UserRepositoryAdapter
 from persistence.adapters.team.team_repository_adapter import TeamRepositoryAdapter
 from persistence.adapters.team.team_member_repository_adapter import (
@@ -55,7 +55,7 @@ from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.audit.audit_log_repository_port import AuditLogRepositoryPort
-from persistence.adapters.volleyball_modality_configuration_repository_adapter import \
+from persistence.adapters.modality.volleyball_modality_configuration_repository_adapter import \
     VolleyballModalityConfigurationRepositoryAdapter
 from persistence.database import get_db
 from persistence.mappers.match_set_mapper import MatchSetMapper
