@@ -17,7 +17,7 @@ from core.persistence.bracket.bracket_group_team_repository_port import (
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
-from core.persistence.match_set_repository_port import MatchSetRepositoryPort
+from core.persistence.match.match_set_repository_port import MatchSetRepositoryPort
 from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
@@ -34,7 +34,7 @@ from business.match.end_period_adapter import EndPeriodAdapter
 from business.match.start_period_adapter import StartPeriodAdapter
 from business.match.end_set_adapter import EndSetAdapter
 from business.match.finish_match_adapter import FinishMatchAdapter
-from core.persistence.volleyball_modality_configuration_repository_port import \
+from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (

@@ -3,8 +3,8 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from core.persistence.match_set_repository_port import MatchSetRepositoryPort
-from core.persistence.volleyball_modality_configuration_repository_port import \
+from core.persistence.match.match_set_repository_port import MatchSetRepositoryPort
+from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
 from persistence.adapters.match.match_set_repository_adapter import MatchSetRepositoryAdapter
 from persistence.adapters.user.user_repository_adapter import UserRepositoryAdapter
@@ -58,7 +58,7 @@ from core.persistence.audit.audit_log_repository_port import AuditLogRepositoryP
 from persistence.adapters.modality.volleyball_modality_configuration_repository_adapter import \
     VolleyballModalityConfigurationRepositoryAdapter
 from persistence.database import get_db
-from persistence.mappers.match_set_mapper import MatchSetMapper
+from persistence.mappers.match.match_set_mapper import MatchSetMapper
 from persistence.mappers.team.team_mapper import TeamMapper
 from persistence.mappers.team.team_member_mapper import TeamMemberMapper
 from persistence.mappers.user.user_mapper import UserMapper
@@ -75,7 +75,7 @@ from persistence.mappers.modality.modality_configuration_mapper import (
     ModalityConfigurationMapper,
 )
 from persistence.mappers.audit.audit_log_mapper import AuditLogMapper
-from persistence.mappers.volleyball_modality_configuration_mapper import VolleyballModalityConfigurationMapper
+from persistence.mappers.modality.volleyball_modality_configuration_mapper import VolleyballModalityConfigurationMapper
 
 
 def get_user_repository(

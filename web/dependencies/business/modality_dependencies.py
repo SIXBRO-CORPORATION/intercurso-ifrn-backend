@@ -9,7 +9,7 @@ from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
-from core.persistence.volleyball_modality_configuration_repository_port import \
+from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (

@@ -7,7 +7,7 @@ from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
-from core.persistence.volleyball_modality_configuration_repository_port import \
+from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.score_type import ScoreType

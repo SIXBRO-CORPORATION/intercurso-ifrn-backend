@@ -4,13 +4,13 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.persistence.volleyball_modality_configuration_repository_port import (
+from core.persistence.modality.volleyball_modality_configuration_repository_port import (
     VolleyballModalityConfigurationRepositoryPort,
 )
 from domain.modality.volleyball_modality_configuration import (
     VolleyballModalityConfiguration,
 )
-from persistence.mappers.volleyball_modality_configuration_mapper import (
+from persistence.mappers.modality.volleyball_modality_configuration_mapper import (
     VolleyballModalityConfigurationMapper,
 )
 from persistence.model.modality.volleybal.volleyball_modality_configuration_entity import (

@@ -4,9 +4,9 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.persistence.match_set_repository_port import MatchSetRepositoryPort
+from core.persistence.match.match_set_repository_port import MatchSetRepositoryPort
 from domain.match.match_set import MatchSet
-from persistence.mappers.match_set_mapper import MatchSetMapper
+from persistence.mappers.match.match_set_mapper import MatchSetMapper
 from persistence.model.match.match_set_entity import MatchSetEntity
 
 
