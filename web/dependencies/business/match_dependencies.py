@@ -11,6 +11,9 @@ from core.business.match.end_period_port import EndPeriodPort
 from core.business.match.start_period_port import StartPeriodPort
 from core.business.match.end_set_port import EndSetPort
 from core.business.match.finish_match_port import FinishMatchPort
+from core.business.match.start_penalty_shootout_port import StartPenaltyShootoutPort
+from core.business.match.register_penalty_kick_port import RegisterPenaltyKickPort
+from core.business.match.end_penalty_shootout_port import EndPenaltyShootoutPort
 from core.persistence.bracket.bracket_group_team_repository_port import (
     BracketGroupTeamRepositoryPort,
 )
@@ -34,6 +37,9 @@ from business.match.end_period_adapter import EndPeriodAdapter
 from business.match.start_period_adapter import StartPeriodAdapter
 from business.match.end_set_adapter import EndSetAdapter
 from business.match.finish_match_adapter import FinishMatchAdapter
+from business.match.start_penalty_shootout_adapter import StartPenaltyShootoutAdapter
+from business.match.register_penalty_kick_adapter import RegisterPenaltyKickAdapter
+from business.match.end_penalty_shootout_adapter import EndPenaltyShootoutAdapter
 from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
 from web.dependencies.commons_dependencies import get_audit_logger
@@ -405,6 +411,134 @@ def get_finish_match_port(
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> FinishMatchPort:
     return FinishMatchAdapter(
+        match_repository,
+        match_event_repository,
+        bracket_group_team_repository,
+        team_repository,
+        team_member_repository,
+        user_repository,
+        bracket_repository,
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
+        audit_logger,
+    )
+
+
+def get_start_penalty_shootout_port(
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    match_event_repository: Annotated[
+        MatchEventRepositoryPort, Depends(get_match_event_repository)
+    ],
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+    modality_configuration_repository: Annotated[
+        ModalityConfigurationRepositoryPort,
+        Depends(get_modality_configuration_repository),
+    ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> StartPenaltyShootoutPort:
+    return StartPenaltyShootoutAdapter(
+        match_repository,
+        match_event_repository,
+        team_repository,
+        team_member_repository,
+        user_repository,
+        bracket_repository,
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
+        audit_logger,
+    )
+
+
+def get_register_penalty_kick_port(
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    match_event_repository: Annotated[
+        MatchEventRepositoryPort, Depends(get_match_event_repository)
+    ],
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+    modality_configuration_repository: Annotated[
+        ModalityConfigurationRepositoryPort,
+        Depends(get_modality_configuration_repository),
+    ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
+) -> RegisterPenaltyKickPort:
+    return RegisterPenaltyKickAdapter(
+        match_repository,
+        match_event_repository,
+        team_repository,
+        team_member_repository,
+        user_repository,
+        bracket_repository,
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
+    )
+
+
+def get_end_penalty_shootout_port(
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    match_event_repository: Annotated[
+        MatchEventRepositoryPort, Depends(get_match_event_repository)
+    ],
+    bracket_group_team_repository: Annotated[
+        BracketGroupTeamRepositoryPort, Depends(get_bracket_group_team_repository)
+    ],
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+    modality_configuration_repository: Annotated[
+        ModalityConfigurationRepositoryPort,
+        Depends(get_modality_configuration_repository),
+    ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> EndPenaltyShootoutPort:
+    return EndPenaltyShootoutAdapter(
         match_repository,
         match_event_repository,
         bracket_group_team_repository,

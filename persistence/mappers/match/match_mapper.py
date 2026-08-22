@@ -35,6 +35,9 @@ class MatchMapper:
             metadata_json=entity.metadata_json,
             team1_sets_won=entity.team1_sets_won,
             team2_sets_won=entity.team2_sets_won,
+            penalty_shootout_active=entity.penalty_shootout_active,
+            team1_penalty_score=entity.team1_penalty_score,
+            team2_penalty_score=entity.team2_penalty_score,
             created_at=entity.created_at,
             modified_at=entity.modified_at,
             active=entity.active
@@ -69,6 +72,9 @@ class MatchMapper:
             metadata_json=domain.metadata_json,
             team1_sets_won=domain.team1_sets_won,
             team2_sets_won=domain.team2_sets_won,
+            penalty_shootout_active=domain.penalty_shootout_active,
+            team1_penalty_score=domain.team1_penalty_score,
+            team2_penalty_score=domain.team2_penalty_score,
             created_at=domain.created_at,
             modified_at=domain.modified_at,
             active=domain.active

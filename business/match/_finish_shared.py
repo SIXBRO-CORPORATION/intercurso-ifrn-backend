@@ -22,7 +22,8 @@ def determine_winner_id(
     match: Match, penalty_result: Optional[dict]
 ) -> Optional[UUID]:
     if penalty_result:
-        return penalty_result.get("winner_id")
+        winner_id = penalty_result.get("winner_id")
+        return UUID(winner_id) if isinstance(winner_id, str) else winner_id
     team1_score = match.team1_score or 0
     team2_score = match.team2_score or 0
     if team1_score > team2_score:
@@ -45,6 +46,34 @@ def ensure_knockout_tie_requires_penalties(
             "Partida empatada em mata-mata no tempo regulamentar. Inicie a "
             "disputa de pênaltis (POST /api/match/{match_id}/penalty-shootout/start) "
             "antes de finalizar a partida."
+        )
+
+
+def ensure_penalty_shootout_can_start(match: Match) -> None:
+    if match.match_category != MatchCategory.KNOCKOUT:
+        raise BusinessException(
+            "Disputa de pênaltis só é aplicável a partidas de mata-mata (KNOCKOUT)"
+        )
+    if (match.team1_score or 0) != (match.team2_score or 0):
+        raise BusinessException(
+            "Só é possível iniciar disputa de pênaltis em partidas empatadas "
+            "no tempo regulamentar"
+        )
+    if match.penalty_shootout_active:
+        raise BusinessException(
+            "Disputa de pênaltis já está em andamento para esta partida"
+        )
+    if match.penality_result:
+        raise BusinessException(
+            "Esta partida já teve sua disputa de pênaltis encerrada"
+        )
+
+
+def ensure_penalty_shootout_active(match: Match) -> None:
+    if not match.penalty_shootout_active:
+        raise BusinessException(
+            "Disputa de pênaltis não foi iniciada para esta partida "
+            "(POST /api/match/{match_id}/penalty-shootout/start)"
         )
 
 
