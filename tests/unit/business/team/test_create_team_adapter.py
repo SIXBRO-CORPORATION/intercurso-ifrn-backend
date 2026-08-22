@@ -20,6 +20,7 @@ def make_adapter():
     season_repository = AsyncMock()
     season_modality_repository = AsyncMock()
     modality_repository = AsyncMock()
+    audit_logger = AsyncMock()
 
     adapter = CreateTeamAdapter(
         team_repository,
@@ -28,6 +29,7 @@ def make_adapter():
         season_repository,
         season_modality_repository,
         modality_repository,
+        audit_logger
     )
     return (
         adapter,
@@ -37,6 +39,7 @@ def make_adapter():
         season_repository,
         season_modality_repository,
         modality_repository,
+        audit_logger
     )
 
 
@@ -70,6 +73,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         active_season = make_open_season()
@@ -111,6 +115,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         context, _ = make_context()
@@ -130,6 +135,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         context, _ = make_context()
@@ -149,6 +155,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         context, _ = make_context()
@@ -168,6 +175,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         context, _ = make_context()
@@ -187,6 +195,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         context, _ = make_context()
@@ -205,6 +214,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger,
         ) = make_adapter()
 
         context, _ = make_context()
@@ -224,6 +234,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         active_season = make_open_season()
@@ -250,6 +261,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         context = Context()
@@ -267,6 +279,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         team = Team(name="Time A", modality_id=uuid4())
@@ -284,6 +297,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         active_season = make_open_season()
@@ -313,6 +327,7 @@ class TestCreateTeamAdapter:
             season_repository,
             season_modality_repository,
             modality_repository,
+            audit_logger
         ) = make_adapter()
 
         active_season = make_open_season()

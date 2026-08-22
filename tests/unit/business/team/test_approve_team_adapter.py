@@ -5,17 +5,16 @@ import pytest
 
 from business.team.approve_team_adapter import ApproveTeamAdapter
 from core.context import Context
-from domain.enums.donation_status import DonationStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.team.team import Team
-from domain.team.team_member import TeamMember
 
 
 def make_adapter():
     team_repository = AsyncMock()
     team_member_repository = AsyncMock()
-    adapter = ApproveTeamAdapter(team_repository, team_member_repository)
+    audit_logger = AsyncMock()
+    adapter = ApproveTeamAdapter(team_repository, team_member_repository, audit_logger)
     return adapter, team_repository, team_member_repository
 
 
@@ -26,19 +25,14 @@ def make_context(team_id=None):
     return context
 
 
-def make_member(donation_status=DonationStatus.DONATION_CONFIRMED):
-    return TeamMember(id=uuid4(), user_id=uuid4(), donation_status=donation_status)
-
-
 @pytest.mark.unit
 class TestApproveTeamAdapter:
     async def test_approves_submitted_team_with_all_donations_confirmed(self):
         adapter, team_repository, team_member_repository = make_adapter()
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
-        members = [make_member(), make_member()]
 
         team_repository.get.return_value = team
-        team_member_repository.count_by_team.return_value = len(members)
+        team_member_repository.count_by_team.return_value = 2
         team_member_repository.count_pending_donations_by_team.return_value = 0
         team_repository.save.return_value = team
 
@@ -79,12 +73,8 @@ class TestApproveTeamAdapter:
     async def test_blocks_when_pending_donation_exists(self):
         adapter, team_repository, team_member_repository = make_adapter()
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
-        members = [
-            make_member(),
-            make_member(donation_status=DonationStatus.PENDING_DONATION),
-        ]
         team_repository.get.return_value = team
-        team_member_repository.count_by_team.return_value = len(members)
+        team_member_repository.count_by_team.return_value = 2
         team_member_repository.count_pending_donations_by_team.return_value = 1
 
         with pytest.raises(BusinessException):
