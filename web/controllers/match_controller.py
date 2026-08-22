@@ -13,6 +13,9 @@ from core.business.match.end_period_port import EndPeriodPort
 from core.business.match.start_period_port import StartPeriodPort
 from core.business.match.end_set_port import EndSetPort
 from core.business.match.finish_match_port import FinishMatchPort
+from core.business.match.start_penalty_shootout_port import StartPenaltyShootoutPort
+from core.business.match.register_penalty_kick_port import RegisterPenaltyKickPort
+from core.business.match.end_penalty_shootout_port import EndPenaltyShootoutPort
 from core.context import Context
 from domain.match.match_set import MatchSet
 from domain.modality.modality import Modality
@@ -27,19 +30,23 @@ from web.commons.api_response import ApiResponse
 from web.dependencies import (
     get_end_period_port,
     get_end_set_port,
+    get_end_penalty_shootout_port,
     get_finish_match_port,
     get_match_model_mapper,
     get_pause_clock_port,
     get_register_card_port,
     get_register_goal_port,
+    get_register_penalty_kick_port,
     get_resume_clock_port,
     get_start_match_port,
     get_start_period_port,
+    get_start_penalty_shootout_port,
     require_monitor,
 )
 from web.mappers.match_model_mapper import MatchModelMapper
 from web.models.request.match.match_card_request import MatchCardRequest
 from web.models.request.match.match_goal_request import MatchGoalRequest
+from web.models.request.match.match_penalty_kick_request import MatchPenaltyKickRequest
 from web.models.response.match.match_management_response import MatchManagementResponse
 
 router = APIRouter(prefix="/api/match", tags=["match"])
@@ -48,9 +55,9 @@ router = APIRouter(prefix="/api/match", tags=["match"])
 # GET de partidas por temporada/time) e o UC017 (Corrigir Evento) ficam para
 # as próximas rodadas desta fase, conforme o planejamento em docs/ai/planejamento.md.
 # UC016 (WebSocket) e Push Notifications também são débito técnico (Fase 6):
-# nenhum evento abaixo (incluindo o /finish do UC015) dispara notificação em
-# tempo real ainda — RN7 e os critérios de aceitação correspondentes do UC015
-# seguem pendentes até a Fase 6.
+# nenhum evento abaixo (incluindo /finish e /penalty-shootout/* do UC015)
+# dispara notificação em tempo real ainda — RN7 e os critérios de aceitação
+# correspondentes do UC015 seguem pendentes até a Fase 6.
 
 
 def _build_response(
@@ -285,3 +292,77 @@ async def finish_match(
     match = await finish_match_port.execute(context)
 
     return _build_response(context, mapper, match, "Partida finalizada com sucesso!")
+
+
+@router.post(
+    "/{match_id}/penalty-shootout/start",
+    response_model=ApiResponse[MatchManagementResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def start_penalty_shootout(
+    match_id: UUID,
+    start_penalty_shootout_port: Annotated[
+        StartPenaltyShootoutPort, Depends(get_start_penalty_shootout_port)
+    ],
+    mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    context.put_property("match_id", match_id)
+    context.put_property("monitor_id", current_user.id)
+
+    match = await start_penalty_shootout_port.execute(context)
+
+    return _build_response(
+        context, mapper, match, "Disputa de pênaltis iniciada com sucesso!"
+    )
+
+
+@router.post(
+    "/{match_id}/penalty-shootout/kick",
+    response_model=ApiResponse[MatchManagementResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def register_penalty_kick(
+    match_id: UUID,
+    request: MatchPenaltyKickRequest,
+    register_penalty_kick_port: Annotated[
+        RegisterPenaltyKickPort, Depends(get_register_penalty_kick_port)
+    ],
+    mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    context.put_property("match_id", match_id)
+    context.put_property("monitor_id", current_user.id)
+    context.put_property("team_id", request.team_id)
+    context.put_property("player_id", request.player_id)
+    context.put_property("result", request.result)
+
+    match = await register_penalty_kick_port.execute(context)
+
+    return _build_response(context, mapper, match, "Cobrança de pênalti registrada!")
+
+
+@router.post(
+    "/{match_id}/penalty-shootout/end",
+    response_model=ApiResponse[MatchManagementResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def end_penalty_shootout(
+    match_id: UUID,
+    end_penalty_shootout_port: Annotated[
+        EndPenaltyShootoutPort, Depends(get_end_penalty_shootout_port)
+    ],
+    mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    context.put_property("match_id", match_id)
+    context.put_property("monitor_id", current_user.id)
+
+    match = await end_penalty_shootout_port.execute(context)
+
+    return _build_response(
+        context, mapper, match, "Disputa de pênaltis encerrada. Partida finalizada!"
+    )

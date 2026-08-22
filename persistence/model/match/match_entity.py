@@ -51,3 +51,9 @@ class MatchEntity(AbstractEntity):
     team1_sets_won = Column(Integer, nullable=True)
 
     team2_sets_won = Column(Integer, nullable=True)
+
+    penalty_shootout_active = Column(Boolean, default=False, nullable=False)
+
+    team1_penalty_score = Column(Integer, nullable=True)
+
+    team2_penalty_score = Column(Integer, nullable=True)

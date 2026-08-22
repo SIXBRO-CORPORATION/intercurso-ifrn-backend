@@ -23,7 +23,11 @@ from web.models.response.match.match_management_response import (
 
 class MatchModelMapper:
     def _to_team_response(
-        self, team: Team, score: int, sets_won: Optional[int] = None
+        self,
+        team: Team,
+        score: int,
+        sets_won: Optional[int] = None,
+        penalty_score: Optional[int] = None,
     ) -> MatchTeamResponse:
         return MatchTeamResponse(
             team_id=team.id,
@@ -31,6 +35,7 @@ class MatchModelMapper:
             photo=team.photo,
             score=score,
             sets_won=sets_won,
+            penalty_score=penalty_score,
         )
 
     def _to_players_response(
@@ -140,16 +145,17 @@ class MatchModelMapper:
             winner_id=match.winner_id,
             penalty_result=match.penality_result or None,
             team1=self._to_team_response(
-                team1, match.team1_score, match.team1_sets_won
+                team1, match.team1_score, match.team1_sets_won, match.team1_penalty_score
             ),
             team2=self._to_team_response(
-                team2, match.team2_score, match.team2_sets_won
+                team2, match.team2_score, match.team2_sets_won, match.team2_penalty_score
             ),
             team1_players=self._to_players_response(team1_players),
             team2_players=self._to_players_response(team2_players),
             clock_seconds=match.clock_seconds,
             clock_running=match.clock_running,
             current_period=match.current_period,
+            penalty_shootout_active=bool(match.penalty_shootout_active),
             modality_configuration=self._to_modality_configuration_response(
                 modality_configuration, volleyball_configuration
             ),

@@ -74,6 +74,9 @@ from web.dependencies.business.match_dependencies import (
     get_start_period_port,
     get_end_set_port,
     get_finish_match_port,
+    get_start_penalty_shootout_port,
+    get_register_penalty_kick_port,
+    get_end_penalty_shootout_port,
 )
 
 from web.dependencies.business.auth_dependencies import (
@@ -161,6 +164,9 @@ __all__ = [
     "get_start_period_port",
     "get_end_set_port",
     "get_finish_match_port",
+    "get_start_penalty_shootout_port",
+    "get_register_penalty_kick_port",
+    "get_end_penalty_shootout_port",
 
     # Business Dependencies - Auth
     "get_oauth_provider",

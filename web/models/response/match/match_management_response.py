@@ -16,6 +16,13 @@ class MatchTeamResponse(BaseModel):
         default=None,
         description="Sets vencidos na partida (apenas modalidades com score_type SETS)",
     )
+    penalty_score: Optional[int] = Field(
+        default=None,
+        description=(
+            "Pênaltis convertidos na disputa de desempate (UC015, Fluxo "
+            "Alternativo 1). Não soma ao placar oficial (score)."
+        ),
+    )
 
 
 class MatchSetResponse(BaseModel):
@@ -111,6 +118,14 @@ class MatchManagementResponse(BaseModel):
     clock_seconds: int = Field()
     clock_running: bool = Field()
     current_period: int = Field()
+
+    penalty_shootout_active: bool = Field(
+        default=False,
+        description=(
+            "UC015, Fluxo Alternativo 1: True enquanto a interface simplificada "
+            "de cobrança-a-cobrança de pênaltis está aberta para esta partida."
+        ),
+    )
 
     modality_configuration: Optional[MatchModalityConfigurationResponse] = Field(
         default=None

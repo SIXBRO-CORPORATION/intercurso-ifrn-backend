@@ -34,6 +34,9 @@ class Match(AbstractDomain):
     metadata_json: dict = field(default_factory=dict)
     team1_sets_won: int = None
     team2_sets_won: int = None
+    penalty_shootout_active: bool = False
+    team1_penalty_score: int = None
+    team2_penalty_score: int = None
 
     def current_clock_seconds(self, now: datetime = None) -> int:
         base = self.clock_seconds or 0

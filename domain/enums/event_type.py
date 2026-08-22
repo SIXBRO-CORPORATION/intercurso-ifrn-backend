@@ -12,3 +12,5 @@ class EventType(Enum):
     CARD_RED = "Cartão vermelho"
     EXPULSION = "Expulsão"
     SET_END = "Fim de set"
+    PENALTY_GOAL = "Pênalti convertido"
+    PENALTY_MISS = "Pênalti perdido"
