@@ -1,17 +1,24 @@
 from typing import Optional
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.users.update_user_by_admin_port import UpdateUserByAdminPort
 from core.context import Context
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.user_role import UserRole
 from domain.exceptions.business_exception import BusinessException
 from domain.user.user import User
 
 
 class UpdateUserByAdminAdapter(UpdateUserByAdminPort):
-    def __init__(self, user_repository: UserRepositoryPort):
+    def __init__(
+        self,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
+    ):
         self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> User:
         target_user_id = context.get_property("target_user_id", UUID)
@@ -58,4 +65,26 @@ class UpdateUserByAdminAdapter(UpdateUserByAdminPort):
         if active is not None:
             target_user.active = active
 
-        return await self.user_repository.save(target_user)
+        saved_user = await self.user_repository.save(target_user)
+
+        changed_fields = [
+            field_name
+            for field_name, value in (
+                ("nome", name),
+                ("e-mail", email),
+                ("papel", role.value if role else None),
+                ("atleta", atleta),
+                ("ativo", active),
+            )
+            if value is not None
+        ]
+        await self.audit_logger.log(
+            action=AuditAction.USER_UPDATED_BY_ADMIN,
+            description=(
+                f"Usuário '{saved_user.name}' atualizado "
+                f"({', '.join(changed_fields)})"
+            ),
+            actor_id=changed_by_user_id,
+        )
+
+        return saved_user

@@ -2,6 +2,7 @@ import secrets
 from datetime import datetime, timezone
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.team.create_team_port import CreateTeamPort
 from core.context import Context
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
@@ -12,6 +13,7 @@ from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.donation_status import DonationStatus
@@ -29,6 +31,7 @@ class CreateTeamAdapter(CreateTeamPort):
         season_repository: SeasonRepositoryPort,
         season_modality_repository: SeasonModalityRepositoryPort,
         modality_repository: ModalityRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
@@ -36,6 +39,7 @@ class CreateTeamAdapter(CreateTeamPort):
         self.season_repository = season_repository
         self.season_modality_repository = season_modality_repository
         self.modality_repository = modality_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Team:
         team = context.get_data(Team)
@@ -74,8 +78,13 @@ class CreateTeamAdapter(CreateTeamPort):
                 "Modalidade informada não faz parte da temporada ativa"
             )
 
-        already_in_modality = await self.team_repository.exists_by_user_season_and_modality(
-            creator_user_id, active_season.id, team.modality_id
+        existing_teams = await self.team_repository.find_teams_by_user_id(
+            creator_user_id
+        )
+        already_in_modality = any(
+            existing_team.season_id == active_season.id
+            and existing_team.modality_id == team.modality_id
+            for existing_team in existing_teams
         )
         if already_in_modality:
             raise BusinessException(
@@ -110,5 +119,15 @@ class CreateTeamAdapter(CreateTeamPort):
 
         context.put_property("owner_member", saved_owner_member)
         context.put_property("team_members", [saved_owner_member])
+
+        await self.audit_logger.log(
+            action=AuditAction.TEAM_CREATED,
+            description=(
+                f"Time '{saved_team.name}' criado na temporada "
+                f"'{active_season.name}'"
+            ),
+            actor_id=creator_user_id,
+            actor=creator_user,
+        )
 
         return saved_team

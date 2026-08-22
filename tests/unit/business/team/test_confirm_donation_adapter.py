@@ -17,8 +17,9 @@ def make_adapter():
     team_repository = AsyncMock()
     team_member_repository = AsyncMock()
     user_repository = AsyncMock()
+    audit_logger = AsyncMock()
     adapter = ConfirmDonationAdapter(
-        team_repository, team_member_repository, user_repository
+        team_repository, team_member_repository, user_repository, audit_logger
     )
     return adapter, team_repository, team_member_repository, user_repository
 
@@ -49,7 +50,7 @@ class TestConfirmDonationAdapter:
 
         team_repository.get.return_value = team
         user_repository.get.return_value = member_user
-        team_member_repository.find_by_team_and_user.return_value = member
+        team_member_repository.find_members_by_team_id.return_value = [member]
         team_member_repository.save.return_value = member
 
         result = await adapter.execute(make_context(team.id))
@@ -72,7 +73,7 @@ class TestConfirmDonationAdapter:
 
         team_repository.get.return_value = team
         user_repository.get.return_value = member_user
-        team_member_repository.find_by_team_and_user.return_value = member
+        team_member_repository.find_members_by_team_id.return_value = [member]
         team_member_repository.save.return_value = member
 
         result = await adapter.execute(make_context(team.id))
@@ -120,7 +121,7 @@ class TestConfirmDonationAdapter:
 
         team_repository.get.return_value = team
         user_repository.get.return_value = member_user
-        team_member_repository.find_by_team_and_user.return_value = None
+        team_member_repository.find_members_by_team_id.return_value = []
 
         with pytest.raises(BusinessException):
             await adapter.execute(make_context(team.id))
@@ -139,7 +140,7 @@ class TestConfirmDonationAdapter:
 
         team_repository.get.return_value = team
         user_repository.get.return_value = member_user
-        team_member_repository.find_by_team_and_user.return_value = member
+        team_member_repository.find_members_by_team_id.return_value = [member]
 
         with pytest.raises(BusinessException):
             await adapter.execute(make_context(team.id))

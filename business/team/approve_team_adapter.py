@@ -1,10 +1,12 @@
 from datetime import datetime
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.context import Context
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.team.team import Team
@@ -15,9 +17,11 @@ class ApproveTeamAdapter(ApproveTeamPort):
         self,
         team_repository: TeamRepositoryPort,
         team_member_repository: TeamMemberRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Team:
         team_id = context.get_property("team_id", UUID)
@@ -51,4 +55,12 @@ class ApproveTeamAdapter(ApproveTeamPort):
         team.approved_at = datetime.now()
         team.approved_by = approved_by_user_id
 
-        return await self.team_repository.save(team)
+        saved_team = await self.team_repository.save(team)
+
+        await self.audit_logger.log(
+            action=AuditAction.TEAM_APPROVED,
+            description=f"Time '{saved_team.name}' aprovado",
+            actor_id=approved_by_user_id,
+        )
+
+        return saved_team

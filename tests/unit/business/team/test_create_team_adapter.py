@@ -20,6 +20,7 @@ def make_adapter():
     season_repository = AsyncMock()
     season_modality_repository = AsyncMock()
     modality_repository = AsyncMock()
+    audit_logger = AsyncMock()
 
     adapter = CreateTeamAdapter(
         team_repository,
@@ -28,6 +29,7 @@ def make_adapter():
         season_repository,
         season_modality_repository,
         modality_repository,
+        audit_logger,
     )
     return (
         adapter,
@@ -80,7 +82,7 @@ class TestCreateTeamAdapter:
         season_repository.find_active_season.return_value = active_season
         modality_repository.exists_by_id.return_value = True
         season_modality_repository.exists_by_season_and_modality.return_value = True
-        team_repository.exists_by_user_season_and_modality.return_value = False
+        team_repository.find_teams_by_user_id.return_value = []
 
         saved_team = Team(
             id=uuid4(),
@@ -234,7 +236,12 @@ class TestCreateTeamAdapter:
         modality_repository.exists_by_id.return_value = True
         season_modality_repository.exists_by_season_and_modality.return_value = True
 
-        team_repository.exists_by_user_season_and_modality.return_value = True
+        existing_team = Team(
+            id=uuid4(),
+            season_id=active_season.id,
+            modality_id=team.modality_id,
+        )
+        team_repository.find_teams_by_user_id.return_value = [existing_team]
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
@@ -293,7 +300,7 @@ class TestCreateTeamAdapter:
         season_repository.find_active_season.return_value = active_season
         modality_repository.exists_by_id.return_value = True
         season_modality_repository.exists_by_season_and_modality.return_value = True
-        team_repository.exists_by_user_season_and_modality.return_value = False
+        team_repository.find_teams_by_user_id.return_value = []
         team_repository.save.return_value = Team(id=uuid4(), name=team.name)
 
         creator_user = User(id=creator_user_id, atleta=False)
@@ -322,7 +329,7 @@ class TestCreateTeamAdapter:
         season_repository.find_active_season.return_value = active_season
         modality_repository.exists_by_id.return_value = True
         season_modality_repository.exists_by_season_and_modality.return_value = True
-        team_repository.exists_by_user_season_and_modality.return_value = False
+        team_repository.find_teams_by_user_id.return_value = []
         team_repository.save.return_value = Team(id=uuid4(), name=team.name)
 
         user_repository.get.return_value = User(id=creator_user_id, atleta=True)
