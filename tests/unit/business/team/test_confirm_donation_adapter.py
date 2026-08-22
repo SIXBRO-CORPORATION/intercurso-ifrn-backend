@@ -17,10 +17,11 @@ def make_adapter():
     team_repository = AsyncMock()
     team_member_repository = AsyncMock()
     user_repository = AsyncMock()
+    audit_logger = AsyncMock()
     adapter = ConfirmDonationAdapter(
-        team_repository, team_member_repository, user_repository
+        team_repository, team_member_repository, user_repository, audit_logger
     )
-    return adapter, team_repository, team_member_repository, user_repository
+    return adapter, team_repository, team_member_repository, user_repository, audit_logger
 
 
 def make_context(team_id=None, target_user_id=None):
@@ -36,7 +37,7 @@ def make_context(team_id=None, target_user_id=None):
 @pytest.mark.unit
 class TestConfirmDonationAdapter:
     async def test_confirms_donation_for_submitted_team_member(self):
-        adapter, team_repository, team_member_repository, user_repository = (
+        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
@@ -59,7 +60,7 @@ class TestConfirmDonationAdapter:
         team_member_repository.save.assert_awaited_once()
 
     async def test_confirms_donation_for_approved_team_member(self):
-        adapter, team_repository, team_member_repository, user_repository = (
+        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.APPROVED)
@@ -80,7 +81,7 @@ class TestConfirmDonationAdapter:
         assert result.donation_status == DonationStatus.DONATION_CONFIRMED
 
     async def test_blocks_when_team_not_found(self):
-        adapter, team_repository, team_member_repository, user_repository = (
+        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
             make_adapter()
         )
         team_repository.get.return_value = None
@@ -89,7 +90,7 @@ class TestConfirmDonationAdapter:
             await adapter.execute(make_context())
 
     async def test_blocks_when_team_status_invalid(self):
-        adapter, team_repository, team_member_repository, user_repository = (
+        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.DRAFT)
@@ -101,7 +102,7 @@ class TestConfirmDonationAdapter:
         team_member_repository.save.assert_not_awaited()
 
     async def test_blocks_when_user_not_found(self):
-        adapter, team_repository, team_member_repository, user_repository = (
+        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
@@ -112,7 +113,7 @@ class TestConfirmDonationAdapter:
             await adapter.execute(make_context(team.id))
 
     async def test_blocks_when_user_is_not_a_team_member(self):
-        adapter, team_repository, team_member_repository, user_repository = (
+        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
@@ -126,7 +127,7 @@ class TestConfirmDonationAdapter:
             await adapter.execute(make_context(team.id))
 
     async def test_blocks_when_donation_already_confirmed(self):
-        adapter, team_repository, team_member_repository, user_repository = (
+        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
             make_adapter()
         )
         team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
@@ -147,7 +148,7 @@ class TestConfirmDonationAdapter:
         team_member_repository.save.assert_not_awaited()
 
     async def test_blocks_when_team_id_or_target_user_id_missing(self):
-        adapter, team_repository, team_member_repository, user_repository = (
+        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
             make_adapter()
         )
 

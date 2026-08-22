@@ -1,18 +1,28 @@
+from uuid import UUID
+
+from core.business.audit.audit_logger import AuditLogger
 from core.business.users.create_user_by_admin_port import CreateUserByAdminPort
 from core.context import Context
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.user_role import UserRole
 from domain.exceptions.business_exception import BusinessException
 from domain.user.user import User
 
 
 class CreateUserByAdminAdapter(CreateUserByAdminPort):
-    def __init__(self, user_repository: UserRepositoryPort):
+    def __init__(
+        self,
+        user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
+    ):
         self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> User:
         user = context.get_data(User)
         role = context.get_property("role", UserRole)
+        created_by_user_id = context.get_property("created_by_user_id", UUID)
 
         if user is None:
             raise BusinessException("Dados do usuário são obrigatórios")
@@ -51,4 +61,14 @@ class CreateUserByAdminAdapter(CreateUserByAdminPort):
             role=role,
         )
 
-        return await self.user_repository.save(new_user)
+        saved_user = await self.user_repository.save(new_user)
+
+        await self.audit_logger.log(
+            action=AuditAction.USER_CREATED_BY_ADMIN,
+            description=(
+                f"Usuário '{saved_user.name}' criado com papel {role.value}"
+            ),
+            actor_id=created_by_user_id,
+        )
+
+        return saved_user

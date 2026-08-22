@@ -1,11 +1,13 @@
 from datetime import datetime
 from uuid import UUID
 
+from core.business.audit.audit_logger import AuditLogger
 from core.business.team.confirm_donation_port import ConfirmDonationPort
 from core.context import Context
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.donation_status import DonationStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
@@ -18,10 +20,12 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
         team_repository: TeamRepositoryPort,
         team_member_repository: TeamMemberRepositoryPort,
         user_repository: UserRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
         self.user_repository = user_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> TeamMember:
         team_id = context.get_property("team_id", UUID)
@@ -47,6 +51,7 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
         member = await self.team_member_repository.find_by_team_and_user(
             team_id, member_user.id
         )
+
         if member is None:
             raise BusinessException("Esse usuário não é membro do time")
 
@@ -60,5 +65,13 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
         updated_member = await self.team_member_repository.save(member)
 
         context.put_property("member_user", member_user)
+
+        await self.audit_logger.log(
+            action=AuditAction.TEAM_DONATION_CONFIRMED,
+            description=(
+                f"Doação confirmada para '{member_user.name}' no time '{team.name}'"
+            ),
+            actor_id=confirmed_by_user_id,
+        )
 
         return updated_member
