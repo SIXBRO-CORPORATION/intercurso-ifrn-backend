@@ -5,14 +5,18 @@ from fastapi import Depends
 from business.season.close_registration_adapter import CloseRegistrationAdapter
 from business.season.create_season_adapter import CreateSeasonAdapter
 from business.season.finish_season_adapter import FinishSeasonAdapter
+from business.season.get_active_season_adapter import GetActiveSeasonAdapter
 from business.season.get_season_details_adapter import GetSeasonDetailsAdapter
+from business.season.list_seasons_adapter import ListSeasonsAdapter
 from business.season.manage_season_adapter import ManageSeasonAdapter
 from business.season.reopen_registration_adapter import ReopenRegistrationAdapter
 from core.business.audit.audit_logger import AuditLogger
 from core.business.season.close_registration_port import CloseRegistrationPort
 from core.business.season.create_season_port import CreateSeasonPort
 from core.business.season.finish_season_port import FinishSeasonPort
+from core.business.season.get_active_season_port import GetActiveSeasonPort
 from core.business.season.get_season_details_port import GetSeasonDetailsPort
+from core.business.season.list_seasons_port import ListSeasonsPort
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
@@ -104,3 +108,19 @@ def get_season_details_port(
     return GetSeasonDetailsAdapter(
         season_repository, season_modality_repository, team_repository
     )
+
+
+def get_list_seasons_port(
+    season_repository: Annotated[
+        SeasonRepositoryPort, Depends(get_season_repository)
+    ],
+) -> ListSeasonsPort:
+    return ListSeasonsAdapter(season_repository)
+
+
+def get_active_season_port(
+    season_repository: Annotated[
+        SeasonRepositoryPort, Depends(get_season_repository)
+    ],
+) -> GetActiveSeasonPort:
+    return GetActiveSeasonAdapter(season_repository)

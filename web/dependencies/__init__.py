@@ -36,8 +36,10 @@ from web.dependencies.business.team_dependencies import (
     get_create_team_port,
     get_approve_team_port,
     get_confirm_donation_team_port,
+    get_team_details_port,
     get_team_invite_info_port,
     get_join_team_via_invite_port,
+    get_list_teams_port,
     get_select_captain_port,
     get_remove_member_port,
     get_leave_team_port,
@@ -49,9 +51,11 @@ from web.dependencies.business.modality_dependencies import (
 )
 
 from web.dependencies.business.season_dependencies import (
+    get_active_season_port,
     get_create_season_port,
     get_manage_season_port,
     get_close_registration_port,
+    get_list_seasons_port,
     get_reopen_registration_port,
     get_season_details_port,
 )
@@ -132,8 +136,10 @@ __all__ = [
     "get_create_team_port",
     "get_approve_team_port",
     "get_confirm_donation_team_port",
+    "get_team_details_port",
     "get_team_invite_info_port",
     "get_join_team_via_invite_port",
+    "get_list_teams_port",
     "get_select_captain_port",
     "get_remove_member_port",
     "get_leave_team_port",
@@ -143,9 +149,11 @@ __all__ = [
     "get_create_modality_port",
 
     # Business Dependencies - Seasons
+    "get_active_season_port",
     "get_create_season_port",
     "get_manage_season_port",
     "get_close_registration_port",
+    "get_list_seasons_port",
     "get_reopen_registration_port",
     "get_season_details_port",
 
