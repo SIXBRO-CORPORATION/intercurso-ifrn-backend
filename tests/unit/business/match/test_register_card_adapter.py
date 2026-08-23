@@ -85,18 +85,7 @@ class TestRegisterCardAdapter:
             make_team_member(match.team1_id, player_id)
         )
 
-        previous_yellow = MatchEvent(
-            match_id=match.id,
-            team_id=match.team1_id,
-            player_id=player_id,
-            event_type=EventType.CARD_YELLOW,
-            clock_seconds=100,
-            metadata_json={},
-        )
-
-        mocks["match_event_repository"].find_by_match_and_type.return_value = [
-            previous_yellow
-        ]
+        mocks["match_event_repository"].count_by_match_player_and_type.return_value = 1
 
         context = make_context(
             match.id,
@@ -185,7 +174,6 @@ class TestRegisterCardAdapter:
 
         monitor_id = uuid4()
         player_id = uuid4()
-        another_player_id = uuid4()
 
         match = make_in_progress_match(monitor_id=monitor_id)
 
@@ -199,18 +187,7 @@ class TestRegisterCardAdapter:
             make_team_member(match.team1_id, player_id)
         )
 
-        previous_yellow = MatchEvent(
-            match_id=match.id,
-            team_id=match.team1_id,
-            player_id=another_player_id,
-            event_type=EventType.CARD_YELLOW,
-            clock_seconds=100,
-            metadata_json={},
-        )
-
-        mocks["match_event_repository"].find_by_match_and_type.return_value = [
-            previous_yellow
-        ]
+        mocks["match_event_repository"].count_by_match_player_and_type.return_value = 0
 
         context = make_context(
             match.id,
