@@ -11,6 +11,7 @@ from domain.enums.match_status import MatchStatus
 from domain.enums.match_type import MatchType
 from domain.match.match import Match
 from persistence.mappers.match.match_mapper import MatchMapper
+from persistence.model.bracket.bracket_entity import BracketEntity
 from persistence.model.match.match_entity import MatchEntity
 
 
@@ -195,6 +196,22 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         result = await self.session.execute(query)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
+
+    async def find_unfinished_by_season(self, season_id: UUID) -> List[Match]:
+        query = (
+            select(MatchEntity)
+            .join(BracketEntity, MatchEntity.bracket_id == BracketEntity.id)
+            .where(
+                BracketEntity.season_id == season_id,
+                BracketEntity.deleted_at.is_(None),
+                MatchEntity.status != MatchStatus.FINISHED.value,
+                MatchEntity.deleted_at.is_(None),
+            )
+            .order_by(MatchEntity.scheduled_date.asc())
+        )
+        result = await self.session.execute(query)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]
 
     async def find_tbd_matches_by_bracket(self, bracket_id: UUID) -> List[Match]:
         query = (

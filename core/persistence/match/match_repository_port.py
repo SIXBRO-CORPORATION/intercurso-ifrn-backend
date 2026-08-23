@@ -65,3 +65,7 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
         self, bracket_id: UUID, match_type: MatchType
     ) -> Optional[Match]:
         pass
+
+    @abstractmethod
+    async def find_unfinished_by_season(self, season_id: UUID) -> List[Match]:
+        pass

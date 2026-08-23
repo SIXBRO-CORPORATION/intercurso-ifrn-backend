@@ -15,6 +15,7 @@ from core.business.season.finish_season_port import FinishSeasonPort
 from core.business.season.get_season_details_port import GetSeasonDetailsPort
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
 from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
@@ -23,6 +24,7 @@ from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
+    get_match_repository,
     get_modality_repository,
     get_season_modality_repository,
     get_season_repository,
@@ -82,9 +84,12 @@ def get_finish_season_port(
         SeasonRepositoryPort, Depends(get_season_repository)
     ],
     team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> FinishSeasonPort:
-    return FinishSeasonAdapter(season_repository, team_repository, audit_logger)
+    return FinishSeasonAdapter(
+        season_repository, team_repository, match_repository, audit_logger
+    )
 
 
 def get_season_details_port(
