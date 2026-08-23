@@ -14,6 +14,8 @@ from core.business.match.finish_match_port import FinishMatchPort
 from core.business.match.start_penalty_shootout_port import StartPenaltyShootoutPort
 from core.business.match.register_penalty_kick_port import RegisterPenaltyKickPort
 from core.business.match.end_penalty_shootout_port import EndPenaltyShootoutPort
+from core.business.match.undo_last_event_port import UndoLastEventPort
+from core.business.match.delete_event_port import DeleteEventPort
 from core.persistence.bracket.bracket_group_team_repository_port import (
     BracketGroupTeamRepositoryPort,
 )
@@ -40,6 +42,8 @@ from business.match.finish_match_adapter import FinishMatchAdapter
 from business.match.start_penalty_shootout_adapter import StartPenaltyShootoutAdapter
 from business.match.register_penalty_kick_adapter import RegisterPenaltyKickAdapter
 from business.match.end_penalty_shootout_adapter import EndPenaltyShootoutAdapter
+from business.match.undo_last_event_adapter import UndoLastEventAdapter
+from business.match.delete_event_adapter import DeleteEventAdapter
 from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
 from web.dependencies.commons_dependencies import get_audit_logger
@@ -641,6 +645,90 @@ def get_end_penalty_shootout_port(
         match_repository,
         match_event_repository,
         bracket_group_team_repository,
+        team_repository,
+        team_member_repository,
+        user_repository,
+        bracket_repository,
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
+        audit_logger,
+    )
+
+
+def get_undo_last_event_port(
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    match_event_repository: Annotated[
+        MatchEventRepositoryPort, Depends(get_match_event_repository)
+    ],
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+    modality_configuration_repository: Annotated[
+        ModalityConfigurationRepositoryPort,
+        Depends(get_modality_configuration_repository),
+    ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> UndoLastEventPort:
+    return UndoLastEventAdapter(
+        match_repository,
+        match_event_repository,
+        team_repository,
+        team_member_repository,
+        user_repository,
+        bracket_repository,
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+        match_set_repository,
+        audit_logger,
+    )
+
+
+def get_delete_event_port(
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    match_event_repository: Annotated[
+        MatchEventRepositoryPort, Depends(get_match_event_repository)
+    ],
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+    modality_configuration_repository: Annotated[
+        ModalityConfigurationRepositoryPort,
+        Depends(get_modality_configuration_repository),
+    ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
+    match_set_repository: Annotated[
+        MatchSetRepositoryPort, Depends(get_match_set_repository)
+    ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> DeleteEventPort:
+    return DeleteEventAdapter(
+        match_repository,
+        match_event_repository,
         team_repository,
         team_member_repository,
         user_repository,

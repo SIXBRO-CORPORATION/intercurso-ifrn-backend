@@ -5,20 +5,24 @@ import pytest
 
 from business.season.finish_season_adapter import FinishSeasonAdapter
 from core.context import Context
+from domain.enums.match_status import MatchStatus
 from domain.enums.season_status import SeasonStatus
 from domain.enums.audit_action import AuditAction
 from domain.exceptions.business_exception import BusinessException
+from domain.match.match import Match
 from domain.season.season import Season
 
 
 def make_adapter():
     season_repository = AsyncMock()
     team_repository = AsyncMock()
+    match_repository = AsyncMock()
+    match_repository.find_unfinished_by_season.return_value = []
     audit_logger = AsyncMock()
     adapter = FinishSeasonAdapter(
-        season_repository, team_repository, audit_logger
+        season_repository, team_repository, match_repository, audit_logger
     )
-    return adapter, season_repository, team_repository, audit_logger
+    return adapter, season_repository, team_repository, match_repository, audit_logger
 
 
 def make_context(season_id=None, confirmation_name="Intercurso 2026"):
@@ -32,7 +36,7 @@ def make_context(season_id=None, confirmation_name="Intercurso 2026"):
 @pytest.mark.unit
 class TestFinishSeasonAdapter:
     async def test_finishes_in_progress_season_and_deactivates_invites(self):
-        adapter, season_repository, team_repository, audit_logger = (
+        adapter, season_repository, team_repository, match_repository, audit_logger = (
             make_adapter()
         )
         season = Season(
@@ -54,6 +58,10 @@ class TestFinishSeasonAdapter:
         assert result.active is False
         season_repository.save.assert_awaited_once()
 
+        match_repository.find_unfinished_by_season.assert_awaited_once_with(
+            season.id
+        )
+
         # Desativação de tokens é feita em lote, direto no banco.
         team_repository.deactivate_tokens_by_season.assert_awaited_once_with(
             season.id
@@ -63,6 +71,29 @@ class TestFinishSeasonAdapter:
             audit_logger.log.await_args.kwargs["action"]
             == AuditAction.SEASON_FINISHED
         )
+
+    async def test_blocks_when_there_are_unfinished_matches(self):
+        adapter, season_repository, team_repository, match_repository, audit_logger = (
+            make_adapter()
+        )
+        season = Season(
+            id=uuid4(),
+            name="Intercurso 2026",
+            status=SeasonStatus.IN_PROGRESS,
+            active=True,
+        )
+        season_repository.get.return_value = season
+        pending_match = Match(id=uuid4(), status=MatchStatus.SCHEDULED)
+        match_repository.find_unfinished_by_season.return_value = [pending_match]
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(
+                make_context(season.id, confirmation_name="Intercurso 2026")
+            )
+
+        season_repository.save.assert_not_awaited()
+        team_repository.deactivate_tokens_by_season.assert_not_awaited()
+        audit_logger.log.assert_not_awaited()
 
     async def test_blocks_when_confirmation_name_does_not_match(self):
         adapter, season_repository, team_repository, *_rest = make_adapter()

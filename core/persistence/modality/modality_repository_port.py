@@ -18,3 +18,7 @@ class ModalityRepositoryPort(BaseRepositoryPort[Modality]):
     @abstractmethod
     async def find_by_name(self, name: str) -> Optional[Modality]:
         pass
+
+    @abstractmethod
+    async def find_by_ids(self, modality_ids: List[UUID]) -> List[Modality]:
+        pass

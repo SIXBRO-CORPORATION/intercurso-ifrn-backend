@@ -14,3 +14,7 @@ class MatchSetRepositoryPort(BaseRepositoryPort[MatchSet]):
     @abstractmethod
     async def count_sets_won_by_team(self, match_id: UUID) -> dict:
         pass
+
+    @abstractmethod
+    async def soft_delete_set(self, match_set_id: UUID) -> bool:
+        pass

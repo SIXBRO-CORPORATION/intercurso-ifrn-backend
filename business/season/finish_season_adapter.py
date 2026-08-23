@@ -4,6 +4,7 @@ from uuid import UUID
 from core.business.audit.audit_logger import AuditLogger
 from core.business.season.finish_season_port import FinishSeasonPort
 from core.context import Context
+from core.persistence.match.match_repository_port import MatchRepositoryPort
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.audit_action import AuditAction
@@ -17,10 +18,12 @@ class FinishSeasonAdapter(FinishSeasonPort):
         self,
         season_repository: SeasonRepositoryPort,
         team_repository: TeamRepositoryPort,
+        match_repository: MatchRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.season_repository = season_repository
         self.team_repository = team_repository
+        self.match_repository = match_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Season:
@@ -48,6 +51,16 @@ class FinishSeasonAdapter(FinishSeasonPort):
         if confirmation_name != season.name:
             raise BusinessException(
                 "Nome de confirmação não corresponde ao nome da temporada"
+            )
+
+        unfinished_matches = await self.match_repository.find_unfinished_by_season(
+            season_id
+        )
+        if unfinished_matches:
+            unfinished_ids = ", ".join(str(match.id) for match in unfinished_matches)
+            raise BusinessException(
+                "Não é possível finalizar a temporada: existem jogos não "
+                f"finalizados. Jogos pendentes: {unfinished_ids}"
             )
 
         now = datetime.now()

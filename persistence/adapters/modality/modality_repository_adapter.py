@@ -64,3 +64,14 @@ class ModalityRepositoryAdapter(ModalityRepositoryPort):
         result = await self.session.execute(query)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
+
+    async def find_by_ids(self, modality_ids: List[UUID]) -> List[Modality]:
+        if not modality_ids:
+            return []
+        query = select(ModalityEntity).where(
+            ModalityEntity.id.in_(modality_ids),
+            ModalityEntity.deleted_at.is_(None)
+        )
+        result = await self.session.execute(query)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]
