@@ -84,9 +84,11 @@ class TestCreateSeasonAdapter:
             audit_logger,
         ) = make_adapter()
         modality_id = uuid4()
-        modality_repository.get.return_value = Modality(
-            id=modality_id, name="Futsal", min_members=5, max_members=10, active=True
-        )
+        modality_repository.find_by_ids.return_value = [
+            Modality(
+                id=modality_id, name="Futsal", min_members=5, max_members=10, active=True
+            )
+        ]
         season_repository.save.return_value = Season(
             id=uuid4(), name="Intercurso 2026", year=datetime.now(timezone.utc).year
         )
@@ -118,9 +120,11 @@ class TestCreateSeasonAdapter:
             audit_logger,
         ) = make_adapter()
         modality_id = uuid4()
-        modality_repository.get.return_value = Modality(
-            id=modality_id, name="Futsal", min_members=5, max_members=10, active=True
-        )
+        modality_repository.find_by_ids.return_value = [
+            Modality(
+                id=modality_id, name="Futsal", min_members=5, max_members=10, active=True
+            )
+        ]
         current_active = Season(id=uuid4(), name="Antiga", active=True)
         season_repository.find_active_season.return_value = current_active
         season_repository.save.return_value = Season(id=uuid4(), name="Nova")
@@ -183,7 +187,7 @@ class TestCreateSeasonAdapter:
 
     async def test_blocks_nonexistent_modality(self):
         adapter, _, _, modality_repository, *_rest = make_adapter()
-        modality_repository.get.return_value = None
+        modality_repository.find_by_ids.return_value = []
 
         context = make_context()
 
@@ -192,11 +196,12 @@ class TestCreateSeasonAdapter:
 
     async def test_blocks_inactive_modality(self):
         adapter, _, _, modality_repository, *_rest = make_adapter()
-        modality_repository.get.return_value = Modality(
-            id=uuid4(), name="Futsal", active=False
-        )
+        modality_id = uuid4()
+        modality_repository.find_by_ids.return_value = [
+            Modality(id=modality_id, name="Futsal", active=False)
+        ]
 
-        context = make_context()
+        context = make_context(modality_ids=[modality_id])
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)

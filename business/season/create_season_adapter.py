@@ -77,8 +77,11 @@ class CreateSeasonAdapter(CreateSeasonPort):
                 "Data de encerramento deve ser maior que a data de abertura"
             )
 
+        found_modalities = await self.modality_repository.find_by_ids(modality_ids)
+        modalities_by_id = {modality.id: modality for modality in found_modalities}
+
         for modality_id in modality_ids:
-            modality = await self.modality_repository.get(modality_id)
+            modality = modalities_by_id.get(modality_id)
             if modality is None:
                 raise BusinessException(
                     f"Modalidade {modality_id} não encontrada"

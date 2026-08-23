@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import List, Tuple
 from uuid import UUID
 
+from business.match._shared import load_players
 from core.business.audit.audit_logger import AuditLogger
 from core.business.match.start_match_port import StartMatchPort
 from core.context import Context
@@ -26,8 +26,6 @@ from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.match.match import Match
 from domain.match.match_event import MatchEvent
-from domain.team.team_member import TeamMember
-from domain.user.user import User
 
 
 class StartMatchAdapter(StartMatchPort):
@@ -149,8 +147,12 @@ class StartMatchAdapter(StartMatchPort):
         )
         saved_event = await self.match_event_repository.save(match_start_event)
 
-        team1_players = await self._load_players(team1.id)
-        team2_players = await self._load_players(team2.id)
+        team1_players = await load_players(
+            self.team_member_repository, self.user_repository, team1.id
+        )
+        team2_players = await load_players(
+            self.team_member_repository, self.user_repository, team2.id
+        )
 
         context.put_property("team1", team1)
         context.put_property("team2", team2)
@@ -163,12 +165,3 @@ class StartMatchAdapter(StartMatchPort):
         context.put_property("match_start_event", saved_event)
 
         return saved_match
-
-    async def _load_players(self, team_id: UUID) -> List[Tuple[TeamMember, User]]:
-        members = await self.team_member_repository.find_members_by_team_id(team_id)
-        players: List[Tuple[TeamMember, User]] = []
-        for member in members:
-            user = await self.user_repository.get(member.user_id)
-            if user is not None:
-                players.append((member, user))
-        return players
