@@ -5,8 +5,10 @@ from core.business.audit.audit_logger import AuditLogger
 from core.business.team.create_team_port import CreateTeamPort
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.business.team.confirm_donation_port import ConfirmDonationPort
+from core.business.team.get_team_details_port import GetTeamDetailsPort
 from core.business.team.get_team_invite_info_port import GetTeamInviteInfoPort
 from core.business.team.join_team_via_invite_port import JoinTeamViaInvitePort
+from core.business.team.list_teams_port import ListTeamsPort
 from core.business.team.select_captain_port import SelectCaptainPort
 from core.business.team.remove_member_port import RemoveMemberPort
 from core.business.team.leave_team_port import LeaveTeamPort
@@ -22,8 +24,10 @@ from core.persistence.modality.modality_repository_port import ModalityRepositor
 from business.team.create_team_adapter import CreateTeamAdapter
 from business.team.approve_team_adapter import ApproveTeamAdapter
 from business.team.confirm_donation_adapter import ConfirmDonationAdapter
+from business.team.get_team_details_adapter import GetTeamDetailsAdapter
 from business.team.get_team_invite_info_adapter import GetTeamInviteInfoAdapter
 from business.team.join_team_via_invite_adapter import JoinTeamViaInviteAdapter
+from business.team.list_teams_adapter import ListTeamsAdapter
 from business.team.select_captain_adapter import SelectCaptainAdapter
 from business.team.remove_member_adapter import RemoveMemberAdapter
 from business.team.leave_team_adapter import LeaveTeamAdapter
@@ -188,4 +192,40 @@ def get_submit_team_port(
         modality_repository,
         user_repository,
         audit_logger,
+    )
+
+
+def get_list_teams_port(
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+) -> ListTeamsPort:
+    return ListTeamsAdapter(
+        team_repository,
+        team_member_repository,
+        user_repository,
+        modality_repository,
+    )
+
+
+def get_team_details_port(
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+) -> GetTeamDetailsPort:
+    return GetTeamDetailsAdapter(
+        team_repository,
+        team_member_repository,
+        user_repository,
+        modality_repository,
     )

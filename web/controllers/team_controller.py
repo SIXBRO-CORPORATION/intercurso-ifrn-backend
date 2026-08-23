@@ -1,19 +1,22 @@
-from typing import Annotated
+from typing import Annotated, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 from fastapi.params import Depends
 
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.business.team.confirm_donation_port import ConfirmDonationPort
 from core.business.team.create_team_port import CreateTeamPort
+from core.business.team.get_team_details_port import GetTeamDetailsPort
 from core.business.team.get_team_invite_info_port import GetTeamInviteInfoPort
 from core.business.team.join_team_via_invite_port import JoinTeamViaInvitePort
 from core.business.team.leave_team_port import LeaveTeamPort
+from core.business.team.list_teams_port import ListTeamsPort
 from core.business.team.remove_member_port import RemoveMemberPort
 from core.business.team.select_captain_port import SelectCaptainPort
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.context import Context
+from domain.enums.team_status import TeamStatus
 from domain.modality.modality import Modality
 from domain.team.team import Team
 from domain.team.team_member import TeamMember
@@ -21,17 +24,21 @@ from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.mappers.team_model_mapper import TeamModelMapper
 from web.models.request.team.team_register_request import TeamRegisterRequest
+from web.models.response.team.team_details_response import TeamDetailsResponse
 from web.models.response.team.team_invite_preview_response import (
     TeamInvitePreviewResponse,
 )
 from web.models.response.team.team_join_response import TeamJoinResponse
 from web.models.response.team.team_register_response import TeamRegisterResponse
+from web.models.response.team.team_summary_response import TeamSummaryResponse
 from web.dependencies import (
     get_create_team_port,
     get_approve_team_port,
     get_confirm_donation_team_port,
+    get_team_details_port,
     get_team_invite_info_port,
     get_join_team_via_invite_port,
+    get_list_teams_port,
     get_select_captain_port,
     get_remove_member_port,
     get_leave_team_port,
@@ -70,6 +77,68 @@ async def create_team(
     response_data = mapper.to_register_response(saved_team, owner_member, current_user)
 
     return ApiResponse(data=response_data, message="Time cadastrado com sucesso!")
+
+
+@router.get(
+    "/",
+    response_model=ApiResponse[List[TeamSummaryResponse]],
+    status_code=status.HTTP_200_OK,
+)
+async def list_teams(
+    list_teams_port: Annotated[ListTeamsPort, Depends(get_list_teams_port)],
+    mapper: Annotated[TeamModelMapper, Depends(get_team_model_mapper)],
+    current_user: User = Depends(require_authenticated_user),
+    status_filter: Optional[TeamStatus] = Query(default=None, alias="status"),
+    season_id: Optional[UUID] = Query(default=None),
+):
+    context = Context()
+    context.put_property("requesting_user_id", current_user.id)
+    context.put_property("requesting_user_role", current_user.role)
+    if status_filter is not None:
+        context.put_property("status", status_filter)
+    if season_id is not None:
+        context.put_property("season_id", season_id)
+
+    teams = await list_teams_port.execute(context)
+    team_extra_info = context.get_property("team_extra_info", dict) or {}
+
+    response_data = [
+        mapper.to_summary_response(team, team_extra_info.get(team.id, {}))
+        for team in teams
+    ]
+
+    return ApiResponse(data=response_data)
+
+
+@router.get(
+    "/{team_id}",
+    response_model=ApiResponse[TeamDetailsResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def get_team_details(
+    team_id: UUID,
+    team_details_port: Annotated[GetTeamDetailsPort, Depends(get_team_details_port)],
+    mapper: Annotated[TeamModelMapper, Depends(get_team_model_mapper)],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("requesting_user_id", current_user.id)
+    context.put_property("requesting_user_role", current_user.role)
+
+    team = await team_details_port.execute(context)
+
+    modality = context.get_property("modality", Modality)
+    members = context.get_property("members", list) or []
+    member_users_by_id = context.get_property("member_users_by_id", dict) or {}
+    owner_user = context.get_property("owner_user", User)
+    captain_user = context.get_property("captain_user", User)
+
+    response_data = mapper.to_details_response(
+        team, modality, members, member_users_by_id, owner_user, captain_user
+    )
+
+    return ApiResponse(data=response_data)
 
 
 @router.patch(

@@ -1,24 +1,29 @@
-from typing import Annotated
+from typing import Annotated, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 from fastapi.params import Depends
 
 from core.business.season.close_registration_port import CloseRegistrationPort
 from core.business.season.create_season_port import CreateSeasonPort
 from core.business.season.finish_season_port import FinishSeasonPort
+from core.business.season.get_active_season_port import GetActiveSeasonPort
 from core.business.season.get_season_details_port import GetSeasonDetailsPort
+from core.business.season.list_seasons_port import ListSeasonsPort
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
 from core.context import Context
+from domain.enums.season_status import SeasonStatus
 from domain.season.season import Season
 from domain.user.user import User
 from web.commons.api_response import ApiResponse
-from web.dependencies import require_monitor
+from web.dependencies import require_authenticated_user, require_monitor
 from web.dependencies.business.season_dependencies import (
+    get_active_season_port,
     get_close_registration_port,
     get_create_season_port,
     get_finish_season_port,
+    get_list_seasons_port,
     get_manage_season_port,
     get_reopen_registration_port,
     get_season_details_port,
@@ -32,6 +37,7 @@ from web.models.request.season.season_reopen_request import SeasonReopenRequest
 from web.models.response.season.season_create_response import SeasonCreateResponse
 from web.models.response.season.season_details_response import SeasonDetailsResponse
 from web.models.response.season.season_status_response import SeasonStatusResponse
+from web.models.response.season.season_summary_response import SeasonSummaryResponse
 
 router = APIRouter(prefix="/api/season", tags=["season"])
 
@@ -66,6 +72,52 @@ async def create_season(
     response_data = mapper.to_create_response(saved_season, season_modalities)
 
     return ApiResponse(data=response_data, message="Temporada criada com sucesso!")
+
+
+@router.get(
+    "/",
+    response_model=ApiResponse[List[SeasonSummaryResponse]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_monitor)],
+)
+async def list_seasons(
+    list_seasons_port: Annotated[ListSeasonsPort, Depends(get_list_seasons_port)],
+    mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
+    status_filter: Optional[SeasonStatus] = Query(default=None, alias="status"),
+    year: Optional[int] = Query(default=None),
+):
+    context = Context()
+    if status_filter is not None:
+        context.put_property("status", status_filter)
+    if year is not None:
+        context.put_property("year", year)
+
+    seasons = await list_seasons_port.execute(context)
+
+    response_data = [mapper.to_summary_response(season) for season in seasons]
+
+    return ApiResponse(data=response_data)
+
+
+@router.get(
+    "/active",
+    response_model=ApiResponse[SeasonSummaryResponse],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_authenticated_user)],
+)
+async def get_active_season(
+    active_season_port: Annotated[
+        GetActiveSeasonPort, Depends(get_active_season_port)
+    ],
+    mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
+):
+    context = Context()
+
+    season = await active_season_port.execute(context)
+
+    response_data = mapper.to_summary_response(season)
+
+    return ApiResponse(data=response_data)
 
 
 @router.get(

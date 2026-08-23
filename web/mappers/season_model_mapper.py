@@ -5,6 +5,7 @@ from domain.season.season_modality import SeasonModality
 from web.models.response.season.season_create_response import SeasonCreateResponse
 from web.models.response.season.season_details_response import SeasonDetailsResponse
 from web.models.response.season.season_status_response import SeasonStatusResponse
+from web.models.response.season.season_summary_response import SeasonSummaryResponse
 
 
 class SeasonModelMapper:
@@ -23,6 +24,17 @@ class SeasonModelMapper:
                 season_modality.modality_id for season_modality in season_modalities
             ],
             message="Temporada criada com sucesso!",
+        )
+
+    def to_summary_response(self, season: Season) -> SeasonSummaryResponse:
+        return SeasonSummaryResponse(
+            season_id=season.id,
+            name=season.name,
+            year=season.year,
+            status=season.status.value,
+            active=season.active,
+            registration_start_date=season.registration_start_date,
+            registration_end_date=season.registration_end_date,
         )
 
     def to_status_response(self, season: Season, message: str) -> SeasonStatusResponse:
