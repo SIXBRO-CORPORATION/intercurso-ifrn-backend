@@ -8,6 +8,7 @@ from business.match._shared import (
     validate_player_in_team,
     validate_team_in_match,
 )
+from core.business.audit.audit_logger import AuditLogger
 from core.business.match.register_card_port import RegisterCardPort
 from core.context import Context
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
@@ -23,6 +24,7 @@ from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.card_type import CardType
 from domain.enums.event_type import EventType
 from domain.exceptions.business_exception import BusinessException
@@ -43,6 +45,7 @@ class RegisterCardAdapter(RegisterCardPort):
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
         volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
         match_set_repository: MatchSetRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -56,6 +59,7 @@ class RegisterCardAdapter(RegisterCardPort):
             volleyball_modality_configuration_repository
         )
         self.match_set_repository = match_set_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -84,8 +88,11 @@ class RegisterCardAdapter(RegisterCardPort):
 
         if card_type == CardType.YELLOW:
 
-            previous_yellow_count = await self.match_event_repository.count_by_match_player_and_type(
-                match_id, player_id, EventType.CARD_YELLOW
+            previous_yellows = await self.match_event_repository.find_by_match_and_type(
+                match_id, EventType.CARD_YELLOW
+            )
+            previous_yellow_count = sum(
+                1 for event in previous_yellows if event.player_id == player_id
             )
             card_event_type = EventType.CARD_YELLOW
             if previous_yellow_count >= 1:
@@ -117,6 +124,17 @@ class RegisterCardAdapter(RegisterCardPort):
                 },
             )
             await self.match_event_repository.save(expulsion_event)
+
+        card_label = "amarelo" if card_type == CardType.YELLOW else "vermelho"
+        await self.audit_logger.log(
+            action=AuditAction.MATCH_CARD_REGISTERED,
+            description=(
+                f"Cartão {card_label} aplicado ao jogador {player_id} "
+                f"na partida {match_id}"
+                + (f" (expulsão: {expulsion_reason})" if expulsion_reason else "")
+            ),
+            actor_id=monitor_id,
+        )
 
         await load_management_context(
             context,

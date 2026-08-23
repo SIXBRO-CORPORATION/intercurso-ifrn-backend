@@ -9,6 +9,7 @@ from business.match._shared import (
     validate_player_in_team,
     validate_team_in_match,
 )
+from core.business.audit.audit_logger import AuditLogger
 from core.business.match.register_goal_port import RegisterGoalPort
 from core.context import Context
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
@@ -24,6 +25,7 @@ from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.event_type import EventType
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
@@ -44,6 +46,7 @@ class RegisterGoalAdapter(RegisterGoalPort):
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
         volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
         match_set_repository: MatchSetRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -57,6 +60,7 @@ class RegisterGoalAdapter(RegisterGoalPort):
             volleyball_modality_configuration_repository
         )
         self.match_set_repository = match_set_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -103,6 +107,15 @@ class RegisterGoalAdapter(RegisterGoalPort):
             clock_seconds=clock_seconds,
         )
         await self.match_event_repository.save(goal_event)
+
+        label = "Ponto" if event_type == EventType.POINT else "Gol"
+        await self.audit_logger.log(
+            action=AuditAction.MATCH_GOAL_REGISTERED,
+            description=(
+                f"{label} registrado para o time {team_id} na partida {match_id}"
+            ),
+            actor_id=monitor_id,
+        )
 
         await load_management_context(
             context,

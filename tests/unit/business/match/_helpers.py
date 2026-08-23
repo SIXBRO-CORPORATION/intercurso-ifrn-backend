@@ -20,13 +20,14 @@ def make_mocks():
         "modality_configuration_repository": AsyncMock(),
         "volleyball_modality_configuration_repository": AsyncMock(),
         "match_set_repository": AsyncMock(),
+        "audit_logger": AsyncMock(),
     }
 
     mocks["match_repository"].lock_for_update.side_effect = (
         lambda match_id: mocks["match_repository"].get.return_value
     )
+
     mocks["match_event_repository"].exists_by_match_player_and_type.return_value = False
-    mocks["match_event_repository"].count_by_match_player_and_type.return_value = 0
 
     return mocks
 
@@ -43,6 +44,7 @@ def make_adapter(adapter_cls, mocks: dict):
         mocks["modality_configuration_repository"],
         mocks["volleyball_modality_configuration_repository"],
         mocks["match_set_repository"],
+        mocks["audit_logger"],
     )
 
 

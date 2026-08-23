@@ -8,6 +8,7 @@ from domain.enums.card_type import CardType
 from domain.enums.event_type import EventType
 from domain.enums.team_member_role import TeamMemberRole
 from domain.exceptions.business_exception import BusinessException
+from domain.match.match_event import MatchEvent
 from domain.team.team_member import TeamMember
 
 from tests.unit.business.match._helpers import (
@@ -73,17 +74,36 @@ class TestRegisterCardAdapter:
         monitor_id = uuid4()
         player_id = uuid4()
         match = make_in_progress_match(monitor_id=monitor_id)
+
         mocks["match_repository"].get.return_value = match
+
         mocks["team_member_repository"].find_members_by_team_id.return_value = [
             make_team_member(match.team1_id, player_id)
         ]
+
         mocks["team_member_repository"].find_by_team_and_user.return_value = (
             make_team_member(match.team1_id, player_id)
         )
-        mocks["match_event_repository"].count_by_match_player_and_type.return_value = 1
+
+        previous_yellow = MatchEvent(
+            match_id=match.id,
+            team_id=match.team1_id,
+            player_id=player_id,
+            event_type=EventType.CARD_YELLOW,
+            clock_seconds=100,
+            metadata_json={},
+        )
+
+        mocks["match_event_repository"].find_by_match_and_type.return_value = [
+            previous_yellow
+        ]
 
         context = make_context(
-            match.id, monitor_id, match.team1_id, player_id, CardType.YELLOW
+            match.id,
+            monitor_id,
+            match.team1_id,
+            player_id,
+            CardType.YELLOW,
         )
 
         await adapter.execute(context)
@@ -92,10 +112,14 @@ class TestRegisterCardAdapter:
             call.args[0]
             for call in mocks["match_event_repository"].save.call_args_list
         ]
+
         assert len(saved_events) == 2
+
         assert saved_events[0].event_type == EventType.CARD_YELLOW
+
         assert saved_events[1].event_type == EventType.EXPULSION
         assert saved_events[1].metadata_json["auto_generated"] is True
+        assert saved_events[1].metadata_json["triggered_by"] == "second_yellow"
 
     @pytest.mark.asyncio
     async def test_direct_red_card_triggers_immediate_expulsion(self):
@@ -152,3 +176,56 @@ class TestRegisterCardAdapter:
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
+
+    @pytest.mark.asyncio
+    async def test_yellow_card_from_another_player_does_not_trigger_expulsion(self):
+        mocks = make_mocks()
+        adapter = make_adapter(RegisterCardAdapter, mocks)
+        stub_empty_management_context(mocks)
+
+        monitor_id = uuid4()
+        player_id = uuid4()
+        another_player_id = uuid4()
+
+        match = make_in_progress_match(monitor_id=monitor_id)
+
+        mocks["match_repository"].get.return_value = match
+
+        mocks["team_member_repository"].find_members_by_team_id.return_value = [
+            make_team_member(match.team1_id, player_id)
+        ]
+
+        mocks["team_member_repository"].find_by_team_and_user.return_value = (
+            make_team_member(match.team1_id, player_id)
+        )
+
+        previous_yellow = MatchEvent(
+            match_id=match.id,
+            team_id=match.team1_id,
+            player_id=another_player_id,
+            event_type=EventType.CARD_YELLOW,
+            clock_seconds=100,
+            metadata_json={},
+        )
+
+        mocks["match_event_repository"].find_by_match_and_type.return_value = [
+            previous_yellow
+        ]
+
+        context = make_context(
+            match.id,
+            monitor_id,
+            match.team1_id,
+            player_id,
+            CardType.YELLOW,
+        )
+
+        await adapter.execute(context)
+
+        saved_events = [
+            call.args[0]
+            for call in mocks["match_event_repository"].save.call_args_list
+        ]
+
+        assert len(saved_events) == 1
+        assert saved_events[0].event_type == EventType.CARD_YELLOW
