@@ -7,6 +7,7 @@ from business.match._shared import (
     load_volleyball_configuration,
     validate_match_in_progress,
 )
+from core.business.audit.audit_logger import AuditLogger
 from core.business.match.end_set_port import EndSetPort
 from core.context import Context
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
@@ -22,6 +23,7 @@ from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
+from domain.enums.audit_action import AuditAction
 from domain.enums.event_type import EventType
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
@@ -43,6 +45,7 @@ class EndSetAdapter(EndSetPort):
         modality_configuration_repository: ModalityConfigurationRepositoryPort,
         volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
         match_set_repository: MatchSetRepositoryPort,
+        audit_logger: AuditLogger,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -56,6 +59,7 @@ class EndSetAdapter(EndSetPort):
             volleyball_modality_configuration_repository
         )
         self.match_set_repository = match_set_repository
+        self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -159,6 +163,15 @@ class EndSetAdapter(EndSetPort):
             },
         )
         await self.match_event_repository.save(set_end_event)
+
+        await self.audit_logger.log(
+            action=AuditAction.MATCH_SET_ENDED,
+            description=(
+                f"Set {current_set_number} encerrado na partida {match_id} "
+                f"({team1_points}x{team2_points}, vencedor: {winner_team_id})"
+            ),
+            actor_id=monitor_id,
+        )
 
         context.put_property(
             "match_point_reached", winner_sets_won >= sets_to_win
