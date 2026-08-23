@@ -154,3 +154,20 @@ class MatchManagementResponse(BaseModel):
             "para vencer a partida (sugestão para UC015)"
         ),
     )
+    reactivated_player_id: Optional[UUID] = Field(
+        default=None,
+        description=(
+            "UC017, RN20-23: preenchido quando a correção reverteu uma "
+            "expulsão (deletar EXPULSION, 2º CARD_YELLOW ou CARD_RED direto) "
+            "— o jogador voltou a ficar ativo e pode marcar pontos novamente."
+        ),
+    )
+    correction_alert: Optional[Any] = Field(
+        default=None,
+        description=(
+            "UC017, RN29-35 e Fluxo Alternativo 7: preenchido apenas quando "
+            "uma correção muda o placar de uma partida já FINISHED. "
+            "winner_id NÃO é alterado automaticamente — o monitor deve "
+            "verificar o chaveamento manualmente (UC012)."
+        ),
+    )

@@ -1,7 +1,8 @@
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.match.match_set_repository_port import MatchSetRepositoryPort
@@ -61,3 +62,16 @@ class MatchSetRepositoryAdapter(MatchSetRepositoryPort):
         )
         result = await self.session.execute(query)
         return {winner_team_id: count for winner_team_id, count in result.all()}
+
+    async def soft_delete_set(self, match_set_id: UUID) -> bool:
+        query = (
+            update(MatchSetEntity)
+            .where(
+                MatchSetEntity.id == match_set_id,
+                MatchSetEntity.deleted_at.is_(None),
+            )
+            .values(deleted_at=datetime.now(), modified_at=datetime.now())
+        )
+        result = await self.session.execute(query)
+        await self.session.flush()
+        return result.rowcount > 0

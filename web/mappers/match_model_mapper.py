@@ -1,4 +1,5 @@
 from typing import List, Optional, Tuple
+from uuid import UUID
 
 from domain.match.match import Match
 from domain.match.match_event import MatchEvent
@@ -127,6 +128,8 @@ class MatchModelMapper:
         volleyball_configuration: Optional[VolleyballModalityConfiguration] = None,
         match_sets: Optional[List[MatchSet]] = None,
         match_point_reached: Optional[bool] = None,
+        reactivated_player_id: Optional[UUID] = None,
+        correction_alert: Optional[dict] = None,
     ) -> MatchManagementResponse:
         match_sets = match_sets or []
 
@@ -163,4 +166,6 @@ class MatchModelMapper:
             sets=self._to_sets_response(match_sets),
             metadata=match.metadata_json,
             match_point_reached=match_point_reached,
+            reactivated_player_id=reactivated_player_id,
+            correction_alert=correction_alert,
         )

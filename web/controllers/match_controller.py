@@ -16,6 +16,8 @@ from core.business.match.finish_match_port import FinishMatchPort
 from core.business.match.start_penalty_shootout_port import StartPenaltyShootoutPort
 from core.business.match.register_penalty_kick_port import RegisterPenaltyKickPort
 from core.business.match.end_penalty_shootout_port import EndPenaltyShootoutPort
+from core.business.match.undo_last_event_port import UndoLastEventPort
+from core.business.match.delete_event_port import DeleteEventPort
 from core.context import Context
 from domain.match.match_set import MatchSet
 from domain.modality.modality import Modality
@@ -41,6 +43,8 @@ from web.dependencies import (
     get_start_match_port,
     get_start_period_port,
     get_start_penalty_shootout_port,
+    get_undo_last_event_port,
+    get_delete_event_port,
     require_monitor,
 )
 from web.mappers.match_model_mapper import MatchModelMapper
@@ -52,12 +56,14 @@ from web.models.response.match.match_management_response import MatchManagementR
 router = APIRouter(prefix="/api/match", tags=["match"])
 
 # TODO (débito técnico Fase 5): endpoints de consulta (GET de partida por id,
-# GET de partidas por temporada/time) e o UC017 (Corrigir Evento) ficam para
-# as próximas rodadas desta fase, conforme o planejamento em docs/ai/planejamento.md.
+# GET de partidas por temporada/time) ficam para as próximas rodadas desta
+# fase, conforme o planejamento em docs/ai/planejamento.md. O UC017
+# (Corrigir Evento) já está implementado (/event/undo e /event/{event_id}).
 # UC016 (WebSocket) e Push Notifications também são débito técnico (Fase 6):
-# nenhum evento abaixo (incluindo /finish e /penalty-shootout/* do UC015)
-# dispara notificação em tempo real ainda — RN7 e os critérios de aceitação
-# correspondentes do UC015 seguem pendentes até a Fase 6.
+# nenhum evento abaixo (incluindo /finish, /penalty-shootout/* do UC015 e
+# /event/undo, /event/{event_id} do UC017) dispara notificação em tempo real
+# ainda — RN7 e os critérios de aceitação correspondentes seguem pendentes
+# até a Fase 6 (decisão 4.4 do handoff do UC017).
 
 
 def _build_response(
@@ -82,6 +88,8 @@ def _build_response(
     )
     match_sets: List[MatchSet] = context.get_property("match_sets", list) or []
     match_point_reached = context.get("match_point_reached")
+    reactivated_player_id = context.get_property("reactivated_player_id", UUID)
+    correction_alert = context.get("correction_alert")
 
     response_data = mapper.to_management_response(
         match,
@@ -95,6 +103,8 @@ def _build_response(
         volleyball_configuration=volleyball_configuration,
         match_sets=match_sets,
         match_point_reached=match_point_reached,
+        reactivated_player_id=reactivated_player_id,
+        correction_alert=correction_alert,
     )
 
     return ApiResponse(data=response_data, message=default_message)
@@ -366,3 +376,54 @@ async def end_penalty_shootout(
     return _build_response(
         context, mapper, match, "Disputa de pênaltis encerrada. Partida finalizada!"
     )
+
+
+@router.post(
+    "/{match_id}/event/undo",
+    response_model=ApiResponse[MatchManagementResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def undo_last_event(
+    match_id: UUID,
+    undo_last_event_port: Annotated[
+        UndoLastEventPort, Depends(get_undo_last_event_port)
+    ],
+    mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    """UC017, Fluxo Principal: desfaz o último evento corrigível da partida
+    (RN18: MATCH_STARTED/MATCH_END/PERIOD_START/PERIOD_END nunca são
+    corrigíveis, então são ignorados na busca — decisão 4.1 do handoff)."""
+    context = Context()
+    context.put_property("match_id", match_id)
+    context.put_property("monitor_id", current_user.id)
+
+    match = await undo_last_event_port.execute(context)
+
+    return _build_response(context, mapper, match, "Último evento desfeito com sucesso!")
+
+
+@router.delete(
+    "/{match_id}/event/{event_id}",
+    response_model=ApiResponse[MatchManagementResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def delete_event(
+    match_id: UUID,
+    event_id: UUID,
+    delete_event_port: Annotated[DeleteEventPort, Depends(get_delete_event_port)],
+    mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    """UC017, Fluxo Alternativo 1: deleta um evento específico da timeline,
+    identificado por `event_id` (ao contrário de /event/undo, que localiza o
+    alvo sozinho). Compartilha toda a regra de negócio de correção com
+    `undo_last_event` via `business/match/_correction_shared.py`."""
+    context = Context()
+    context.put_property("match_id", match_id)
+    context.put_property("monitor_id", current_user.id)
+    context.put_property("event_id", event_id)
+
+    match = await delete_event_port.execute(context)
+
+    return _build_response(context, mapper, match, "Evento deletado com sucesso!")
