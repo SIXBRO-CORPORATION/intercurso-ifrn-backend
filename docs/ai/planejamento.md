@@ -162,7 +162,7 @@ UC005/009/010 já concluídos nas Fases 0/1. Nesta fase:
 
 ### Fase 6 — Tempo real (UC016)
 - Hoje não há nenhuma infraestrutura de tempo real implementada, mas a decisão de transporte já foi tomada no [ADR 0003](../adr/ADR003_EnvioDeEventos.md) (ainda em `Status: Proposta`): **SSE** em vez de WebSocket, com reconciliação por `GET` de estado completo a cada reconexão. Falta implementar:
-  - Os dois canais SSE previstos pelo ADR: `GET /api/seasons/{season_id}/live` e `GET /api/matches/{match_id}/live` (`StreamingResponse`/`sse-starlette`), com broadcaster em memória (fila por conexão) na primeira versão.
+  - Os dois canais SSE previstos pelo ADR: `GET /api/season/{season_id}/live` e `GET /api/match/{match_id}/live` (`StreamingResponse`, com broadcaster em memória por conexão) na primeira versão.
   - Publicação nas filas a partir dos adapters da Fase 5 — hoje nenhum dos adapters do UC013/UC014 publica em canal algum; será necessário instrumentá-los (`score_update`, `goal_scored`/`point_scored`, `card_issued`, `player_expelled`, `clock_update`, `period_ended`/`period_started`, `set_finished` etc.).
   - Push Notifications (mencionadas nos documentos) — definir provedor (FCM/APNs) e camada de integração (`core/notifications/`, ainda inexistente).
 - Esta fase depende funcionalmente da Fase 5 estar concluída (os eventos precisam existir antes de serem transmitidos) — **Fase 5 concluída**: UC013/UC014/UC015/UC017 já geram todos os eventos do Bloco de Dados 4 do UC016 (incluindo `MATCH_END`, `PENALTY_GOAL`/`PENALTY_MISS`, e as correções do UC017 continuam publicando os mesmos tipos de evento por trás, só que soft-deletados).

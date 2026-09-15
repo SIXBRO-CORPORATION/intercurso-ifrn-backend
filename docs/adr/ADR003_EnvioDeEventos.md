@@ -1,8 +1,7 @@
 # ADR 0003: Transporte de Tempo Real via SSE com Fallback por Reconciliação (UC016)
 
 ## Status
-Proposta (ainda não implementada — depende da Fase 6 do planejamento, que por sua vez depende da
-Fase 5/UC014-015-017 estarem gerando os eventos que serão transmitidos)
+Aceita e implementada na primeira versão (broadcaster em memória por processo).
 
 ## Contexto
 
@@ -64,9 +63,9 @@ regra de negócio do documento.
 
 Mantém-se exatamente a topologia de canais da RN2-3 do UC016, só troca-se o protocolo de
 transporte:
-- **Feed de jogos:** `GET /api/seasons/{season_id}/live` (SSE) — substitui
+- **Feed de jogos:** `GET /api/season/{season_id}/live` (SSE) — substitui
   `/seasons/{season_id}/live` (WebSocket) da espec.
-- **Detalhes de partida:** `GET /api/matches/{match_id}/live` (SSE) — substitui
+- **Detalhes de partida:** `GET /api/match/{match_id}/live` (SSE) — substitui
   `/matches/{match_id}/live` (WebSocket) da espec.
 
 Cada endpoint mantém uma lista de conexões (`asyncio.Queue` por conexão) associadas ao
@@ -85,11 +84,11 @@ um buffer de eventos perdidos para retransmitir na reconexão.** Em vez disso:
    cliente entra em estado "Reconectando..." (RN17-18 já preveem isso na UI).
 2. O `EventSource` do navegador já tenta reabrir a conexão SSE sozinho (comportamento nativo).
 3. **Em paralelo**, e não apenas na abertura da tela: toda vez que o front detecta que a conexão
-   SSE caiu e voltou, ele dispara um `GET /api/matches/{match_id}` (estado completo: placar,
+   SSE caiu e voltou, ele dispara um `   GET /api/match/{match_id}` (estado completo: placar,
    cronômetro calculado — via ADR 0001 —, timeline completa de eventos não deletados) para
    reconciliar o estado local, substituindo qualquer estado antigo que possa ter ficado
    inconsistente durante a queda.
-4. Esse mesmo endpoint de leitura completa (`GET /api/matches/{match_id}`) é o mesmo que resolve o
+4. Esse mesmo endpoint de leitura completa (`GET /api/match/{match_id}`) é o mesmo que resolve o
    débito técnico já registrado na Fase 4/5 do planejamento (endpoints `GET` de consulta que
    ficaram pendentes) — este ADR não cria um endpoint novo só para reconciliação, reaproveita o
    que já está planejado como pendência.

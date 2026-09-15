@@ -16,6 +16,9 @@ from web.controllers.modality_controller import router as modality_router
 from web.controllers.user_controller import router as user_router
 from web.controllers.bracket_controller import router as bracket_router
 from web.controllers.match_controller import router as match_router
+from web.controllers.realtime_controller import router as realtime_router
+from web.controllers.match_live_controller import router as match_live_router
+from web.controllers.season_live_controller import router as season_live_router
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -63,6 +66,9 @@ app.include_router(modality_router)
 app.include_router(user_router)
 app.include_router(bracket_router)
 app.include_router(match_router)
+app.include_router(match_live_router)
+app.include_router(season_live_router)
+app.include_router(realtime_router)
 
 app.include_router(auth_router)
 

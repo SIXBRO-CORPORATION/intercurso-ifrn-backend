@@ -7,11 +7,18 @@ from web.dependencies.persistence_dependencies import (
     get_bracket_group_repository,
     get_bracket_group_team_repository,
     get_match_repository,
+    get_match_event_repository,
+    get_match_set_repository,
+    get_season_repository,
     get_audit_log_repository,
+    get_modality_repository,
+    get_modality_configuration_repository,
+    get_volleyball_modality_configuration_repository,
 )
 
 from web.dependencies.commons_dependencies import (
     get_audit_logger,
+    get_broadcaster,
 )
 
 from web.dependencies.security_dependencies import (
@@ -23,6 +30,7 @@ from web.dependencies.security_dependencies import (
     require_role,
     require_monitor,
     require_admin,
+    get_live_ticket_port,
 )
 
 from web.dependencies.business.user_dependencies import (
@@ -111,7 +119,14 @@ __all__ = [
     "get_bracket_group_repository",
     "get_bracket_group_team_repository",
     "get_match_repository",
+    "get_match_event_repository",
+    "get_match_set_repository",
+    "get_modality_repository",
+    "get_modality_configuration_repository",
+    "get_volleyball_modality_configuration_repository",
+    "get_season_repository",
     "get_audit_log_repository",
+    "get_broadcaster",
 
     # Commons Dependencies
     "get_audit_logger",
@@ -125,6 +140,7 @@ __all__ = [
     "require_role",
     "require_monitor",
     "require_admin",
+    "get_live_ticket_port",
 
     # Business Dependencies - Users
     "create_user_port",

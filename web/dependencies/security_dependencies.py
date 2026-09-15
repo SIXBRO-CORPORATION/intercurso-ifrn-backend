@@ -4,11 +4,13 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 
+from core.realtime.live_ticket_port import LiveTicketPort
 from core.security.jwt_provider_port import JWTProviderPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.user_role import UserRole
 from domain.user.user import User
 from security.adapters.jwt_provider_adapter import JWTProviderAdapter
+from security.adapters.live_ticket_adapter import LiveTicketAdapter
 from security.utils import (
     validate_user_active,
     extract_token_from_credentials,
@@ -21,6 +23,10 @@ from web.dependencies.persistence_dependencies import get_user_repository
 
 def get_jwt_provider() -> JWTProviderPort:
     return JWTProviderAdapter()
+
+
+def get_live_ticket_port() -> LiveTicketPort:
+    return LiveTicketAdapter()
 
 
 async def get_current_user_id(
