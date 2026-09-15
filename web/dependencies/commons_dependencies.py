@@ -5,10 +5,21 @@ from fastapi import Depends
 from core.business.audit.audit_logger import AuditLogger
 from core.persistence.audit.audit_log_repository_port import AuditLogRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
+from core.realtime.broadcaster import Broadcaster, get_broadcaster_singleton
 from web.dependencies.persistence_dependencies import (
     get_audit_log_repository,
     get_user_repository,
 )
+
+
+def get_broadcaster() -> Broadcaster:
+    """Retorna o broadcaster em memória do UC016 (singleton do processo).
+
+    Ver core/realtime/broadcaster.py �?" mesma instância é compartilhada entre
+    o publisher (routers de escrita) e os consumidores (routers de SSE),
+    dentro de um mesmo worker Uvicorn.
+    """
+    return get_broadcaster_singleton()
 
 
 def get_audit_logger(
