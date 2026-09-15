@@ -60,15 +60,42 @@ from web.models.response.match.match_management_response import MatchManagementR
 
 router = APIRouter(prefix="/api/match", tags=["match"])
 
-# TODO (débito técnico Fase 5): endpoints de consulta (GET de partida por id,
-# GET de partidas por temporada/time) ficam para as próximas rodadas desta
-# fase, conforme o planejamento em docs/ai/planejamento.md. O UC017
-# (Corrigir Evento) já está implementado (/event/undo e /event/{event_id}).
-# UC016 (WebSocket) e Push Notifications também são débito técnico (Fase 6):
-# nenhum evento abaixo (incluindo /finish, /penalty-shootout/* do UC015 e
-# /event/undo, /event/{event_id} do UC017) dispara notificação em tempo real
-# ainda — RN7 e os critérios de aceitação correspondentes seguem pendentes
-# até a Fase 6 (decisão 4.4 do handoff do UC017).
+async def _publish_match_event(
+    broadcaster: Broadcaster,
+    bracket_repository: BracketRepositoryPort,
+    match: Match,
+    event_types: str | Sequence[str],
+    response: ApiResponse[MatchManagementResponse],
+) -> None:
+    """Publica o evento nos canais da partida e, quando possível, da temporada."""
+    if isinstance(event_types, str):
+        event_types = (event_types,)
+
+    payload = {
+        "match_id": str(match.id),
+        "match": response.data.model_dump(mode="json") if response.data else None,
+    }
+
+    for event_type in event_types:
+        await broadcaster.publish(
+            Broadcaster.match_channel(match.id),
+            event_type,
+            {**payload, "event": event_type},
+        )
+
+    if match.bracket_id is None:
+        return
+
+    bracket = await bracket_repository.get(match.bracket_id)
+    if bracket is None or bracket.season_id is None:
+        return
+
+    for event_type in event_types:
+        await broadcaster.publish(
+            Broadcaster.season_channel(bracket.season_id),
+            event_type,
+            {**payload, "event": event_type},
+        )
 
 async def _publish_match_event(
     broadcaster: Broadcaster,
