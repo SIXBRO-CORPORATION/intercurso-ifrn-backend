@@ -41,6 +41,7 @@ from web.dependencies import (
 from web.dependencies.mapper_dependencies import get_match_model_mapper
 from web.mappers.match_model_mapper import MatchModelMapper
 from web.models.response.match.match_management_response import MatchManagementResponse
+from domain.enums.match_status import MatchStatus
 
 router = APIRouter(prefix="/api/match", tags=["match-live"])
 
@@ -73,6 +74,11 @@ async def stream_match_events(
     if match is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Partida não encontrada"
+        )
+    if match.status != MatchStatus.IN_PROGRESS:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Canal ao vivo disponível apenas para partidas em andamento",
         )
 
     return StreamingResponse(

@@ -20,6 +20,7 @@ from web.models.request.realtime.live_ticket_request import (
 )
 from web.models.response.realtime.live_ticket_response import LiveTicketResponse
 from security.adapters.live_ticket_adapter import DEFAULT_TICKET_TTL_SECONDS
+from domain.enums.match_status import MatchStatus
 
 router = APIRouter(prefix="/api/realtime", tags=["realtime"])
 
@@ -44,14 +45,12 @@ async def issue_live_ticket(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Partida não encontrada"
             )
-        channel = Broadcaster.match_channel(request.channel_id)
-    else:
-        season = await season_repository.get(request.channel_id)
-        if season is None:
+        if match.status != MatchStatus.IN_PROGRESS:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Temporada não encontrada"
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Só é possível abrir canal ao vivo para partidas em andamento",
             )
-        channel = Broadcaster.season_channel(request.channel_id)
+        channel = Broadcaster.match_channel(request.channel_id)
 
     ticket = live_ticket_port.issue_ticket(current_user.id, channel)
 

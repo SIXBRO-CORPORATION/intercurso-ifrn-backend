@@ -97,43 +97,6 @@ async def _publish_match_event(
             {**payload, "event": event_type},
         )
 
-async def _publish_match_event(
-    broadcaster: Broadcaster,
-    bracket_repository: BracketRepositoryPort,
-    match: Match,
-    event_types: str | Sequence[str],
-    response: ApiResponse[MatchManagementResponse],
-) -> None:
-    if isinstance(event_types, str):
-        event_types = (event_types,)
-
-    payload = {
-        "match_id": str(match.id),
-        "match": response.data.model_dump(mode="json") if response.data else None,
-    }
-
-    for event_type in event_types:
-        await broadcaster.publish(
-            Broadcaster.match_channel(match.id),
-            event_type,
-            {**payload, "event": event_type},
-        )
-
-    if match.bracket_id is None:
-        return
-
-    bracket = await bracket_repository.get(match.bracket_id)
-    if bracket is None or bracket.season_id is None:
-        return
-
-    for event_type in event_types:
-        await broadcaster.publish(
-            Broadcaster.season_channel(bracket.season_id),
-            event_type,
-            {**payload, "event": event_type},
-        )
-
-
 def _build_response(
     context: Context,
     mapper: MatchModelMapper,
