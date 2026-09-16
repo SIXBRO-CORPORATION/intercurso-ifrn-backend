@@ -1,24 +1,29 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from typing import Callable
 from uuid import UUID
-
-from jose import JWTError, jwt
+from jose import jwt, JWTError
 
 from core.realtime.live_ticket_port import InvalidLiveTicketError, LiveTicketPort
 from security.config import settings
 
-DEFAULT_TICKET_TTL_SECONDS = 300
+DEFAULT_TICKET_TTL_SECONDS = 30
 TICKET_SCOPE_CLAIM = "live_ticket"
 
 
 class LiveTicketAdapter(LiveTicketPort):
 
-    def __init__(self, ttl_seconds: int = DEFAULT_TICKET_TTL_SECONDS) -> None:
-        self._secret_key = settings.jwt_secret_key
+    def __init__(
+        self,
+        ttl_seconds: int = DEFAULT_TICKET_TTL_SECONDS,
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+    ) -> None:
+        self._secret_key = settings.live_ticket_secret_key
         self._algorithm = settings.jwt_algorithm
         self._ttl_seconds = ttl_seconds
+        self._clock = clock
 
     def issue_ticket(self, user_id: UUID, channel: str) -> str:
-        now = datetime.utcnow()
+        now = self._clock()
         payload = {
             "sub": str(user_id),
             "scope": TICKET_SCOPE_CLAIM,
@@ -34,7 +39,12 @@ class LiveTicketAdapter(LiveTicketPort):
                 ticket,
                 self._secret_key,
                 algorithms=[self._algorithm],
-                options={"require": ["sub", "exp", "iat", "scope", "channel"]},
+                options={
+                    "require_exp": True,
+                    "require_iat": True,
+                    "require_sub": True,
+                    "verify_exp": True,
+                },
             )
         except JWTError as exc:
             raise InvalidLiveTicketError(f"Ticket inválido: {exc}") from exc
@@ -43,9 +53,7 @@ class LiveTicketAdapter(LiveTicketPort):
             raise InvalidLiveTicketError("Token informado não é um ticket de tempo real")
 
         if payload.get("channel") != channel:
-            raise InvalidLiveTicketError(
-                "Ticket não é válido para o canal solicitado"
-            )
+            raise InvalidLiveTicketError("Ticket não é válido para o canal solicitado")
 
         try:
             return UUID(payload["sub"])

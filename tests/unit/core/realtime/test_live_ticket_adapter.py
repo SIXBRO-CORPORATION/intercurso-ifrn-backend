@@ -1,10 +1,12 @@
 from uuid import uuid4
 
 import pytest
+from jose import jwt
 
 from core.realtime.broadcaster import Broadcaster
 from core.realtime.live_ticket_port import InvalidLiveTicketError
-from security.adapters.live_ticket_adapter import LiveTicketAdapter
+from security.adapters.live_ticket_adapter import LiveTicketAdapter, TICKET_SCOPE_CLAIM
+from security.config import settings
 
 
 @pytest.mark.unit
@@ -46,3 +48,14 @@ class TestLiveTicketAdapter:
 
         with pytest.raises(InvalidLiveTicketError):
             adapter.verify_ticket("not-a-jwt", channel)
+
+    def test_ticket_without_exp_is_rejected(self):
+        adapter = LiveTicketAdapter()
+        channel = Broadcaster.match_channel(uuid4())
+        forged = jwt.encode(
+            {"sub": str(uuid4()), "scope": TICKET_SCOPE_CLAIM, "channel": channel},
+            settings.live_ticket_secret_key,
+            algorithm=settings.jwt_algorithm,
+        )
+        with pytest.raises(InvalidLiveTicketError):
+            adapter.verify_ticket(forged, channel)

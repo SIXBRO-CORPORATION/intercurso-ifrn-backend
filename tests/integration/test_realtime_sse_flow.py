@@ -213,7 +213,7 @@ class TestRealtimeSSEFlow:
             app.dependency_overrides.clear()
 
     async def test_live_endpoint_rejects_ticket_issued_for_another_channel(
-        self, live_server
+            self, live_server
     ):
         match_id = uuid4()
         other_match_id = uuid4()
@@ -221,6 +221,7 @@ class TestRealtimeSSEFlow:
 
         fake_match = Match(id=match_id, created_at=datetime.now())
         other_fake_match = Match(id=other_match_id, created_at=datetime.now())
+        other_fake_match.status = MatchStatus.IN_PROGRESS
         fake_user = User(id=user_id, role=UserRole.MONITOR, name="Monitor de Teste")
 
         app.dependency_overrides[get_match_repository] = lambda: _FakeMatchRepository(
