@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
+    live_ticket_secret_key: str = "changeme"
 
     # Frontend
     frontend_url: str = "http://localhost:5173"
