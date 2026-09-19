@@ -25,6 +25,7 @@ dependencies = [
     "psycopg[binary]>=3.3.4",
     "taskipy>=1.14.1",
     "psycopg2-binary>=2.9.12",
+    "python-dotenv==1.1.0",
 ]
 
 [dependency-groups]
@@ -34,7 +35,6 @@ dev = [
     "ruff>=0.14.10",
     "taskipy>=1.14.1",
     "aiosqlite==0.20.0",
-    "python-dotenv==1.1.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -63,5 +63,11 @@ lint = "uv run ruff check ."
 # 🔍 Tudo de uma vez (local / CI)
 check = "task lint && task test"
 
+# 🐳 Docker
+docker_dev = "docker compose -f compose.dev.yml up --build"
+docker_dev_down = "docker compose -f compose.dev.yml down"
+docker_prod = "docker compose -f compose.prod.yml up --build -d"
+docker_prod_down = "docker compose -f compose.prod.yml down"
+
 # 🧨 Limpeza
-clean = "rm -rf .venv .pytest_cache .ruff_cache dist build *.egg-info"
+clean = "python -c \"import shutil,glob; [shutil.rmtree(p,ignore_errors=True) for p in ['.venv','.pytest_cache','.ruff_cache','dist','build']+glob.glob('*.egg-info')]\""
