@@ -129,7 +129,7 @@ MOBILE_DEEP_LINK_PATH=callback
 ### 2. Subir o banco de dados
 
 ```bash
-docker compose up -d
+docker compose -f compose.dev.yml up -d postgres
 ```
 
 ### 3. Instalar dependências
@@ -216,10 +216,61 @@ uv run task coverage           # com cobertura (core, domain, business, auth, pe
 
 ## Docker
 
-Uma imagem de produção pode ser construída a partir do `Dockerfile` incluso, que instala as
-dependências com `uv`, aplica as migrations e sobe a aplicação com `uvicorn`:
+Dois ambientes independentes, cada um com seu Compose, seu volume do PostgreSQL e seu arquivo de variáveis.
+
+| | Development | Production |
+|---|---|---|
+| Compose | `compose.dev.yml` | `compose.prod.yml` |
+| Dockerfile | `Dockerfile.dev` | `Dockerfile` (multi-stage) |
+| Variáveis | `.env.dev` | `.env.prod` |
+| Código | bind mount + `uvicorn --reload` | copiado para a imagem, sem reload |
+| Usuário | root | não-root (uid 1000) |
+| PostgreSQL | porta `127.0.0.1:5432` | sem porta publicada |
+| API | `http://localhost:8000` | interna; acesso via Nginx em HTTPS (`443`) |
+
+Serviços: `nginx` (apenas em produção), `postgres` (17, com healthcheck e volume nomeado), `migrate` (executa `alembic upgrade head` uma única vez e encerra) e `api` (só inicia após o banco saudável e a migration concluída). A API acessa o banco por `postgres:5432` na rede padrão do Compose.
+
+### Variáveis de ambiente
+
+Copie os exemplos (PowerShell) e ajuste os valores. Os arquivos `.env.dev` e `.env.prod` estão no `.gitignore`; nunca versione segredos.
+
+```powershell
+Copy-Item .env.dev.example .env.dev
+Copy-Item .env.prod.example .env.prod
+```
+
+`DATABASE_URL` (asyncpg) e `DATABASE_URL_SYNC` (psycopg2, usada pelo Alembic) devem apontar para o host `postgres` e usar as mesmas credenciais de `POSTGRES_USER` e `POSTGRES_PASSWORD`.
+
+### Development
 
 ```bash
-docker build -t intercurso-ifrn-backend .
-docker run --env-file .env -p 8000:8000 intercurso-ifrn-backend
+docker compose -f compose.dev.yml up --build
+docker compose -f compose.dev.yml logs -f api
+docker compose -f compose.dev.yml down
 ```
+
+O código de `alembic`, `business`, `core`, `domain`, `persistence`, `scheduling`, `security` e `web` é montado no container e o Uvicorn reinicia ao salvar arquivos (polling ativado para funcionar em bind mounts no Windows). Alterou `pyproject.toml` ou `uv.lock`? Rode com `--build`.
+
+### Production
+
+```bash
+docker compose -f compose.prod.yml up --build -d
+docker compose -f compose.prod.yml logs -f api
+docker compose -f compose.prod.yml down
+```
+
+Em produção o Nginx é o único ponto de entrada: `80` redireciona para `443` (HTTPS) e repassa para a API pela rede interna. Ele espera os certificados em `nginx/certs/fullchain.pem` e `nginx/certs/privkey.pem` (ignorados pelo Git). Sem eles, o Nginx não inicia.
+
+Certificado para teste local (PowerShell):
+
+```powershell
+docker run --rm -v "${PWD}/nginx/certs:/certs" alpine/openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /certs/privkey.pem -out /certs/fullchain.pem -subj "/CN=localhost"
+```
+
+Em servidor real, gere um certificado válido (ex.: Let's Encrypt com `certbot certonly --standalone -d seu-dominio`) e copie `fullchain.pem` e `privkey.pem` para `nginx/certs/`. Ajuste `SUAP_REDIRECT_URI` em `.env.prod` para a URL `https://`.
+
+### Persistência e migrations
+
+- Os dados ficam nos volumes nomeados `postgres_data_dev` e `postgres_data_prod`. `down` preserva os dados; `down -v` apaga.
+- As migrations existentes são aplicadas pelo serviço `migrate` (`alembic upgrade head`). Nenhuma migration é gerada automaticamente. Para criar uma nova: `docker compose -f compose.dev.yml run --rm api alembic revision --autogenerate -m "descricao"`.
+- Atalhos: `task docker_dev`, `task docker_dev_down`, `task docker_prod`, `task docker_prod_down`.
