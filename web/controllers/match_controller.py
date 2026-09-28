@@ -57,6 +57,7 @@ from web.models.request.match.match_card_request import MatchCardRequest
 from web.models.request.match.match_goal_request import MatchGoalRequest
 from web.models.request.match.match_penalty_kick_request import MatchPenaltyKickRequest
 from web.models.response.match.match_management_response import MatchManagementResponse
+from web.models.response.match.match_public_response import MatchPublicResponse
 
 router = APIRouter(prefix="/api/match", tags=["match"])
 
@@ -67,13 +68,15 @@ async def _publish_match_event(
     event_types: str | Sequence[str],
     response: ApiResponse[MatchManagementResponse],
 ) -> None:
-    """Publica o evento nos canais da partida e, quando possível, da temporada."""
     if isinstance(event_types, str):
         event_types = (event_types,)
 
+    public_match = (
+        MatchPublicResponse.model_validate(response.data) if response.data else None
+    )
     payload = {
         "match_id": str(match.id),
-        "match": response.data.model_dump(mode="json") if response.data else None,
+        "match": public_match.model_dump(mode="json") if public_match else None,
     }
 
     for event_type in event_types:

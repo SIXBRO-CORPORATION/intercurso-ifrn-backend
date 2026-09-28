@@ -49,6 +49,15 @@ class TestLiveTicketAdapter:
         with pytest.raises(InvalidLiveTicketError):
             adapter.verify_ticket("not-a-jwt", channel)
 
+    def test_anonymous_ticket_round_trip_returns_none(self):
+        """ADR 0004: user_id=None emite ticket anônimo; verify_ticket -> None."""
+        adapter = LiveTicketAdapter()
+        channel = Broadcaster.match_channel(uuid4())
+
+        ticket = adapter.issue_ticket(None, channel)
+
+        assert adapter.verify_ticket(ticket, channel) is None
+
     def test_ticket_without_exp_is_rejected(self):
         adapter = LiveTicketAdapter()
         channel = Broadcaster.match_channel(uuid4())

@@ -5,8 +5,10 @@ import asyncio
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, Set
+from typing import Dict, Set, Union
 from uuid import UUID
+
+ConnectionKey = Union[UUID, str]
 
 DEFAULT_QUEUE_MAX_SIZE = 100
 DEFAULT_MAX_CONNECTIONS_PER_USER = 2
@@ -35,7 +37,7 @@ class Broadcaster:
         self._max_connections_per_user = max_connections_per_user
 
         self._channels: Dict[str, Set["asyncio.Queue[RealtimeEvent]"]] = defaultdict(set)
-        self._connections_by_user: Dict[UUID, int] = defaultdict(int)
+        self._connections_by_key: Dict[ConnectionKey, int] = defaultdict(int)
         self._lock = asyncio.Lock()
 
     @staticmethod
@@ -47,12 +49,12 @@ class Broadcaster:
         return f"season:{season_id}"
 
     async def subscribe(
-        self, channel: str, user_id: UUID
+        self, channel: str, connection_key: ConnectionKey
     ) -> "asyncio.Queue[RealtimeEvent]":
         async with self._lock:
-            if self._connections_by_user[user_id] >= self._max_connections_per_user:
+            if self._connections_by_key[connection_key] >= self._max_connections_per_user:
                 raise ConnectionLimitExceededError(
-                    f"Usuário {user_id} já possui o número máximo de conexões "
+                    f"{connection_key} já possui o número máximo de conexões "
                     f"em tempo real permitidas ({self._max_connections_per_user})."
                 )
 
@@ -60,22 +62,25 @@ class Broadcaster:
                 maxsize=self._queue_max_size
             )
             self._channels[channel].add(queue)
-            self._connections_by_user[user_id] += 1
+            self._connections_by_key[connection_key] += 1
 
             return queue
 
     async def unsubscribe(
-        self, channel: str, user_id: UUID, queue: "asyncio.Queue[RealtimeEvent]"
+        self,
+        channel: str,
+        connection_key: ConnectionKey,
+        queue: "asyncio.Queue[RealtimeEvent]",
     ) -> None:
         async with self._lock:
             self._channels[channel].discard(queue)
             if not self._channels[channel]:
                 del self._channels[channel]
 
-            if self._connections_by_user[user_id] > 0:
-                self._connections_by_user[user_id] -= 1
-            if self._connections_by_user[user_id] == 0:
-                del self._connections_by_user[user_id]
+            if self._connections_by_key[connection_key] > 0:
+                self._connections_by_key[connection_key] -= 1
+            if self._connections_by_key[connection_key] == 0:
+                del self._connections_by_key[connection_key]
 
     async def publish(self, channel: str, event_type: str, payload: dict) -> None:
         event = RealtimeEvent(event_type=event_type, payload=payload)

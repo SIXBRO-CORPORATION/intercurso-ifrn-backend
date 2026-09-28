@@ -4,12 +4,12 @@ from __future__ import annotations
 import asyncio
 import json
 from typing import AsyncIterator
-from uuid import UUID
 
 from fastapi import Request
 
 from core.realtime.broadcaster import (
     Broadcaster,
+    ConnectionKey,
     ConnectionLimitExceededError,
     RealtimeEvent,
 )
@@ -30,10 +30,10 @@ async def stream_channel(
     request: Request,
     broadcaster: Broadcaster,
     channel: str,
-    user_id: UUID,
+    connection_key: ConnectionKey,
 ) -> AsyncIterator[str]:
     try:
-        queue = await broadcaster.subscribe(channel, user_id)
+        queue = await broadcaster.subscribe(channel, connection_key)
     except ConnectionLimitExceededError as exc:
         yield format_sse_message(
             RealtimeEvent(event_type="error", payload={"detail": str(exc)})
@@ -53,4 +53,4 @@ async def stream_channel(
             except asyncio.TimeoutError:
                 yield format_sse_comment("ping")
     finally:
-        await broadcaster.unsubscribe(channel, user_id, queue)
+        await broadcaster.unsubscribe(channel, connection_key, queue)

@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from typing import Callable
+from typing import Callable, Optional
 from uuid import UUID
 import jwt
 
@@ -8,6 +8,7 @@ from security.config import settings
 
 DEFAULT_TICKET_TTL_SECONDS = 30
 TICKET_SCOPE_CLAIM = "live_ticket"
+ANONYMOUS_SUBJECT = "anonymous"
 
 
 class LiveTicketAdapter(LiveTicketPort):
@@ -22,10 +23,10 @@ class LiveTicketAdapter(LiveTicketPort):
         self._ttl_seconds = ttl_seconds
         self._clock = clock
 
-    def issue_ticket(self, user_id: UUID, channel: str) -> str:
+    def issue_ticket(self, user_id: Optional[UUID], channel: str) -> str:
         now = self._clock()
         payload = {
-            "sub": str(user_id),
+            "sub": str(user_id) if user_id is not None else ANONYMOUS_SUBJECT,
             "scope": TICKET_SCOPE_CLAIM,
             "channel": channel,
             "iat": now,
@@ -33,7 +34,7 @@ class LiveTicketAdapter(LiveTicketPort):
         }
         return jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
 
-    def verify_ticket(self, ticket: str, channel: str) -> UUID:
+    def verify_ticket(self, ticket: str, channel: str) -> Optional[UUID]:
         try:
             payload = jwt.decode(
                 ticket,
@@ -50,7 +51,11 @@ class LiveTicketAdapter(LiveTicketPort):
         if payload.get("channel") != channel:
             raise InvalidLiveTicketError("Ticket não é válido para o canal solicitado")
 
+        sub = payload.get("sub")
+        if sub == ANONYMOUS_SUBJECT:
+            return None
+
         try:
-            return UUID(payload["sub"])
-        except (KeyError, ValueError) as exc:
+            return UUID(sub)
+        except (TypeError, ValueError) as exc:
             raise InvalidLiveTicketError("Ticket sem usuário válido") from exc

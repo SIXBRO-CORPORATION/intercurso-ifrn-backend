@@ -384,3 +384,29 @@ class TestRealtimeSSEFlow:
             assert json.loads(data_line[5:].strip())["sequence"] == 41
         finally:
             app.dependency_overrides.clear()
+
+    async def test_anonymous_visitor_gets_season_ticket_without_login(
+        self, live_server
+    ):
+        """ADR 0004: leitura pública — visitante sem token emite ticket de
+        canal de temporada (antes: SEASON não era tratado e a rota dava 500)."""
+        from domain.season.season import Season
+        from web.dependencies import get_season_repository
+
+        season_id = uuid4()
+        fake_season = Season(id=season_id)
+        app.dependency_overrides[get_season_repository] = lambda: _FakeStateRepository(
+            {season_id: fake_season}
+        )
+
+        try:
+            async with AsyncClient(base_url=live_server, timeout=10) as client:
+                ticket_response = await client.post(
+                    "/api/realtime/ticket",
+                    json={"channel_type": "season", "channel_id": str(season_id)},
+                )
+                assert ticket_response.status_code == 200
+                ticket = ticket_response.json()["data"]["ticket"]
+                assert ticket
+        finally:
+            app.dependency_overrides.clear()

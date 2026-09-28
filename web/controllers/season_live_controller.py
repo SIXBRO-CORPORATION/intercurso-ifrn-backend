@@ -8,7 +8,7 @@ from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.realtime.broadcaster import Broadcaster
 from core.realtime.live_ticket_port import InvalidLiveTicketError, LiveTicketPort
 from core.realtime.sse import stream_channel
-from web.controllers.match_live_controller import SSE_HEADERS, SSE_MEDIA_TYPE
+from web.controllers.match_live_controller import SSE_HEADERS, SSE_MEDIA_TYPE, _connection_key
 from web.dependencies import get_broadcaster, get_live_ticket_port, get_season_repository
 
 router = APIRouter(prefix="/api/season", tags=["season-live"])
@@ -38,8 +38,10 @@ async def stream_season_events(
             status_code=status.HTTP_404_NOT_FOUND, detail="Temporada não encontrada"
         )
 
+    connection_key = _connection_key(request, user_id)
+
     return StreamingResponse(
-        stream_channel(request, broadcaster, channel, user_id),
+        stream_channel(request, broadcaster, channel, connection_key),
         media_type=SSE_MEDIA_TYPE,
         headers=SSE_HEADERS,
     )

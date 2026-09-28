@@ -48,6 +48,19 @@ class TestBroadcaster:
 
         await broadcaster.publish(channel, "goal_scored", {})
 
+    async def test_connection_key_accepts_ip_string_for_anonymous_visitors(self):
+        """ADR 0004: visitante anônimo assina com chave por IP, não com UUID."""
+        broadcaster = Broadcaster(max_connections_per_user=1)
+        channel = Broadcaster.match_channel(uuid4())
+
+        await broadcaster.subscribe(channel, "ip:203.0.113.10")
+
+        with pytest.raises(ConnectionLimitExceededError):
+            await broadcaster.subscribe(channel, "ip:203.0.113.10")
+
+        # IP diferente não compartilha o limite do primeiro.
+        await broadcaster.subscribe(channel, "ip:203.0.113.11")
+
     async def test_queue_discards_oldest_when_full(self):
         broadcaster = Broadcaster(queue_max_size=2)
         user_id = uuid4()

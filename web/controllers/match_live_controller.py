@@ -20,7 +20,7 @@ from core.persistence.modality.volleyball_modality_configuration_repository_port
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
-from core.realtime.broadcaster import Broadcaster
+from core.realtime.broadcaster import Broadcaster, ConnectionKey
 from core.realtime.live_ticket_port import InvalidLiveTicketError, LiveTicketPort
 from core.realtime.sse import stream_channel
 from web.commons.api_response import ApiResponse
@@ -40,8 +40,15 @@ from web.dependencies import (
 )
 from web.dependencies.mapper_dependencies import get_match_model_mapper
 from web.mappers.match_model_mapper import MatchModelMapper
-from web.models.response.match.match_management_response import MatchManagementResponse
+from web.models.response.match.match_public_response import MatchPublicResponse
 from domain.enums.match_status import MatchStatus
+
+
+def _connection_key(request: Request, user_id: UUID | None) -> ConnectionKey:
+    if user_id is not None:
+        return user_id
+    client_host = request.client.host if request.client else "unknown"
+    return f"ip:{client_host}"
 
 router = APIRouter(prefix="/api/match", tags=["match-live"])
 
@@ -81,14 +88,16 @@ async def stream_match_events(
             detail="Canal ao vivo disponível apenas para partidas em andamento",
         )
 
+    connection_key = _connection_key(request, user_id)
+
     return StreamingResponse(
-        stream_channel(request, broadcaster, channel, user_id),
+        stream_channel(request, broadcaster, channel, connection_key),
         media_type=SSE_MEDIA_TYPE,
         headers=SSE_HEADERS,
     )
 
 
-@router.get("/{match_id}", response_model=ApiResponse[MatchManagementResponse])
+@router.get("/{match_id}", response_model=ApiResponse[MatchPublicResponse])
 async def get_match_state(
     match_id: UUID,
     match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
@@ -147,4 +156,5 @@ async def get_match_state(
         volleyball_configuration=context.get("volleyball_configuration"),
         match_sets=context.get_property("match_sets", list) or [],
     )
-    return ApiResponse.success(data=response_data)
+    public_data = MatchPublicResponse.model_validate(response_data)
+    return ApiResponse.success(data=public_data)

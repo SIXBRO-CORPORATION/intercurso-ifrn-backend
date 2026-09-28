@@ -17,7 +17,7 @@ from domain.enums.season_status import SeasonStatus
 from domain.season.season import Season
 from domain.user.user import User
 from web.commons.api_response import ApiResponse
-from web.dependencies import require_authenticated_user, require_monitor
+from web.dependencies import require_monitor
 from web.dependencies.business.season_dependencies import (
     get_active_season_port,
     get_close_registration_port,
@@ -103,7 +103,6 @@ async def list_seasons(
     "/active",
     response_model=ApiResponse[SeasonSummaryResponse],
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(require_authenticated_user)],
 )
 async def get_active_season(
     active_season_port: Annotated[
