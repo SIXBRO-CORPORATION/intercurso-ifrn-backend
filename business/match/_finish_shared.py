@@ -140,9 +140,9 @@ async def update_group_standings(
     bracket_group_team_repository: BracketGroupTeamRepositoryPort,
     match: Match,
     winner_id: Optional[UUID],
+    sign: int = 1,
 ) -> None:
-    """RN16-18 (Fluxo Principal passo 12 / Alternativo 2): atualiza a
-    classificação (BracketGroupTeam) dos dois times da partida de grupo."""
+
     if match.bracket_group_id is None:
         return
 
@@ -158,24 +158,28 @@ async def update_group_standings(
     team1_goals = match.team1_score or 0
     team2_goals = match.team2_score or 0
 
-    team1_standing.goals_for = (team1_standing.goals_for or 0) + team1_goals
-    team1_standing.goals_against = (team1_standing.goals_against or 0) + team2_goals
-    team2_standing.goals_for = (team2_standing.goals_for or 0) + team2_goals
-    team2_standing.goals_against = (team2_standing.goals_against or 0) + team1_goals
+    team1_standing.goals_for = (team1_standing.goals_for or 0) + sign * team1_goals
+    team1_standing.goals_against = (
+        (team1_standing.goals_against or 0) + sign * team2_goals
+    )
+    team2_standing.goals_for = (team2_standing.goals_for or 0) + sign * team2_goals
+    team2_standing.goals_against = (
+        (team2_standing.goals_against or 0) + sign * team1_goals
+    )
 
     if winner_id is None:
-        team1_standing.points = (team1_standing.points or 0) + 1
-        team2_standing.points = (team2_standing.points or 0) + 1
-        team1_standing.draws = (team1_standing.draws or 0) + 1
-        team2_standing.draws = (team2_standing.draws or 0) + 1
+        team1_standing.points = (team1_standing.points or 0) + sign
+        team2_standing.points = (team2_standing.points or 0) + sign
+        team1_standing.draws = (team1_standing.draws or 0) + sign
+        team2_standing.draws = (team2_standing.draws or 0) + sign
     elif winner_id == match.team1_id:
-        team1_standing.points = (team1_standing.points or 0) + 3
-        team1_standing.wins = (team1_standing.wins or 0) + 1
-        team2_standing.losses = (team2_standing.losses or 0) + 1
+        team1_standing.points = (team1_standing.points or 0) + 3 * sign
+        team1_standing.wins = (team1_standing.wins or 0) + sign
+        team2_standing.losses = (team2_standing.losses or 0) + sign
     else:
-        team2_standing.points = (team2_standing.points or 0) + 3
-        team2_standing.wins = (team2_standing.wins or 0) + 1
-        team1_standing.losses = (team1_standing.losses or 0) + 1
+        team2_standing.points = (team2_standing.points or 0) + 3 * sign
+        team2_standing.wins = (team2_standing.wins or 0) + sign
+        team1_standing.losses = (team1_standing.losses or 0) + sign
 
     team1_standing.goals_difference = (
         team1_standing.goals_for - team1_standing.goals_against

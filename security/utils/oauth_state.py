@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timedelta
 
-from jose import jwt, JWTError
+import jwt
 
 from security.config import settings
 
@@ -38,7 +38,7 @@ def is_valid_oauth_state(state_from_provider: str, state_from_cookie: str) -> bo
             settings.jwt_secret_key,
             algorithms=[settings.jwt_algorithm],
         )
-    except JWTError:
+    except jwt.InvalidTokenError:
         return False
 
     return payload.get("typ") == _STATE_TOKEN_TYPE
@@ -52,5 +52,5 @@ def get_platform_from_state(state: str) -> str:
             algorithms=[settings.jwt_algorithm],
         )
         return payload.get("platform", "web")
-    except JWTError:
+    except jwt.InvalidTokenError:
         return "web"

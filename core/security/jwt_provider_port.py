@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import timedelta
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Tuple
 from uuid import UUID
 
 from domain.auth.auth_token import AuthToken
@@ -36,8 +36,4 @@ class JWTProviderPort(ABC):
 
     @abstractmethod
     def get_user_id_from_token(self, token: str) -> UUID:
-        pass
-
-    @abstractmethod
-    def decode_token(self, token: str) -> Dict[str, Any]:
         pass

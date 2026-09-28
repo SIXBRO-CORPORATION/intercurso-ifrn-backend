@@ -36,7 +36,11 @@ def make_mocks():
         "volleyball_modality_configuration_repository": AsyncMock(),
         "match_set_repository": AsyncMock(),
         "audit_logger": AsyncMock(),
+        "bracket_group_team_repository": AsyncMock(),
     }
+    mocks["match_repository"].lock_for_update.side_effect = (
+        lambda match_id: mocks["match_repository"].get.return_value
+    )
     mocks["match_event_repository"].soft_delete_event.return_value = True
     mocks["match_event_repository"].find_by_match_and_type.return_value = []
     mocks["match_set_repository"].count_sets_won_by_team.return_value = {}
@@ -60,6 +64,7 @@ def make_undo_adapter(mocks):
         mocks["volleyball_modality_configuration_repository"],
         mocks["match_set_repository"],
         mocks["audit_logger"],
+        mocks["bracket_group_team_repository"],
     )
 
 
@@ -76,6 +81,7 @@ def make_delete_adapter(mocks):
         mocks["volleyball_modality_configuration_repository"],
         mocks["match_set_repository"],
         mocks["audit_logger"],
+        mocks["bracket_group_team_repository"],
     )
 
 
@@ -501,6 +507,44 @@ class TestSetEndCorrection:
 
 
 class TestPostFinishCorrection:
+    @pytest.mark.asyncio
+    async def test_group_standings_are_recomputed_when_score_changes(self):
+        from domain.bracket.bracket_group_team import BracketGroupTeam
+
+        mocks = make_mocks()
+        adapter = make_delete_adapter(mocks)
+        stub_empty_management_context(mocks)
+
+        monitor_id = uuid4()
+        match = make_in_progress_match(monitor_id=monitor_id)
+        match.status = MatchStatus.FINISHED
+        match.bracket_group_id = uuid4()
+        match.team1_score, match.team2_score = 2, 1
+        match.winner_id = match.team1_id
+        mocks["match_repository"].get.return_value = match
+
+        # Classificação já reflete 2x1 (time1 venceu).
+        s1 = BracketGroupTeam(team_id=match.team1_id, points=3, wins=1, draws=0,
+                              losses=0, goals_for=2, goals_against=1)
+        s2 = BracketGroupTeam(team_id=match.team2_id, points=0, wins=0, draws=0,
+                              losses=1, goals_for=1, goals_against=2)
+        standings = {match.team1_id: s1, match.team2_id: s2}
+        mocks["bracket_group_team_repository"].find_by_bracket_group_and_team.side_effect = (
+            lambda group_id, team_id: standings[team_id]
+        )
+
+        goal = make_event(match.id, EventType.GOAL, team_id=match.team1_id)
+        mocks["match_event_repository"].get.return_value = goal
+        remaining = make_event(match.id, EventType.GOAL, team_id=match.team2_id)
+        mocks["match_event_repository"].find_by_match.return_value = [remaining]
+
+        await adapter.execute(make_delete_context(match.id, monitor_id, goal.id))
+
+        # Placar corrigido 0x1: time2 passa a vencer.
+        assert (s1.points, s1.wins, s1.losses, s1.goals_for, s1.goals_against) == (0, 0, 1, 0, 1)
+        assert (s2.points, s2.wins, s2.losses, s2.goals_for, s2.goals_against) == (3, 1, 0, 1, 0)
+        assert s1.goals_difference == -1 and s2.goals_difference == 1
+
     @pytest.mark.asyncio
     async def test_correcting_finished_match_uses_special_audit_action(self):
         mocks = make_mocks()

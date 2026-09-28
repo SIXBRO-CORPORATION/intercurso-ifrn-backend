@@ -12,7 +12,7 @@ modalidades esportivas, equipes, chaveamento (brackets) e partidas, com autentic
 - **Alembic** — migrations
 - **PostgreSQL 17**
 - **APScheduler** — jobs agendados
-- **PyJWT / python-jose** — autenticação JWT
+- **PyJWT** — autenticação JWT
 - **SUAP OAuth2** — login institucional
 - **uv** + **taskipy** — gerenciamento de ambiente e tasks
 - **pytest** — testes (unitários, integração, e2e)
@@ -117,10 +117,13 @@ Variáveis relevantes:
 
 ```env
 DATABASE_URL=postgresql+asyncpg://username:password@localhost:5432/db_name
+DATABASE_URL_SYNC=postgresql://username:password@localhost:5432/db_name
 SUAP_CLIENT_ID=suap_client_id
 SUAP_CLIENT_SECRET=suap_client_secret
 SUAP_REDIRECT_URI=http://localhost:8000/api/auth/callback
 JWT_SECRET_KEY=strong_key
+LIVE_TICKET_SECRET_KEY=outro_valor_diferente_do_jwt
+FRONTEND_URL=http://localhost:5173
 
 MOBILE_DEEP_LINK_SCHEME=myapp
 MOBILE_DEEP_LINK_PATH=callback

@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 import pytest
-from jose import jwt
+import jwt
 
 from core.realtime.broadcaster import Broadcaster
 from core.realtime.live_ticket_port import InvalidLiveTicketError

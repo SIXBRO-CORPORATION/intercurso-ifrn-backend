@@ -1,10 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+from business.match._finish_shared import determine_winner_id, update_group_standings
 from business.match._shared import load_modality_configuration
 from core.business.audit.audit_logger import AuditLogger
+from core.persistence.bracket.bracket_group_team_repository_port import (
+    BracketGroupTeamRepositoryPort,
+)
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
@@ -58,7 +62,7 @@ async def validate_match_correctable(
     if monitor_id is None:
         raise BusinessException("Monitor responsável é obrigatório")
 
-    match = await match_repository.get(match_id)
+    match = await match_repository.lock_for_update(match_id)
     if match is None:
         raise BusinessException("Partida não encontrada")
 
@@ -343,6 +347,7 @@ async def apply_event_correction(
     modality_repository: ModalityRepositoryPort,
     modality_configuration_repository: ModalityConfigurationRepositoryPort,
     audit_logger: AuditLogger,
+    bracket_group_team_repository: BracketGroupTeamRepositoryPort,
     normal_audit_action: AuditAction,
 ) -> CorrectionResult:
 
@@ -390,6 +395,23 @@ async def apply_event_correction(
 
     correction_alert = None
     if was_finished and _score_snapshot(saved_match) != previous_snapshot:
+        if saved_match.bracket_group_id is not None and not is_sets_modality:
+            old = replace(
+                saved_match,
+                team1_score=previous_snapshot[0],
+                team2_score=previous_snapshot[1],
+            )
+            await update_group_standings(
+                bracket_group_team_repository,
+                old,
+                determine_winner_id(old, None),
+                sign=-1,
+            )
+            await update_group_standings(
+                bracket_group_team_repository,
+                saved_match,
+                determine_winner_id(saved_match, None),
+            )
         correction_alert = _build_post_finish_alert(
             saved_match, previous_snapshot, previous_winner_id
         )

@@ -65,6 +65,9 @@ class RefreshTokenRepositoryAdapter(RefreshTokenRepositoryPort):
         await self.session.flush()
         return result.rowcount
 
+    async def commit(self) -> None:
+        await self.session.commit()
+
     async def delete_expired(self) -> int:
         query = delete(RefreshTokenEntity).where(
             RefreshTokenEntity.expires_at < datetime.now()

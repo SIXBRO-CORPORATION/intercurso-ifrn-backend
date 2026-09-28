@@ -50,6 +50,11 @@ class RefreshTokenService:
         if not stored_token:
             raise BusinessException("Refresh token inválido")
 
+        if stored_token.revoked and stored_token.replaced_by_token is not None:
+            await self.refresh_token_repository.revoke_all_by_user(stored_token.user_id)
+            await self.refresh_token_repository.commit()
+            raise BusinessException("Refresh token reutilizado. Faça login novamente")
+
         stored_token.validate()
 
         user = await self.user_repository.get(stored_token.user_id)

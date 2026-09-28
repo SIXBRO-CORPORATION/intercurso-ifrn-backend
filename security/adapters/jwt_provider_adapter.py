@@ -1,23 +1,12 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Tuple
 from uuid import UUID
 
-from jose import JWTError, jwt, ExpiredSignatureError
-
-from jwt.exceptions import (
-    InvalidTokenError,
-    InvalidSignatureError,
-    DecodeError,
-)
+import jwt
 
 from core.security.jwt_provider_port import JWTProviderPort
-from domain.exceptions.jwt_exception import (
-    JWTExpiredError,
-    JWTValidationError,
-    JWTDecodeError,
-)
 from security.config import settings
 from domain.auth.auth_token import AuthToken
 from domain.exceptions.business_exception import BusinessException
@@ -58,37 +47,6 @@ class JWTProviderAdapter(JWTProviderPort):
             user_id=user_id,
         )
 
-    def decode_token(self, token: str) -> Dict[str, Any]:
-        try:
-            payload = jwt.decode(
-                token,
-                self.secret_key,
-                algorithms=[self.algorithm],
-                options={
-                    "verify_signature": True,
-                    "verify_exp": True,
-                    "verify_iat": True,
-                    "require": ["sub", "exp", "iat"],
-                },
-            )
-
-            return payload
-
-        except ExpiredSignatureError:
-            raise JWTExpiredError("Token Expirado")
-
-        except InvalidSignatureError:
-            raise JWTValidationError("Assinatura do token inválida")
-
-        except DecodeError as e:
-            raise JWTDecodeError(f"Token malformado: {str(e)}")
-
-        except InvalidTokenError as e:
-            raise JWTDecodeError(f"Token inválido: {str(e)}")
-
-        except Exception as e:
-            raise JWTDecodeError(f"Erro ao decodificar token: {str(e)}")
-
     def verify_token(self, token: str) -> dict:
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
@@ -98,7 +56,7 @@ class JWTProviderAdapter(JWTProviderPort):
 
             return payload
 
-        except JWTError as e:
+        except jwt.InvalidTokenError as e:
             raise BusinessException(f"Token inválido: {str(e)}")
 
     def get_user_id_from_token(self, token: str) -> UUID:

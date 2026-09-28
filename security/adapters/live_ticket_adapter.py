@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import Callable
 from uuid import UUID
-from jose import jwt, JWTError
+import jwt
 
 from core.realtime.live_ticket_port import InvalidLiveTicketError, LiveTicketPort
 from security.config import settings
@@ -39,14 +39,9 @@ class LiveTicketAdapter(LiveTicketPort):
                 ticket,
                 self._secret_key,
                 algorithms=[self._algorithm],
-                options={
-                    "require_exp": True,
-                    "require_iat": True,
-                    "require_sub": True,
-                    "verify_exp": True,
-                },
+                options={"require": ["exp", "iat", "sub"]},
             )
-        except JWTError as exc:
+        except jwt.InvalidTokenError as exc:
             raise InvalidLiveTicketError(f"Ticket inválido: {exc}") from exc
 
         if payload.get("scope") != TICKET_SCOPE_CLAIM:

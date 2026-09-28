@@ -597,6 +597,9 @@ def get_undo_last_event_port(
         MatchSetRepositoryPort, Depends(get_match_set_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    bracket_group_team_repository: Annotated[
+        BracketGroupTeamRepositoryPort, Depends(get_bracket_group_team_repository)
+    ],
 ) -> UndoLastEventPort:
     return UndoLastEventAdapter(
         match_repository,
@@ -610,6 +613,7 @@ def get_undo_last_event_port(
         volleyball_modality_configuration_repository,
         match_set_repository,
         audit_logger,
+        bracket_group_team_repository,
     )
 
 
@@ -639,6 +643,9 @@ def get_delete_event_port(
         MatchSetRepositoryPort, Depends(get_match_set_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    bracket_group_team_repository: Annotated[
+        BracketGroupTeamRepositoryPort, Depends(get_bracket_group_team_repository)
+    ],
 ) -> DeleteEventPort:
     return DeleteEventAdapter(
         match_repository,
@@ -652,4 +659,5 @@ def get_delete_event_port(
         volleyball_modality_configuration_repository,
         match_set_repository,
         audit_logger,
+        bracket_group_team_repository,
     )

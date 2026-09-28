@@ -16,7 +16,6 @@ dependencies = [
     "asyncpg==0.29.0",
     "httpx>=0.28.1",
     "pyjwt>=2.10.1",
-    "python-jose>=3.3.0",
     "pydantic[email]==2.10.0",
     "pydantic-settings>=2.0.0",
     "apscheduler>=3.10.4",
@@ -42,26 +41,19 @@ where = ["."]
 
 [tool.taskipy.tasks]
 
-# 🔥 Ambiente
 install = "uv venv && uv pip install . && uv pip install --group dev"
 
-# 🚀 Aplicação
 run = "uv run uvicorn web.main:app --reload"
 
-# 🧪 Testes
 test = "uv run pytest"
 test_unit = "uv run pytest tests/unit"
 test_integration = "uv run pytest tests/integration"
 test_e2e = "uv run pytest tests/e2e"
 
-# 📊 Cobertura
 coverage = "uv run pytest --cov=core --cov=domain --cov=business --cov=security --cov=persistence --cov-report=term-missing"
 
-# 🧹 Qualidade de código
 lint = "uv run ruff check ."
 
-# 🔍 Tudo de uma vez (local / CI)
 check = "task lint && task test"
 
-# 🧨 Limpeza
 clean = "rm -rf .venv .pytest_cache .ruff_cache dist build *.egg-info"

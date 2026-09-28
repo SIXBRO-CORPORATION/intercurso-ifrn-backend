@@ -9,6 +9,9 @@ from business.match._shared import load_management_context
 from core.business.audit.audit_logger import AuditLogger
 from core.business.match.undo_last_event_port import UndoLastEventPort
 from core.context import Context
+from core.persistence.bracket.bracket_group_team_repository_port import (
+    BracketGroupTeamRepositoryPort,
+)
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
@@ -41,6 +44,7 @@ class UndoLastEventAdapter(UndoLastEventPort):
         volleyball_modality_configuration_repository: VolleyballModalityConfigurationRepositoryPort,
         match_set_repository: MatchSetRepositoryPort,
         audit_logger: AuditLogger,
+        bracket_group_team_repository: BracketGroupTeamRepositoryPort,
     ):
         self.match_repository = match_repository
         self.match_event_repository = match_event_repository
@@ -55,6 +59,7 @@ class UndoLastEventAdapter(UndoLastEventPort):
         )
         self.match_set_repository = match_set_repository
         self.audit_logger = audit_logger
+        self.bracket_group_team_repository = bracket_group_team_repository
 
     async def execute(self, context: Context) -> Match:
         match_id = context.get_property("match_id", UUID)
@@ -79,6 +84,7 @@ class UndoLastEventAdapter(UndoLastEventPort):
             modality_repository=self.modality_repository,
             modality_configuration_repository=self.modality_configuration_repository,
             audit_logger=self.audit_logger,
+            bracket_group_team_repository=self.bracket_group_team_repository,
             normal_audit_action=AuditAction.MATCH_EVENT_UNDONE,
         )
 

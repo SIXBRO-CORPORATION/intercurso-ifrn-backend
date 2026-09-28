@@ -3,10 +3,12 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from starlette.middleware.cors import CORSMiddleware
 
 from scheduling.configuration.scheduler import start_scheduler, stop_scheduler
-from persistence.database import close_db
+from persistence.database import AsyncSessionLocal, close_db
 from security.config import settings
 from web.commons.exception_handler import register_exception_handler
 from web.controllers.team_controller import router as team_router
@@ -79,7 +81,15 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "database": "connected", "pool": "active"}
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("select 1"))
+    except Exception:
+        logger.exception("Health check: banco indisponível")
+        return JSONResponse(
+            {"status": "unhealthy", "database": "disconnected"}, status_code=503
+        )
+    return {"status": "healthy", "database": "connected"}
 
 
 if __name__ == "__main__":

@@ -20,6 +20,10 @@ class RefreshTokenRepositoryPort(BaseRepositoryPort[RefreshToken]):
         pass
 
     @abstractmethod
+    async def commit(self) -> None:
+        pass
+
+    @abstractmethod
     async def delete_expired(self) -> int:
         pass
 

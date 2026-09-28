@@ -39,7 +39,7 @@ async def validate_match_in_progress(
     if monitor_id is None:
         raise BusinessException("Monitor responsável é obrigatório")
 
-    match = await match_repository.get(match_id)
+    match = await match_repository.lock_for_update(match_id)
     if match is None:
         raise BusinessException("Partida não encontrada")
 

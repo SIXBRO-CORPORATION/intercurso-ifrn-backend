@@ -20,7 +20,7 @@ from tests.unit.business.match._helpers import stub_empty_management_context
 
 
 def make_mocks():
-    return {
+    mocks = {
         "match_repository": AsyncMock(),
         "match_event_repository": AsyncMock(),
         "bracket_group_team_repository": AsyncMock(),
@@ -34,6 +34,10 @@ def make_mocks():
         "match_set_repository": AsyncMock(),
         "audit_logger": AsyncMock(),
     }
+    mocks["match_repository"].lock_for_update.side_effect = (
+        lambda match_id: mocks["match_repository"].get.return_value
+    )
+    return mocks
 
 
 def make_start_adapter(mocks):
@@ -406,6 +410,8 @@ class TestEndPenaltyShootoutAdapter:
             return match if match_id == match.id else None
 
         async def lock_for_update(match_id):
+            if match_id == match.id:
+                return match
             return next_match if match_id == next_match_id else None
 
         mocks["match_repository"].get.side_effect = get_match
