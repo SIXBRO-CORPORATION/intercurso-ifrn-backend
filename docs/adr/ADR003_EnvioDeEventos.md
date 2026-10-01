@@ -114,6 +114,15 @@ data: {"match_id": 42, "team_id": 7, "player_id": 15, "clock_seconds": 932, "new
 Isso permite que o `EventSource` no front use `addEventListener("goal_scored", handler)` por tipo,
 em vez de um único `onmessage` que precisa inspecionar o payload para descobrir o tipo.
 
+### 4.1 Ticket de conexão e reconexão (ver [ADR 0004](ADR004_ModeloDeAcesso.md))
+
+O `EventSource` não envia headers, então a conexão é aberta com `?ticket=` (JWT de 30s emitido por
+`POST /api/realtime/ticket`). **O ticket vale só para abrir a conexão**: a reconexão automática do
+`EventSource` reutiliza a mesma URL, e depois de 30s o servidor responde `401` — o `EventSource`
+trata qualquer status diferente de 200 como falha definitiva e **não tenta de novo**. Por isso o
+cliente não deve confiar na reconexão nativa: no `onerror`, chamar `es.close()`, pedir um ticket novo
+e abrir um novo `EventSource` (com backoff), e então reconciliar via `GET /api/match/{match_id}`.
+
 ### 5. Push Notifications (RN13-16 do UC016) ficam fora deste ADR
 
 Push Notification é um mecanismo independente (entrega mesmo com app fechado, via FCM/APNs) e não

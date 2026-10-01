@@ -12,6 +12,7 @@ ConnectionKey = Union[UUID, str]
 
 DEFAULT_QUEUE_MAX_SIZE = 100
 DEFAULT_MAX_CONNECTIONS_PER_USER = 2
+DEFAULT_MAX_CONNECTIONS_PER_IP = 100
 
 
 @dataclass(frozen=True)
@@ -32,9 +33,11 @@ class Broadcaster:
         self,
         queue_max_size: int = DEFAULT_QUEUE_MAX_SIZE,
         max_connections_per_user: int = DEFAULT_MAX_CONNECTIONS_PER_USER,
+        max_connections_per_ip: int = DEFAULT_MAX_CONNECTIONS_PER_IP,
     ) -> None:
         self._queue_max_size = queue_max_size
         self._max_connections_per_user = max_connections_per_user
+        self._max_connections_per_ip = max_connections_per_ip
 
         self._channels: Dict[str, Set["asyncio.Queue[RealtimeEvent]"]] = defaultdict(set)
         self._connections_by_key: Dict[ConnectionKey, int] = defaultdict(int)
@@ -52,10 +55,14 @@ class Broadcaster:
         self, channel: str, connection_key: ConnectionKey
     ) -> "asyncio.Queue[RealtimeEvent]":
         async with self._lock:
-            if self._connections_by_key[connection_key] >= self._max_connections_per_user:
+            limit = (
+                self._max_connections_per_user
+                if isinstance(connection_key, UUID)
+                else self._max_connections_per_ip
+            )
+            if self._connections_by_key[connection_key] >= limit:
                 raise ConnectionLimitExceededError(
-                    f"{connection_key} já possui o número máximo de conexões "
-                    f"em tempo real permitidas ({self._max_connections_per_user})."
+                    f"Limite de conexões em tempo real atingido ({limit})."
                 )
 
             queue: "asyncio.Queue[RealtimeEvent]" = asyncio.Queue(

@@ -49,8 +49,7 @@ class TestBroadcaster:
         await broadcaster.publish(channel, "goal_scored", {})
 
     async def test_connection_key_accepts_ip_string_for_anonymous_visitors(self):
-        """ADR 0004: visitante anônimo assina com chave por IP, não com UUID."""
-        broadcaster = Broadcaster(max_connections_per_user=1)
+        broadcaster = Broadcaster(max_connections_per_ip=1)
         channel = Broadcaster.match_channel(uuid4())
 
         await broadcaster.subscribe(channel, "ip:203.0.113.10")
@@ -100,3 +99,12 @@ class TestBroadcaster:
                 await broadcaster.publish(channel, "EVT", {"n": i})
 
         await asyncio.wait_for(publish_many(), timeout=1)
+
+    async def test_ip_limit_is_higher_than_user_limit(self):
+        broadcaster = Broadcaster(max_connections_per_user=2)
+        channel = Broadcaster.match_channel(uuid4())
+
+        for _ in range(3):
+            await broadcaster.subscribe(channel, "ip:203.0.113.10")
+
+        await broadcaster.subscribe(channel, uuid4())

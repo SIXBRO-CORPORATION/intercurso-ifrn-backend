@@ -4,7 +4,7 @@ import time
 from collections import defaultdict, deque
 from typing import Deque, Dict
 
-DEFAULT_MAX_REQUESTS = 10
+DEFAULT_MAX_REQUESTS = 200
 DEFAULT_WINDOW_SECONDS = 60.0
 
 
