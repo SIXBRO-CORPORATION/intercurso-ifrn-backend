@@ -70,6 +70,9 @@ from web.dependencies.business.season_dependencies import (
 
 from web.dependencies.business.bracket_dependencies import (
     get_bracket_config_suggestion_port,
+    get_bracket_details_port,
+    get_list_bracket_matches_port,
+    get_list_brackets_by_season_port,
     get_create_bracket_port,
     get_resort_bracket_port,
     get_update_match_port,
@@ -175,6 +178,9 @@ __all__ = [
 
     # Business Dependencies - Brackets
     "get_bracket_config_suggestion_port",
+    "get_bracket_details_port",
+    "get_list_bracket_matches_port",
+    "get_list_brackets_by_season_port",
     "get_create_bracket_port",
     "get_resort_bracket_port",
     "get_update_match_port",
