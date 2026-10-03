@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
@@ -27,6 +27,16 @@ class TeamMemberRepositoryPort(BaseRepositoryPort[TeamMember]):
 
     @abstractmethod
     async def count_pending_donations_by_team(self, team_id: UUID) -> int:
+        pass
+
+    @abstractmethod
+    async def count_by_teams(self, team_ids: List[UUID]) -> Dict[UUID, int]:
+        pass
+
+    @abstractmethod
+    async def count_pending_donations_by_teams(
+        self, team_ids: List[UUID]
+    ) -> Dict[UUID, int]:
         pass
 
     @abstractmethod

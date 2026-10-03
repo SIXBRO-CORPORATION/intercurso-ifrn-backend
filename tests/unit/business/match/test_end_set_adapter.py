@@ -44,7 +44,7 @@ def setup_volleyball(mocks, match, **volleyball_overrides):
     ].find_by_modality_configuration_id.return_value = VolleyballModalityConfiguration(
         **defaults
     )
-    mocks["match_set_repository"].find_by_match.return_value = []
+    mocks["match_set_repository"].count_by_match.return_value = 0
     mocks["match_set_repository"].save.side_effect = lambda match_set: match_set
 
 
@@ -157,10 +157,7 @@ class TestEndSetAdapter:
         mocks["match_repository"].get.return_value = match
         mocks["match_repository"].save.side_effect = lambda m: m
         setup_volleyball(mocks, match)
-        mocks["match_set_repository"].find_by_match.return_value = [
-            MatchSet(match_id=match.id, set_number=1),
-            MatchSet(match_id=match.id, set_number=2),
-        ]
+        mocks["match_set_repository"].count_by_match.return_value = 2
 
         context = make_context(match.id, monitor_id)
         result = await adapter.execute(context)
@@ -224,7 +221,7 @@ class TestEndSetAdapter:
         mocks[
             "volleyball_modality_configuration_repository"
         ].find_by_modality_configuration_id.return_value = None
-        mocks["match_set_repository"].find_by_match.return_value = []
+        mocks["match_set_repository"].count_by_match.return_value = 0
         mocks["match_set_repository"].save.side_effect = lambda match_set: match_set
 
         context = make_context(match.id, monitor_id)

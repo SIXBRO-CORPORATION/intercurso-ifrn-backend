@@ -94,8 +94,8 @@ class EndSetAdapter(EndSetPort):
         team1_points = match.team1_score or 0
         team2_points = match.team2_score or 0
 
-        existing_sets = await self.match_set_repository.find_by_match(match_id)
-        current_set_number = len(existing_sets) + 1
+        existing_sets_count = await self.match_set_repository.count_by_match(match_id)
+        current_set_number = existing_sets_count + 1
 
         is_final_set = current_set_number == (2 * sets_to_win - 1)
         points_required = final_set_points if is_final_set else points_per_set

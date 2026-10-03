@@ -1,5 +1,4 @@
 from dataclasses import dataclass, replace
-from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -87,15 +86,14 @@ async def find_last_correctable_event(
     match_id: UUID,
 ) -> MatchEvent:
 
-    events = await match_event_repository.find_by_match(match_id)
-    correctable = [
-        event for event in events if event.event_type not in NON_CORRECTABLE_EVENT_TYPES
-    ]
-    if not correctable:
+    last_event = await match_event_repository.find_last_by_match_excluding_types(
+        match_id, NON_CORRECTABLE_EVENT_TYPES
+    )
+    if last_event is None:
         raise BusinessException(
             "Não há eventos que possam ser desfeitos nesta partida"
         )
-    return max(correctable, key=lambda event: event.created_at or datetime.min)
+    return last_event
 
 
 async def get_correctable_event(
@@ -120,20 +118,9 @@ async def _find_linked_expulsion(
     if card_event.player_id is None:
         return None
 
-    expulsions = await match_event_repository.find_by_match_and_type(
-        card_event.match_id, EventType.EXPULSION
+    return await match_event_repository.find_expulsion_by_player(
+        card_event.match_id, card_event.player_id, card_event.clock_seconds
     )
-    same_clock = [
-        e
-        for e in expulsions
-        if e.player_id == card_event.player_id
-        and e.clock_seconds == card_event.clock_seconds
-    ]
-    if same_clock:
-        return same_clock[0]
-
-    by_player = [e for e in expulsions if e.player_id == card_event.player_id]
-    return by_player[0] if by_player else None
 
 
 async def _reverse_expulsion_if_needed(
@@ -165,33 +152,22 @@ async def _recompute_running_score(
     is_sets_modality: bool,
 ) -> None:
 
-    events = await match_event_repository.find_by_match(match.id)
-
     boundary_created_at = None
     if is_sets_modality:
-        set_end_events = [e for e in events if e.event_type == EventType.SET_END]
-        if set_end_events:
-            last_set_end = max(
-                set_end_events, key=lambda e: e.created_at or datetime.min
-            )
+        last_set_end = await match_event_repository.find_last_by_match_and_type(
+            match.id, EventType.SET_END
+        )
+        if last_set_end is not None:
             boundary_created_at = last_set_end.created_at
 
-    team1_score = 0
-    team2_score = 0
-    for event in events:
-        if event.event_type not in (EventType.GOAL, EventType.POINT):
-            continue
-        if boundary_created_at is not None and (
-            (event.created_at or datetime.min) <= boundary_created_at
-        ):
-            continue
-        if event.team_id == match.team1_id:
-            team1_score += 1
-        elif event.team_id == match.team2_id:
-            team2_score += 1
+    scores_by_team = await match_event_repository.count_by_team(
+        match.id,
+        (EventType.GOAL, EventType.POINT),
+        created_after=boundary_created_at,
+    )
 
-    match.team1_score = team1_score
-    match.team2_score = team2_score
+    match.team1_score = scores_by_team.get(match.team1_id, 0)
+    match.team2_score = scores_by_team.get(match.team2_id, 0)
 
 
 async def _recompute_sets_won(
@@ -212,9 +188,8 @@ async def _revert_set_end(
     if set_number is None:
         return
 
-    match_sets = await match_set_repository.find_by_match(match.id)
-    target_set = next(
-        (s for s in match_sets if s.set_number == set_number), None
+    target_set = await match_set_repository.find_by_match_and_number(
+        match.id, set_number
     )
     if target_set is None:
         return
@@ -226,18 +201,11 @@ async def _recompute_penalty_score(
     match: Match, match_event_repository: MatchEventRepositoryPort
 ) -> None:
 
-    events = await match_event_repository.find_by_match(match.id)
-
-    team1_penalties = sum(
-        1
-        for e in events
-        if e.event_type == EventType.PENALTY_GOAL and e.team_id == match.team1_id
+    penalties_by_team = await match_event_repository.count_by_team(
+        match.id, (EventType.PENALTY_GOAL,)
     )
-    team2_penalties = sum(
-        1
-        for e in events
-        if e.event_type == EventType.PENALTY_GOAL and e.team_id == match.team2_id
-    )
+    team1_penalties = penalties_by_team.get(match.team1_id, 0)
+    team2_penalties = penalties_by_team.get(match.team2_id, 0)
 
     match.team1_penalty_score = team1_penalties
     match.team2_penalty_score = team2_penalties

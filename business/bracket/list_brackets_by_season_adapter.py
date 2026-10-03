@@ -29,11 +29,18 @@ class ListBracketsBySeasonAdapter(ListBracketsBySeasonPort):
 
         brackets = await self.bracket_repository.find_by_season(season_id)
 
-        stats = {}
-        # ponytail: one find_by_bracket per bracket (N+1); fine while a season has few modalities
-        for bracket in brackets:
-            matches = await self.match_repository.find_by_bracket(bracket.id)
-            stats[bracket.id] = build_bracket_stats(bracket, matches)
+        matches_by_bracket = {bracket.id: [] for bracket in brackets}
+        if brackets:
+            all_matches = await self.match_repository.find_by_brackets(
+                [bracket.id for bracket in brackets]
+            )
+            for match in all_matches:
+                matches_by_bracket.setdefault(match.bracket_id, []).append(match)
+
+        stats = {
+            bracket.id: build_bracket_stats(bracket, matches_by_bracket[bracket.id])
+            for bracket in brackets
+        }
 
         modality_names = {}
         modality_ids = list({bracket.modality_id for bracket in brackets})

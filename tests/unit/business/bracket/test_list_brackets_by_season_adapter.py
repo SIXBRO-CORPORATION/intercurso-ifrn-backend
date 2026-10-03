@@ -36,10 +36,10 @@ class TestListBracketsBySeasonAdapter:
             status=BracketStatus.ACTIVE,
         )
         bracket_repository.find_by_season.return_value = [bracket]
-        match_repository.find_by_bracket.return_value = [
-            Match(status=MatchStatus.IN_PROGRESS),
-            Match(status=MatchStatus.FINISHED),
-            Match(status=MatchStatus.SCHEDULED),
+        match_repository.find_by_brackets.return_value = [
+            Match(bracket_id=bracket.id, status=MatchStatus.IN_PROGRESS),
+            Match(bracket_id=bracket.id, status=MatchStatus.FINISHED),
+            Match(bracket_id=bracket.id, status=MatchStatus.SCHEDULED),
         ]
         modality_repository.find_by_ids.return_value = [
             Modality(id=modality_id, name="Futsal")
@@ -59,6 +59,41 @@ class TestListBracketsBySeasonAdapter:
         assert context.get_property("modality_names", dict) == {modality_id: "Futsal"}
 
     @pytest.mark.asyncio
+    async def test_loads_matches_of_all_brackets_in_one_query(self):
+        adapter, bracket_repository, match_repository, modality_repository = make_adapter()
+        season_id = uuid4()
+        bracket_a = Bracket(
+            id=uuid4(), season_id=season_id, modality_id=uuid4(), status=BracketStatus.ACTIVE
+        )
+        bracket_b = Bracket(
+            id=uuid4(), season_id=season_id, modality_id=uuid4(), status=BracketStatus.ACTIVE
+        )
+        bracket_c = Bracket(
+            id=uuid4(), season_id=season_id, modality_id=uuid4(), status=BracketStatus.DRAFT
+        )
+        bracket_repository.find_by_season.return_value = [bracket_a, bracket_b, bracket_c]
+        match_repository.find_by_brackets.return_value = [
+            Match(bracket_id=bracket_a.id, status=MatchStatus.FINISHED),
+            Match(bracket_id=bracket_b.id, status=MatchStatus.SCHEDULED),
+            Match(bracket_id=bracket_a.id, status=MatchStatus.SCHEDULED),
+        ]
+        modality_repository.find_by_ids.return_value = []
+
+        context = Context()
+        context.put_property("season_id", season_id)
+
+        await adapter.execute(context)
+
+        match_repository.find_by_brackets.assert_awaited_once_with(
+            [bracket_a.id, bracket_b.id, bracket_c.id]
+        )
+        stats = context.get_property("bracket_stats", dict)
+        assert stats[bracket_a.id]["total_matches"] == 2
+        assert stats[bracket_a.id]["finished_matches"] == 1
+        assert stats[bracket_b.id]["total_matches"] == 1
+        assert stats[bracket_c.id]["total_matches"] == 0
+
+    @pytest.mark.asyncio
     async def test_offers_resort_when_no_match_started(self):
         adapter, bracket_repository, match_repository, modality_repository = make_adapter()
         season_id = uuid4()
@@ -69,8 +104,8 @@ class TestListBracketsBySeasonAdapter:
             status=BracketStatus.ACTIVE,
         )
         bracket_repository.find_by_season.return_value = [bracket]
-        match_repository.find_by_bracket.return_value = [
-            Match(status=MatchStatus.SCHEDULED)
+        match_repository.find_by_brackets.return_value = [
+            Match(bracket_id=bracket.id, status=MatchStatus.SCHEDULED)
         ]
         modality_repository.find_by_ids.return_value = []
 
@@ -93,7 +128,7 @@ class TestListBracketsBySeasonAdapter:
         result = await adapter.execute(context)
 
         assert result == []
-        match_repository.find_by_bracket.assert_not_awaited()
+        match_repository.find_by_brackets.assert_not_awaited()
         modality_repository.find_by_ids.assert_not_awaited()
 
     @pytest.mark.asyncio

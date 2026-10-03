@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from business.match._correction_shared import NON_CORRECTABLE_EVENT_TYPES
 from business.match.delete_event_adapter import DeleteEventAdapter
 from business.match.undo_last_event_adapter import UndoLastEventAdapter
 from core.context import Context
@@ -42,7 +43,11 @@ def make_mocks():
         lambda match_id: mocks["match_repository"].get.return_value
     )
     mocks["match_event_repository"].soft_delete_event.return_value = True
-    mocks["match_event_repository"].find_by_match_and_type.return_value = []
+    mocks["match_event_repository"].find_expulsion_by_player.return_value = None
+    mocks["match_event_repository"].find_last_by_match_excluding_types.return_value = None
+    mocks["match_event_repository"].find_last_by_match_and_type.return_value = None
+    mocks["match_event_repository"].count_by_team.return_value = {}
+    mocks["match_set_repository"].find_by_match_and_number.return_value = None
     mocks["match_set_repository"].count_sets_won_by_team.return_value = {}
     mocks["match_repository"].save.side_effect = lambda match: match
     # Sem modalidade de sets por padrão (futebol/handebol etc.).
@@ -130,7 +135,6 @@ class TestValidateMatchCorrectable:
         match = make_in_progress_match(monitor_id=monitor_id)
         match.status = MatchStatus.SCHEDULED
         mocks["match_repository"].get.return_value = match
-        mocks["match_event_repository"].find_by_match.return_value = []
 
         context = make_undo_context(match.id, monitor_id)
 
@@ -146,14 +150,16 @@ class TestValidateMatchCorrectable:
         other_monitor_id = uuid4()
         match = make_in_progress_match(monitor_id=monitor_id)
         mocks["match_repository"].get.return_value = match
-        mocks["match_event_repository"].find_by_match.return_value = [
+        mocks["match_event_repository"].find_last_by_match_excluding_types.return_value = (
             make_event(match.id, EventType.GOAL, team_id=match.team1_id)
-        ]
+        )
 
         context = make_undo_context(match.id, other_monitor_id)
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
+
+        mocks["match_event_repository"].soft_delete_event.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_finished_match_allows_any_monitor(self):
@@ -168,9 +174,9 @@ class TestValidateMatchCorrectable:
         match.team1_score = 2
         match.team2_score = 1
         mocks["match_repository"].get.return_value = match
-        mocks["match_event_repository"].find_by_match.return_value = [
+        mocks["match_event_repository"].find_last_by_match_excluding_types.return_value = (
             make_event(match.id, EventType.GOAL, team_id=match.team1_id)
-        ]
+        )
 
         context = make_undo_context(match.id, other_monitor_id)
 
@@ -189,15 +195,15 @@ class TestNonCorrectableEventTypes:
         monitor_id = uuid4()
         match = make_in_progress_match(monitor_id=monitor_id)
         mocks["match_repository"].get.return_value = match
-        mocks["match_event_repository"].find_by_match.return_value = [
-            make_event(match.id, EventType.MATCH_STARTED),
-            make_event(match.id, EventType.PERIOD_START),
-        ]
+        # Só existem eventos estruturais: o filtro em SQL não devolve nenhum.
+        mocks["match_event_repository"].find_last_by_match_excluding_types.return_value = None
 
         context = make_undo_context(match.id, monitor_id)
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
+
+        mocks["match_event_repository"].soft_delete_event.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_delete_rejects_non_correctable_event_type(self):
@@ -256,15 +262,23 @@ class TestUndoLastEvent:
         period_end_event = make_event(
             match.id, EventType.PERIOD_END, created_at=now
         )
-        mocks["match_event_repository"].find_by_match.side_effect = [
-            [goal_event, period_end_event],  # 1ª chamada: localizar o alvo
-            [period_end_event],  # 2ª chamada: recompute pós soft-delete
-            [period_end_event],  # 3ª chamada: timeline em load_management_context
-        ]
+        # O banco já devolve o último evento correctable (ignora PERIOD_END).
+        mocks["match_event_repository"].find_last_by_match_excluding_types.return_value = (
+            goal_event
+        )
+        # Pós soft-delete não sobra nenhum gol.
+        mocks["match_event_repository"].count_by_team.return_value = {}
+        # Timeline em load_management_context.
+        mocks["match_event_repository"].find_by_match.return_value = [period_end_event]
 
         context = make_undo_context(match.id, monitor_id)
         result = await adapter.execute(context)
 
+        mocks[
+            "match_event_repository"
+        ].find_last_by_match_excluding_types.assert_awaited_once_with(
+            match.id, NON_CORRECTABLE_EVENT_TYPES
+        )
         mocks["match_event_repository"].soft_delete_event.assert_awaited_once_with(
             goal_event.id
         )
@@ -278,7 +292,7 @@ class TestUndoLastEvent:
         monitor_id = uuid4()
         match = make_in_progress_match(monitor_id=monitor_id)
         mocks["match_repository"].get.return_value = match
-        mocks["match_event_repository"].find_by_match.return_value = []
+        mocks["match_event_repository"].find_last_by_match_excluding_types.return_value = None
 
         context = make_undo_context(match.id, monitor_id)
 
@@ -299,16 +313,18 @@ class TestGoalPointRecomputation:
         mocks["match_repository"].get.return_value = match
 
         goal_to_delete = make_event(match.id, EventType.GOAL, team_id=match.team1_id)
-        remaining_goal = make_event(match.id, EventType.GOAL, team_id=match.team1_id)
         mocks["match_event_repository"].get.return_value = goal_to_delete
-        # Após o soft delete, o evento removido não aparece mais em find_by_match.
-        mocks["match_event_repository"].find_by_match.return_value = [remaining_goal]
+        # Após o soft delete, resta 1 gol do time 1 (agregado em SQL por time).
+        mocks["match_event_repository"].count_by_team.return_value = {match.team1_id: 1}
 
         context = make_delete_context(match.id, monitor_id, goal_to_delete.id)
         result = await adapter.execute(context)
 
         assert result.team1_score == 1
         assert result.team2_score == 0
+        mocks["match_event_repository"].count_by_team.assert_awaited_once_with(
+            match.id, (EventType.GOAL, EventType.POINT), created_after=None
+        )
 
     @pytest.mark.asyncio
     async def test_delete_returns_business_error_when_event_already_corrected(self):
@@ -382,13 +398,16 @@ class TestExpulsionReversal:
             metadata_json={"triggered_by": "second_yellow", "auto_generated": True},
         )
         mocks["match_event_repository"].get.return_value = second_yellow
-        mocks["match_event_repository"].find_by_match_and_type.return_value = [
+        mocks["match_event_repository"].find_expulsion_by_player.return_value = (
             linked_expulsion
-        ]
-        mocks["match_event_repository"].find_by_match.return_value = []
+        )
 
         context = make_delete_context(match.id, monitor_id, second_yellow.id)
         await adapter.execute(context)
+
+        mocks["match_event_repository"].find_expulsion_by_player.assert_awaited_once_with(
+            match.id, player_id, 200
+        )
 
         assert mocks["match_event_repository"].soft_delete_event.await_args_list == [
             ((second_yellow.id,),),
@@ -421,7 +440,7 @@ class TestExpulsionReversal:
         mocks["match_event_repository"].soft_delete_event.assert_awaited_once_with(
             first_yellow.id
         )
-        mocks["match_event_repository"].find_by_match_and_type.assert_not_awaited()
+        mocks["match_event_repository"].find_expulsion_by_player.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_deleting_direct_red_card_removes_linked_expulsion(self):
@@ -445,10 +464,9 @@ class TestExpulsionReversal:
             metadata_json={"triggered_by": "direct_red", "auto_generated": False},
         )
         mocks["match_event_repository"].get.return_value = red_card
-        mocks["match_event_repository"].find_by_match_and_type.return_value = [
+        mocks["match_event_repository"].find_expulsion_by_player.return_value = (
             linked_expulsion
-        ]
-        mocks["match_event_repository"].find_by_match.return_value = []
+        )
 
         context = make_delete_context(match.id, monitor_id, red_card.id)
         await adapter.execute(context)
@@ -486,17 +504,19 @@ class TestSetEndCorrection:
             winner_team_id=match.team1_id,
         )
         mocks["match_event_repository"].get.return_value = set_end_event
-        mocks["match_set_repository"].find_by_match.return_value = [match_set]
+        mocks["match_set_repository"].find_by_match_and_number.return_value = match_set
         mocks["match_set_repository"].soft_delete_set.return_value = True
         # Depois do soft delete não sobra nenhum set ganho.
         mocks["match_set_repository"].count_sets_won_by_team.return_value = {}
         # Os pontos do set reaberto vêm dos GOAL/POINT restantes.
-        reopened_point = make_event(match.id, EventType.POINT, team_id=match.team1_id)
-        mocks["match_event_repository"].find_by_match.return_value = [reopened_point]
+        mocks["match_event_repository"].count_by_team.return_value = {match.team1_id: 1}
 
         context = make_delete_context(match.id, monitor_id, set_end_event.id)
         result = await adapter.execute(context)
 
+        mocks["match_set_repository"].find_by_match_and_number.assert_awaited_once_with(
+            match.id, 1
+        )
         mocks["match_set_repository"].soft_delete_set.assert_awaited_once_with(
             match_set.id
         )
@@ -535,8 +555,7 @@ class TestPostFinishCorrection:
 
         goal = make_event(match.id, EventType.GOAL, team_id=match.team1_id)
         mocks["match_event_repository"].get.return_value = goal
-        remaining = make_event(match.id, EventType.GOAL, team_id=match.team2_id)
-        mocks["match_event_repository"].find_by_match.return_value = [remaining]
+        mocks["match_event_repository"].count_by_team.return_value = {match.team2_id: 1}
 
         await adapter.execute(make_delete_context(match.id, monitor_id, goal.id))
 
@@ -562,8 +581,7 @@ class TestPostFinishCorrection:
         goal_event = make_event(match.id, EventType.GOAL, team_id=match.team1_id)
         mocks["match_event_repository"].get.return_value = goal_event
         # Sobrou 1 gol do time 2, o placar vira 1x1 -> alerta de correção.
-        remaining_goal = make_event(match.id, EventType.GOAL, team_id=match.team2_id)
-        mocks["match_event_repository"].find_by_match.return_value = [remaining_goal]
+        mocks["match_event_repository"].count_by_team.return_value = {match.team2_id: 1}
 
         context = make_delete_context(match.id, monitor_id, goal_event.id)
         result = await adapter.execute(context)
@@ -658,3 +676,87 @@ class TestNonCorrectableStructuralDeletion:
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
+
+
+class TestScoreRecomputationQueries:
+    @pytest.mark.asyncio
+    async def test_sets_modality_counts_only_events_after_last_set_end(self):
+        mocks = make_mocks()
+        adapter = make_delete_adapter(mocks)
+        stub_empty_management_context(mocks)
+        setup_sets_modality(mocks)
+
+        monitor_id = uuid4()
+        match = make_in_progress_match(monitor_id=monitor_id)
+        mocks["match_repository"].get.return_value = match
+
+        last_set_end = make_event(
+            match.id, EventType.SET_END, created_at=datetime.now() - timedelta(minutes=5)
+        )
+        point_to_delete = make_event(match.id, EventType.POINT, team_id=match.team2_id)
+        mocks["match_event_repository"].get.return_value = point_to_delete
+        mocks["match_event_repository"].find_last_by_match_and_type.return_value = (
+            last_set_end
+        )
+        mocks["match_event_repository"].count_by_team.return_value = {
+            match.team1_id: 4,
+            match.team2_id: 2,
+        }
+
+        result = await adapter.execute(
+            make_delete_context(match.id, monitor_id, point_to_delete.id)
+        )
+
+        mocks["match_event_repository"].find_last_by_match_and_type.assert_awaited_once_with(
+            match.id, EventType.SET_END
+        )
+        mocks["match_event_repository"].count_by_team.assert_awaited_once_with(
+            match.id,
+            (EventType.GOAL, EventType.POINT),
+            created_after=last_set_end.created_at,
+        )
+        assert (result.team1_score, result.team2_score) == (4, 2)
+
+    @pytest.mark.asyncio
+    async def test_non_sets_modality_does_not_look_for_set_end_boundary(self):
+        mocks = make_mocks()
+        adapter = make_delete_adapter(mocks)
+        stub_empty_management_context(mocks)
+
+        monitor_id = uuid4()
+        match = make_in_progress_match(monitor_id=monitor_id)
+        mocks["match_repository"].get.return_value = match
+        goal = make_event(match.id, EventType.GOAL, team_id=match.team1_id)
+        mocks["match_event_repository"].get.return_value = goal
+
+        await adapter.execute(make_delete_context(match.id, monitor_id, goal.id))
+
+        mocks["match_event_repository"].find_last_by_match_and_type.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_deleting_penalty_goal_recomputes_penalty_score_in_sql(self):
+        mocks = make_mocks()
+        adapter = make_delete_adapter(mocks)
+        stub_empty_management_context(mocks)
+
+        monitor_id = uuid4()
+        match = make_in_progress_match(monitor_id=monitor_id)
+        match.team1_penalty_score = 3
+        match.team2_penalty_score = 3
+        mocks["match_repository"].get.return_value = match
+        penalty = make_event(match.id, EventType.PENALTY_GOAL, team_id=match.team1_id)
+        mocks["match_event_repository"].get.return_value = penalty
+        mocks["match_event_repository"].count_by_team.return_value = {
+            match.team1_id: 2,
+            match.team2_id: 3,
+        }
+
+        result = await adapter.execute(
+            make_delete_context(match.id, monitor_id, penalty.id)
+        )
+
+        mocks["match_event_repository"].count_by_team.assert_awaited_once_with(
+            match.id, (EventType.PENALTY_GOAL,)
+        )
+        assert (result.team1_penalty_score, result.team2_penalty_score) == (2, 3)
+

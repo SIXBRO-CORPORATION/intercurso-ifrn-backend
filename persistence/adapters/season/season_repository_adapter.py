@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
@@ -63,6 +64,36 @@ class SeasonRepositoryAdapter(SeasonRepositoryPort):
             SeasonEntity.year == year,
             SeasonEntity.deleted_at.is_(None)
         ).order_by(SeasonEntity.created_at.desc())
+        result = await self.session.execute(query)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def find_draft_ready_to_open(self, now: datetime) -> List[Season]:
+        query = (
+            select(SeasonEntity)
+            .where(
+                SeasonEntity.status == SeasonStatus.DRAFT.value,
+                SeasonEntity.registration_start_date.is_not(None),
+                SeasonEntity.registration_start_date <= now,
+                SeasonEntity.deleted_at.is_(None),
+            )
+            .order_by(SeasonEntity.created_at.desc())
+        )
+        result = await self.session.execute(query)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def find_open_with_registration_ended(self, now: datetime) -> List[Season]:
+        query = (
+            select(SeasonEntity)
+            .where(
+                SeasonEntity.status == SeasonStatus.REGISTRATION_OPEN.value,
+                SeasonEntity.registration_end_date.is_not(None),
+                SeasonEntity.registration_end_date <= now,
+                SeasonEntity.deleted_at.is_(None),
+            )
+            .order_by(SeasonEntity.created_at.desc())
+        )
         result = await self.session.execute(query)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]

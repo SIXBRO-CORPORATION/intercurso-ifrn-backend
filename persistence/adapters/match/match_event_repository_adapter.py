@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Dict, Optional, List, Sequence
 from uuid import UUID
 
 from sqlalchemy import func, select, update
@@ -69,6 +69,82 @@ class MatchEventRepositoryAdapter(MatchEventRepositoryPort):
         result = await self.session.execute(query)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def find_last_by_match_excluding_types(
+        self, match_id: UUID, excluded_types: Sequence[EventType]
+    ) -> Optional[MatchEvent]:
+        query = select(MatchEventEntity).where(
+            MatchEventEntity.match_id == match_id,
+            MatchEventEntity.deleted_at.is_(None),
+        )
+        if excluded_types:
+            query = query.where(
+                MatchEventEntity.event_type.not_in(
+                    [event_type.value for event_type in excluded_types]
+                )
+            )
+        query = query.order_by(MatchEventEntity.created_at.desc()).limit(1)
+        result = await self.session.execute(query)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None
+
+    async def find_last_by_match_and_type(
+        self, match_id: UUID, event_type: EventType
+    ) -> Optional[MatchEvent]:
+        query = (
+            select(MatchEventEntity)
+            .where(
+                MatchEventEntity.match_id == match_id,
+                MatchEventEntity.event_type == event_type.value,
+                MatchEventEntity.deleted_at.is_(None),
+            )
+            .order_by(MatchEventEntity.created_at.desc())
+            .limit(1)
+        )
+        result = await self.session.execute(query)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None
+
+    async def find_expulsion_by_player(
+        self, match_id: UUID, player_id: UUID, preferred_clock_seconds: Optional[int]
+    ) -> Optional[MatchEvent]:
+        query = select(MatchEventEntity).where(
+            MatchEventEntity.match_id == match_id,
+            MatchEventEntity.player_id == player_id,
+            MatchEventEntity.event_type == EventType.EXPULSION.value,
+            MatchEventEntity.deleted_at.is_(None),
+        )
+        order_by = []
+        if preferred_clock_seconds is not None:
+            order_by.append(
+                (MatchEventEntity.clock_seconds == preferred_clock_seconds).desc()
+            )
+        order_by.append(MatchEventEntity.clock_seconds.asc())
+        result = await self.session.execute(query.order_by(*order_by).limit(1))
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None
+
+    async def count_by_team(
+        self,
+        match_id: UUID,
+        event_types: Sequence[EventType],
+        created_after: Optional[datetime] = None,
+    ) -> Dict[Optional[UUID], int]:
+        query = (
+            select(MatchEventEntity.team_id, func.count(MatchEventEntity.id))
+            .where(
+                MatchEventEntity.match_id == match_id,
+                MatchEventEntity.event_type.in_(
+                    [event_type.value for event_type in event_types]
+                ),
+                MatchEventEntity.deleted_at.is_(None),
+            )
+            .group_by(MatchEventEntity.team_id)
+        )
+        if created_after is not None:
+            query = query.where(MatchEventEntity.created_at > created_after)
+        result = await self.session.execute(query)
+        return {team_id: count for team_id, count in result.all()}
 
     async def find_by_player(self, player_id: UUID) -> List[MatchEvent]:
         query = (

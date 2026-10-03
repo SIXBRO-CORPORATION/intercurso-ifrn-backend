@@ -41,7 +41,7 @@ class TestListBracketMatchesAdapter:
         bracket_repository.get.return_value = Bracket(id=bracket_id)
         match_repository.find_by_bracket.return_value = [match]
         group_repository.find_by_bracket.return_value = [group]
-        team_repository.get.return_value = Team(id=team_id, name="Time X")
+        team_repository.find_by_ids.return_value = [Team(id=team_id, name="Time X")]
 
         context = Context()
         context.put_property("bracket_id", bracket_id)
@@ -51,6 +51,7 @@ class TestListBracketMatchesAdapter:
         assert result == [match]
         assert context.get_property("team_names", dict) == {team_id: "Time X"}
         assert context.get_property("group_names", dict) == {group.id: "A"}
+        team_repository.find_by_ids.assert_awaited_once_with([team_id])
 
     @pytest.mark.asyncio
     async def test_blocks_when_bracket_not_found(self):

@@ -62,6 +62,27 @@ class BracketGroupTeamRepositoryAdapter(BracketGroupTeamRepositoryPort):
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
 
+    async def find_by_groups(
+        self, bracket_group_ids: List[UUID]
+    ) -> List[BracketGroupTeam]:
+        if not bracket_group_ids:
+            return []
+        query = (
+            select(BracketGroupTeamEntity)
+            .where(
+                BracketGroupTeamEntity.bracket_group_id.in_(bracket_group_ids),
+                BracketGroupTeamEntity.deleted_at.is_(None),
+            )
+            .order_by(
+                BracketGroupTeamEntity.points.desc(),
+                BracketGroupTeamEntity.goals_difference.desc(),
+                BracketGroupTeamEntity.goals_for.desc(),
+            )
+        )
+        result = await self.session.execute(query)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]
+
     async def find_by_bracket_group_and_team(
         self, bracket_group_id: UUID, team_id: UUID
     ) -> Optional[BracketGroupTeam]:

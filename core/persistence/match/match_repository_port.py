@@ -15,6 +15,10 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
         pass
 
     @abstractmethod
+    async def find_by_brackets(self, bracket_ids: List[UUID]) -> List[Match]:
+        pass
+
+    @abstractmethod
     async def find_by_team(self, team_id: UUID) -> List[Match]:
         pass
 

@@ -76,12 +76,11 @@ class GetBracketConfigSuggestionAdapter(GetBracketConfigSuggestionPort):
                 "Já existe um chaveamento ativo criado para essa modalidade"
             )
 
-        approved_teams = (
-            await self.team_repository.find_approved_teams_by_season_and_modality(
+        team_count = (
+            await self.team_repository.count_approved_teams_by_season_and_modality(
                 active_season.id, modality_id
             )
         )
-        team_count = len(approved_teams)
 
         validate_team_count_for_format(modality_format, team_count)
 

@@ -68,6 +68,21 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
 
+    async def find_by_brackets(self, bracket_ids: List[UUID]) -> List[Match]:
+        if not bracket_ids:
+            return []
+        query = (
+            select(MatchEntity)
+            .where(
+                MatchEntity.bracket_id.in_(bracket_ids),
+                MatchEntity.deleted_at.is_(None),
+            )
+            .order_by(MatchEntity.scheduled_date.asc())
+        )
+        result = await self.session.execute(query)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]
+
     async def find_by_team(self, team_id: UUID) -> List[Match]:
         query = (
             select(MatchEntity)

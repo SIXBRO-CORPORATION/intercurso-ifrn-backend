@@ -123,6 +123,45 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         team_entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in team_entities]
 
+    async def find_by_status_and_season_id(
+        self, status: TeamStatus, season_id: UUID
+    ) -> List[Team]:
+        selecionar = (
+            select(TeamEntity)
+            .where(
+                TeamEntity.status == status.value,
+                TeamEntity.season_id == season_id,
+                TeamEntity.deleted_at.is_(None)
+            )
+            .order_by(TeamEntity.created_at.desc())
+        )
+        result = await self.session.execute(selecionar)
+        team_entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in team_entities]
+
+    async def count_approved_teams_by_season_and_modality(
+        self, season_id: UUID, modality_id: UUID
+    ) -> int:
+        selecionar = select(func.count(TeamEntity.id)).where(
+            TeamEntity.season_id == season_id,
+            TeamEntity.modality_id == modality_id,
+            TeamEntity.status == TeamStatus.APPROVED.value,
+            TeamEntity.deleted_at.is_(None)
+        )
+        result = await self.session.execute(selecionar)
+        return result.scalar() or 0
+
+    async def find_by_ids(self, team_ids: List[UUID]) -> List[Team]:
+        if not team_ids:
+            return []
+        selecionar = select(TeamEntity).where(
+            TeamEntity.id.in_(team_ids),
+            TeamEntity.deleted_at.is_(None)
+        )
+        result = await self.session.execute(selecionar)
+        team_entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in team_entities]
+
     async def find_by_season_id(self, season_id: UUID) -> List[Team]:
         selecionar = (
             select(TeamEntity)

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy import func, select, update
@@ -98,6 +98,38 @@ class TeamMemberRepositoryAdapter(TeamMemberRepositoryPort):
         )
         result = await self.session.execute(selecionar)
         return result.scalar() or 0
+
+    async def count_by_teams(self, team_ids: List[UUID]) -> Dict[UUID, int]:
+        if not team_ids:
+            return {}
+        selecionar = (
+            select(TeamMemberEntity.team_id, func.count(TeamMemberEntity.id))
+            .where(
+                TeamMemberEntity.team_id.in_(team_ids),
+                TeamMemberEntity.deleted_at.is_(None),
+            )
+            .group_by(TeamMemberEntity.team_id)
+        )
+        result = await self.session.execute(selecionar)
+        return {team_id: count for team_id, count in result.all()}
+
+    async def count_pending_donations_by_teams(
+        self, team_ids: List[UUID]
+    ) -> Dict[UUID, int]:
+        if not team_ids:
+            return {}
+        selecionar = (
+            select(TeamMemberEntity.team_id, func.count(TeamMemberEntity.id))
+            .where(
+                TeamMemberEntity.team_id.in_(team_ids),
+                TeamMemberEntity.donation_status
+                != DonationStatus.DONATION_CONFIRMED.value,
+                TeamMemberEntity.deleted_at.is_(None),
+            )
+            .group_by(TeamMemberEntity.team_id)
+        )
+        result = await self.session.execute(selecionar)
+        return {team_id: count for team_id, count in result.all()}
 
     async def delete(self, team_member_id: UUID) -> int:
         statement = (

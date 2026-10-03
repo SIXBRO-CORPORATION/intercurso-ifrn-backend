@@ -56,10 +56,14 @@ class TestGetBracketDetailsAdapter:
             Match(team1_id=team_a, team2_id=team_b, status=MatchStatus.SCHEDULED)
         ]
         repos["group"].find_by_bracket.return_value = [group_second, group_first]
-        repos["group_team"].find_by_group.side_effect = lambda group_id: [
-            BracketGroupTeam(bracket_group_id=group_id, team_id=team_a, points=3)
+        repos["group_team"].find_by_groups.return_value = [
+            BracketGroupTeam(bracket_group_id=group_first.id, team_id=team_a, points=3),
+            BracketGroupTeam(bracket_group_id=group_second.id, team_id=team_b, points=1),
+            BracketGroupTeam(bracket_group_id=group_first.id, team_id=team_b, points=0),
         ]
-        repos["team"].get.side_effect = lambda team_id: Team(id=team_id, name=f"Time {team_id}")
+        repos["team"].find_by_ids.side_effect = lambda team_ids: [
+            Team(id=team_id, name=f"Time {team_id}") for team_id in team_ids
+        ]
         repos["modality"].find_by_ids.return_value = [Modality(id=modality_id, name="Vôlei")]
 
         context = Context()
@@ -70,10 +74,38 @@ class TestGetBracketDetailsAdapter:
         assert result is bracket
         groups = context.get_property("bracket_groups", list)
         assert [group.name for group, _ in groups] == ["A", "B"]
+        # Uma única consulta para os times de todos os grupos, já ordenada pelo banco.
+        repos["group_team"].find_by_groups.assert_awaited_once_with(
+            [group_first.id, group_second.id]
+        )
+        repos["group_team"].find_by_group.assert_not_called()
+        assert [gt.team_id for gt in groups[0][1]] == [team_a, team_b]
+        assert [gt.team_id for gt in groups[1][1]] == [team_b]
         assert context.get_property("modality_name", str) == "Vôlei"
         names = context.get_property("team_names", dict)
         assert team_a in names and team_b in names
+        repos["team"].find_by_ids.assert_awaited_once()
         assert context.get_property("bracket_stats", dict)["total_matches"] == 1
+
+    @pytest.mark.asyncio
+    async def test_bracket_without_groups_does_not_load_group_teams_rows(self):
+        adapter, repos = make_adapter()
+        bracket_id = uuid4()
+        repos["bracket"].get.return_value = Bracket(
+            id=bracket_id, modality_id=uuid4(), status=BracketStatus.ACTIVE
+        )
+        repos["match"].find_by_bracket.return_value = []
+        repos["group"].find_by_bracket.return_value = []
+        repos["group_team"].find_by_groups.return_value = []
+        repos["team"].find_by_ids.return_value = []
+        repos["modality"].find_by_ids.return_value = []
+
+        context = Context()
+        context.put_property("bracket_id", bracket_id)
+
+        await adapter.execute(context)
+
+        assert context.get_property("bracket_groups", list) == []
 
     @pytest.mark.asyncio
     async def test_blocks_when_bracket_not_found(self):

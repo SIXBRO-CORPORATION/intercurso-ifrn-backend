@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional, Sequence
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
@@ -16,6 +17,33 @@ class MatchEventRepositoryPort(BaseRepositoryPort[MatchEvent]):
     async def find_by_match_and_type(
         self, match_id: UUID, event_type: EventType
     ) -> List[MatchEvent]:
+        pass
+
+    @abstractmethod
+    async def find_last_by_match_excluding_types(
+        self, match_id: UUID, excluded_types: Sequence[EventType]
+    ) -> Optional[MatchEvent]:
+        pass
+
+    @abstractmethod
+    async def find_last_by_match_and_type(
+        self, match_id: UUID, event_type: EventType
+    ) -> Optional[MatchEvent]:
+        pass
+
+    @abstractmethod
+    async def find_expulsion_by_player(
+        self, match_id: UUID, player_id: UUID, preferred_clock_seconds: Optional[int]
+    ) -> Optional[MatchEvent]:
+        pass
+
+    @abstractmethod
+    async def count_by_team(
+        self,
+        match_id: UUID,
+        event_types: Sequence[EventType],
+        created_after: Optional[datetime] = None,
+    ) -> Dict[Optional[UUID], int]:
         pass
 
     @abstractmethod

@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from uuid import UUID
 
 from business.bracket._read_shared import build_bracket_stats, load_team_names
@@ -51,10 +51,20 @@ class GetBracketDetailsAdapter(GetBracketDetailsPort):
         groups = await self.bracket_group_repository.find_by_bracket(bracket_id)
         groups_sorted = sorted(groups, key=lambda group: group.display_order or 0)
 
-        groups_with_teams: List[Tuple[BracketGroup, List[BracketGroupTeam]]] = []
-        for group in groups_sorted:
-            group_teams = await self.bracket_group_team_repository.find_by_group(group.id)
-            groups_with_teams.append((group, group_teams))
+        teams_by_group: Dict[UUID, List[BracketGroupTeam]] = {
+            group.id: [] for group in groups_sorted
+        }
+        all_group_teams = await self.bracket_group_team_repository.find_by_groups(
+            [group.id for group in groups_sorted]
+        )
+        for group_team in all_group_teams:
+            teams_by_group.setdefault(group_team.bracket_group_id, []).append(
+                group_team
+            )
+
+        groups_with_teams: List[Tuple[BracketGroup, List[BracketGroupTeam]]] = [
+            (group, teams_by_group[group.id]) for group in groups_sorted
+        ]
 
         team_ids = {match.team1_id for match in matches} | {
             match.team2_id for match in matches

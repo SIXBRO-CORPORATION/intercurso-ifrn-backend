@@ -30,10 +30,8 @@ def build_bracket_stats(bracket: Bracket, matches: List[Match]) -> dict:
 async def load_team_names(
     team_repository: TeamRepositoryPort, team_ids: Iterable[Optional[UUID]]
 ) -> Dict[UUID, str]:
-    # ponytail: one get per team (N+1); add TeamRepositoryPort.find_by_ids when brackets grow past ~32 teams
-    names: Dict[UUID, str] = {}
-    for team_id in {tid for tid in team_ids if tid is not None}:
-        team = await team_repository.get(team_id)
-        if team is not None:
-            names[team_id] = team.name
-    return names
+    ids = list({tid for tid in team_ids if tid is not None})
+    if not ids:
+        return {}
+    teams = await team_repository.find_by_ids(ids)
+    return {team.id: team.name for team in teams}

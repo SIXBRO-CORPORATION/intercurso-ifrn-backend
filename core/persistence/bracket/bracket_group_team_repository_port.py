@@ -12,6 +12,12 @@ class BracketGroupTeamRepositoryPort(BaseRepositoryPort[BracketGroupTeam]):
         pass
 
     @abstractmethod
+    async def find_by_groups(
+        self, bracket_group_ids: List[UUID]
+    ) -> List[BracketGroupTeam]:
+        pass
+
+    @abstractmethod
     async def find_by_bracket_group_and_team(
         self, bracket_group_id: UUID, team_id: UUID
     ) -> BracketGroupTeam:

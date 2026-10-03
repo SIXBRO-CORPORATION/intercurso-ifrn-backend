@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 from uuid import UUID
 
 from core.business.team.list_teams_port import ListTeamsPort
@@ -44,9 +44,7 @@ class ListTeamsAdapter(ListTeamsPort):
                 requesting_user_id
             )
 
-        team_extra_info = {}
-        for team in teams:
-            team_extra_info[team.id] = await self._build_extra_info(team)
+        team_extra_info = await self._build_extra_info_by_team(teams)
 
         context.put_property("team_extra_info", team_extra_info)
 
@@ -55,33 +53,50 @@ class ListTeamsAdapter(ListTeamsPort):
     async def _find_teams_for_monitor(
         self, status_filter, season_id_filter
     ) -> List[Team]:
+        if status_filter is not None and season_id_filter is not None:
+            return await self.team_repository.find_by_status_and_season_id(
+                status_filter, season_id_filter
+            )
+
         if status_filter is not None:
-            teams = await self.team_repository.find_teams_by_status(status_filter)
-            if season_id_filter is not None:
-                teams = [t for t in teams if t.season_id == season_id_filter]
-            return teams
+            return await self.team_repository.find_teams_by_status(status_filter)
 
         if season_id_filter is not None:
             return await self.team_repository.find_by_season_id(season_id_filter)
 
         return await self.team_repository.find_all()
 
-    async def _build_extra_info(self, team: Team) -> dict:
-        modality = await self.modality_repository.get(team.modality_id)
-        owner_user = (
-            await self.user_repository.get(team.owner_id) if team.owner_id else None
+    async def _build_extra_info_by_team(self, teams: List[Team]) -> Dict[UUID, dict]:
+        if not teams:
+            return {}
+
+        team_ids = [team.id for team in teams]
+        modality_ids = list({team.modality_id for team in teams if team.modality_id})
+        owner_ids = list({team.owner_id for team in teams if team.owner_id})
+
+        modalities = await self.modality_repository.find_by_ids(modality_ids)
+        owners = await self.user_repository.find_by_ids(owner_ids)
+        members_count_by_team = await self.team_member_repository.count_by_teams(
+            team_ids
         )
-        members_count = await self.team_member_repository.count_by_team(team.id)
-        pending_donations = (
-            await self.team_member_repository.count_pending_donations_by_team(
-                team.id
+        pending_by_team = (
+            await self.team_member_repository.count_pending_donations_by_teams(
+                team_ids
             )
         )
 
-        return {
-            "modality_name": modality.name if modality else None,
-            "owner_name": owner_user.name if owner_user else None,
-            "members_count": members_count,
-            "donations_confirmed": members_count - pending_donations,
-            "donations_total": members_count,
-        }
+        modality_names = {modality.id: modality.name for modality in modalities}
+        owner_names = {owner.id: owner.name for owner in owners}
+
+        extra_info: Dict[UUID, dict] = {}
+        for team in teams:
+            members_count = members_count_by_team.get(team.id, 0)
+            pending_donations = pending_by_team.get(team.id, 0)
+            extra_info[team.id] = {
+                "modality_name": modality_names.get(team.modality_id),
+                "owner_name": owner_names.get(team.owner_id) if team.owner_id else None,
+                "members_count": members_count,
+                "donations_confirmed": members_count - pending_donations,
+                "donations_total": members_count,
+            }
+        return extra_info

@@ -51,6 +51,30 @@ class MatchSetRepositoryAdapter(MatchSetRepositoryPort):
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
 
+    async def count_by_match(self, match_id: UUID) -> int:
+        query = select(func.count(MatchSetEntity.id)).where(
+            MatchSetEntity.match_id == match_id,
+            MatchSetEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        return result.scalar() or 0
+
+    async def find_by_match_and_number(
+        self, match_id: UUID, set_number: int
+    ) -> Optional[MatchSet]:
+        query = (
+            select(MatchSetEntity)
+            .where(
+                MatchSetEntity.match_id == match_id,
+                MatchSetEntity.set_number == set_number,
+                MatchSetEntity.deleted_at.is_(None),
+            )
+            .limit(1)
+        )
+        result = await self.session.execute(query)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None
+
     async def count_sets_won_by_team(self, match_id: UUID) -> dict:
         query = (
             select(MatchSetEntity.winner_team_id, func.count(MatchSetEntity.id))
