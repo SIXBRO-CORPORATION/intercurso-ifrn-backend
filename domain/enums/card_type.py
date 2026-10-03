@@ -2,5 +2,5 @@ from enum import Enum
 
 
 class CardType(Enum):
-    YELLOW = "Amarelo"
-    RED = "Vermelho"
+    YELLOW = "YELLOW"
+    RED = "RED"

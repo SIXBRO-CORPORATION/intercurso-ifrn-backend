@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class MatchType(Enum):
-    REGULAR = "Regular"
-    SEMIFINAL = "Semifinal"
-    THIRD_PLACE = "Terceiro Lugar"
-    FINAL = "Final"
+    REGULAR = "REGULAR"
+    SEMIFINAL = "SEMIFINAL"
+    THIRD_PLACE = "THIRD_PLACE"
+    FINAL = "FINAL"

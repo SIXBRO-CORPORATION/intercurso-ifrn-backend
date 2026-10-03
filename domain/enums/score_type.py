@@ -2,6 +2,6 @@ from enum import Enum
 
 
 class ScoreType(Enum):
-    GOALS = "Gols"
-    POINTS = "Pontos"
-    SETS = "Sets"
+    GOALS = "GOALS"
+    POINTS = "POINTS"
+    SETS = "SETS"

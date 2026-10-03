@@ -2,8 +2,8 @@ from enum import Enum
 
 
 class SeasonStatus(Enum):
-    DRAFT = "Rascunho"
-    REGISTRATION_OPEN = "Inscrições abertas"
-    REGISTRATION_CLOSED = "Inscrições fechadas"
-    IN_PROGRESS = "Em progresso"
-    FINISHED = "Finalizada"
+    DRAFT = "DRAFT"
+    REGISTRATION_OPEN = "REGISTRATION_OPEN"
+    REGISTRATION_CLOSED = "REGISTRATION_CLOSED"
+    IN_PROGRESS = "IN_PROGRESS"
+    FINISHED = "FINISHED"

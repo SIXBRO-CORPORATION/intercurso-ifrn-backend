@@ -2,6 +2,6 @@ from enum import Enum
 
 
 class MatchStatus(Enum):
-    SCHEDULED = "Agendada"
-    IN_PROGRESS = "Em progresso"
-    FINISHED = "Finalizada"
+    SCHEDULED = "SCHEDULED"
+    IN_PROGRESS = "IN_PROGRESS"
+    FINISHED = "FINISHED"

@@ -2,5 +2,5 @@ from enum import Enum
 
 
 class DonationStatus(Enum):
-    PENDING_DONATION = "Aguardando doação"
-    DONATION_CONFIRMED = "Doação confirmada"
+    PENDING_DONATION = "PENDING_DONATION"
+    DONATION_CONFIRMED = "DONATION_CONFIRMED"
