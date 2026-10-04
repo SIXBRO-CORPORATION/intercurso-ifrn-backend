@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
@@ -72,4 +72,17 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
 
     @abstractmethod
     async def find_unfinished_by_season(self, season_id: UUID) -> List[Match]:
+        pass
+
+    @abstractmethod
+    async def search_by_season(
+        self,
+        season_id: UUID,
+        modality_id: Optional[UUID],
+        status: Optional[MatchStatus],
+        date_from: Optional[datetime],
+        date_to: Optional[datetime],
+        offset: int,
+        limit: int,
+    ) -> Tuple[List[Match], int]:
         pass

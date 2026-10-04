@@ -3,6 +3,11 @@
 ## Status
 Aceita e implementada na primeira versão (broadcaster em memória por processo).
 
+> **Nota (ADR 0004):** a leitura é pública. O ticket SSE deixa de provar identidade e passa a ser
+> uma admissão curta, com escopo de canal; `POST /api/realtime/ticket` aceita visitante
+> (`sub = anonymous`) com limite por IP, e o `GET /api/match/{id}` usado na reconciliação
+> devolve schema público, sem `matricula`.
+
 ## Contexto
 
 O [UC016 - Visualizar Partida em Tempo Real](../spec/UC016_InterfaceUsuário_VisualizarPartida.md)

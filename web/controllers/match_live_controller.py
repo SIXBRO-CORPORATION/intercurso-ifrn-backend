@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -5,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from starlette.responses import StreamingResponse
 
 from business.match._shared import load_management_context
+from core.business.match.list_public_matches_port import ListPublicMatchesPort
 from core.context import Context
 from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
 from core.persistence.match.match_event_repository_port import MatchEventRepositoryPort
@@ -38,8 +40,10 @@ from web.dependencies import (
     get_user_repository,
     get_volleyball_modality_configuration_repository,
 )
+from web.dependencies.business.match_dependencies import get_list_public_matches_port
 from web.dependencies.mapper_dependencies import get_match_model_mapper
 from web.mappers.match_model_mapper import MatchModelMapper
+from web.models.response.match.match_list_response import MatchListResponse
 from web.models.response.match.match_public_response import MatchPublicResponse
 from domain.enums.match_status import MatchStatus
 
@@ -57,6 +61,46 @@ SSE_HEADERS = {
     "X-Accel-Buffering": "no",
     "Cache-Control": "no-cache",
 }
+
+
+@router.get("/", response_model=ApiResponse[MatchListResponse])
+async def list_matches(
+    list_port: Annotated[ListPublicMatchesPort, Depends(get_list_public_matches_port)],
+    mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
+    season_id: UUID,
+    modality_id: UUID | None = None,
+    status: MatchStatus | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 20,
+):
+
+    context = Context()
+    for key, value in {
+        "season_id": season_id,
+        "modality_id": modality_id,
+        "status": status,
+        "date_from": date_from,
+        "date_to": date_to,
+        "page": page,
+        "size": size,
+    }.items():
+        context.put_property(key, value)
+
+    matches = await list_port.execute(context)
+
+    return ApiResponse.success(
+        data=mapper.to_list_response(
+            matches,
+            context.get("teams"),
+            context.get("group_names"),
+            context.get("bracket_modalities"),
+            context.get("total"),
+            context.get("page"),
+            context.get("size"),
+        )
+    )
 
 
 @router.get("/{match_id}/live")

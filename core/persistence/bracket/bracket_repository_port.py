@@ -37,3 +37,7 @@ class BracketRepositoryPort(BaseRepositoryPort[Bracket]):
         self, season_id: UUID, modality_id: UUID
     ) -> Optional[Bracket]:
         pass
+
+    @abstractmethod
+    async def find_by_ids(self, bracket_ids: List[UUID]) -> List[Bracket]:
+        pass

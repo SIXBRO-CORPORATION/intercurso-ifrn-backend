@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from domain.match.match import Match
@@ -12,6 +12,10 @@ from domain.modality.volleyball_modality_configuration import (
 from domain.team.team import Team
 from domain.team.team_member import TeamMember
 from domain.user.user import User
+from web.models.response.match.match_list_response import (
+    MatchListItemResponse,
+    MatchListResponse,
+)
 from web.models.response.match.match_management_response import (
     MatchManagementResponse,
     MatchModalityConfigurationResponse,
@@ -23,6 +27,46 @@ from web.models.response.match.match_management_response import (
 
 
 class MatchModelMapper:
+    def to_list_response(
+        self,
+        matches: List[Match],
+        teams: Dict[UUID, Team],
+        group_names: Dict[UUID, str],
+        bracket_modalities: Dict[UUID, Modality],
+        total: int,
+        page: int,
+        size: int,
+    ) -> MatchListResponse:
+        def team(team_id, score, sets_won, penalty_score):
+            found = teams.get(team_id)
+            if found is None:
+                return None
+            return self._to_team_response(found, score or 0, sets_won, penalty_score)
+
+        items = []
+        for m in matches:
+            modality = bracket_modalities.get(m.bracket_id)
+            items.append(
+                MatchListItemResponse(
+                    match_id=m.id,
+                    bracket_id=m.bracket_id,
+                    modality_id=modality.id if modality else None,
+                    modality_name=modality.name if modality else None,
+                    group_name=group_names.get(m.bracket_group_id),
+                    match_type=m.match_type.value,
+                    match_category=m.match_category.value,
+                    status=m.status.value,
+                    scheduled_date=m.scheduled_date,
+                    team1=team(m.team1_id, m.team1_score, m.team1_sets_won, m.team1_penalty_score),
+                    team2=team(m.team2_id, m.team2_score, m.team2_sets_won, m.team2_penalty_score),
+                    winner_id=m.winner_id,
+                    clock_seconds=m.clock_seconds or 0,
+                    clock_running=bool(m.clock_running),
+                    current_period=m.current_period or 1,
+                )
+            )
+        return MatchListResponse(items=items, total=total, page=page, size=size)
+
     def _to_team_response(
         self,
         team: Team,

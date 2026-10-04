@@ -8,6 +8,7 @@ from core.persistence.modality.modality_repository_port import ModalityRepositor
 from domain.modality.modality import Modality
 from persistence.mappers.modality.modality_mapper import ModalityMapper
 from persistence.model.modality.modality_entity import ModalityEntity
+from persistence.model.season.season_modality_entity import SeasonModalityEntity
 
 
 class ModalityRepositoryAdapter(ModalityRepositoryPort):
@@ -75,3 +76,18 @@ class ModalityRepositoryAdapter(ModalityRepositoryPort):
         result = await self.session.execute(query)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def find_active_by_season(self, season_id: UUID) -> List[Modality]:
+        query = (
+            select(ModalityEntity)
+            .join(SeasonModalityEntity, SeasonModalityEntity.modality_id == ModalityEntity.id)
+            .where(
+                SeasonModalityEntity.season_id == season_id,
+                SeasonModalityEntity.deleted_at.is_(None),
+                ModalityEntity.active.is_(True),
+                ModalityEntity.deleted_at.is_(None),
+            )
+            .order_by(ModalityEntity.name)
+        )
+        result = await self.session.execute(query)
+        return [self.mapper.to_domain(entity) for entity in result.scalars().all()]

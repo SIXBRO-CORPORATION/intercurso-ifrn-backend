@@ -115,6 +115,11 @@ uma conta.
 
 ### Bloco de Dados 1 – Feed de Jogos (Lista)
 
+> Fonte: `GET /api/match/?season_id=...` (público, paginado). Filtros: `modality_id`, `status`,
+> `date_from`, `date_to` (o cliente envia o intervalo no fuso local). `team1`/`team2` são `null`
+> enquanto o time não está definido. Detalhes em
+> [ADR 0004](../adr/ADR004_ModeloDeAcesso.md#estado-de-implementação).
+
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
 | Modalidade               | S             | Nome da modalidade                                    |

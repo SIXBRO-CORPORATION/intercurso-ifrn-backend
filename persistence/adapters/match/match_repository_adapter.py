@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from uuid import UUID
 
-from sqlalchemy import select, update, or_
+from sqlalchemy import func, select, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -244,3 +244,43 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         result = await self.session.execute(query)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def search_by_season(
+        self,
+        season_id: UUID,
+        modality_id: Optional[UUID],
+        status: Optional[MatchStatus],
+        date_from: Optional[datetime],
+        date_to: Optional[datetime],
+        offset: int,
+        limit: int,
+    ) -> Tuple[List[Match], int]:
+        filters = [
+            BracketEntity.season_id == season_id,
+            BracketEntity.deleted_at.is_(None),
+            MatchEntity.deleted_at.is_(None),
+            MatchEntity.is_bye.is_(False),
+        ]
+        if modality_id is not None:
+            filters.append(BracketEntity.modality_id == modality_id)
+        if status is not None:
+            filters.append(MatchEntity.status == status.value)
+        if date_from is not None:
+            filters.append(MatchEntity.scheduled_date >= date_from)
+        if date_to is not None:
+            filters.append(MatchEntity.scheduled_date <= date_to)
+
+        join = MatchEntity.bracket_id == BracketEntity.id
+        total = await self.session.scalar(
+            select(func.count(MatchEntity.id)).join(BracketEntity, join).where(*filters)
+        )
+        query = (
+            select(MatchEntity)
+            .join(BracketEntity, join)
+            .where(*filters)
+            .order_by(MatchEntity.scheduled_date.asc().nulls_last(), MatchEntity.id)
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.session.execute(query)
+        return [self.mapper.to_domain(e) for e in result.scalars().all()], total or 0

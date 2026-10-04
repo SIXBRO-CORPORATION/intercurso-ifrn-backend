@@ -2,7 +2,12 @@ from typing import Annotated
 from fastapi import Depends
 
 from core.business.audit.audit_logger import AuditLogger
+from core.business.match.list_public_matches_port import ListPublicMatchesPort
 from core.business.match.start_match_port import StartMatchPort
+from business.match.list_public_matches_adapter import ListPublicMatchesAdapter
+from core.persistence.bracket.bracket_group_repository_port import (
+    BracketGroupRepositoryPort,
+)
 from core.business.match.register_goal_port import RegisterGoalPort
 from core.business.match.register_card_port import RegisterCardPort
 from core.business.match.pause_clock_port import PauseClockPort
@@ -48,6 +53,7 @@ from core.persistence.modality.volleyball_modality_configuration_repository_port
     VolleyballModalityConfigurationRepositoryPort
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
+    get_bracket_group_repository,
     get_bracket_group_team_repository,
     get_bracket_repository,
     get_match_event_repository,
@@ -660,4 +666,24 @@ def get_delete_event_port(
         match_set_repository,
         audit_logger,
         bracket_group_team_repository,
+    )
+
+
+def get_list_public_matches_port(
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    bracket_group_repository: Annotated[
+        BracketGroupRepositoryPort, Depends(get_bracket_group_repository)
+    ],
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+) -> ListPublicMatchesPort:
+    return ListPublicMatchesAdapter(
+        match_repository,
+        bracket_repository,
+        bracket_group_repository,
+        team_repository,
+        modality_repository,
     )

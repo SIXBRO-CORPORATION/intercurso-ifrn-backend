@@ -102,3 +102,12 @@ class BracketRepositoryAdapter(BracketRepositoryPort):
         result = await self.session.execute(query)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
+
+    async def find_by_ids(self, bracket_ids: List[UUID]) -> List[Bracket]:
+        if not bracket_ids:
+            return []
+        query = select(BracketEntity).where(
+            BracketEntity.id.in_(bracket_ids), BracketEntity.deleted_at.is_(None)
+        )
+        result = await self.session.execute(query)
+        return [self.mapper.to_domain(e) for e in result.scalars().all()]

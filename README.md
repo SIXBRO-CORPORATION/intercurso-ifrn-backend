@@ -2,7 +2,7 @@
 
 Backend do sistema de gestão do **Intercurso IFRN**: cadastro e gerenciamento de temporadas,
 modalidades esportivas, equipes, chaveamento (brackets) e partidas, com autenticação via SUAP
-(OAuth2) e suporte planejado a atualizações em tempo real para acompanhamento de jogos.
+(OAuth2) e atualizações em tempo real (SSE) para acompanhamento de jogos.
 
 ## Stack
 
@@ -49,53 +49,46 @@ em `docs/spec`, seguindo as regras de negócio documentadas ali.
 - **Gestão de chaveamento** (criação e reorganização de brackets, sugestão automática de
   configuração)
 - **Gestão de partidas** (início, registro e correção de eventos, cronômetro, finalização)
+- **Acompanhamento público** de partidas sem login (lista paginada, detalhe e feed ao vivo)
 - **Agendamento de jobs** para rotinas automáticas do sistema (ex.: transições de estado de
   temporada/partida)
 
-## Comunicação em tempo real (em definição)
+## Modelo de acesso
 
-O acompanhamento de partidas ao vivo — placar, cronômetro e eventos como gols e cartões —
-depende de algum mecanismo de **comunicação em tempo real** entre backend e clientes (app dos
-alunos, telas de monitor). Hoje o backend expõe apenas a API REST tradicional; **nenhuma infra de
-tempo real está implementada ainda**, e esta é uma decisão de arquitetura em aberto.
+Regra geral: **leitura pública, ação autenticada** ([ADR 0004](docs/adr/ADR004_ModeloDeAcesso.md)).
+Qualquer pessoa abre o app e acompanha o Intercurso sem login; o login só é pedido quando a
+pessoa tenta uma ação que depende de identidade (criar equipe, denunciar, gerir partidas).
 
-### Por que é necessário
+| Capacidade | Visitante | Aluno | Monitor |
+|---|:-:|:-:|:-:|
+| Ver temporada ativa, modalidades, partidas, placar, cronômetro e eventos | ✔ | ✔ | ✔ |
+| Feed ao vivo (SSE de temporada e de partida) | ✔ | ✔ | ✔ |
+| Ver nome de jogadores/times em partidas | ✔ | ✔ | ✔ |
+| Ver matrícula de jogadores | ✘ | ✘ | Só em telas de gestão |
+| Detalhe de equipe com membros e convites | ✘ | Só a própria | ✔ |
+| Criar/gerir equipe, aceitar convite, submeter | ✘ | ✔ | ✔ |
+| Denunciar (UC018) e receber push | ✘ | ✔ | — |
+| Gestão de temporada, modalidade, chaveamento, partida | ✘ | ✘ | ✔ |
 
-Conforme [`docs/spec/UC016_InterfaceUsuário_VisualizarPartida.md`](docs/spec/UC016_InterfaceUsuário_VisualizarPartida.md),
-o sistema precisa:
+Rotas públicas de leitura hoje: `GET /api/season/active`, `GET /api/modality/`,
+`GET /api/match/` (paginada, com filtros), `GET /api/match/{id}` e os canais SSE. Classificação,
+chaveamento e lista de temporadas ainda são restritos a monitor. Detalhes em
+[Estado de implementação](docs/adr/ADR004_ModeloDeAcesso.md#estado-de-implementação).
 
-- Atualizar placar e cronômetro de partidas `IN_PROGRESS` para múltiplos clientes simultaneamente,
-  sem que cada um precise ficar dando polling na API;
-- Propagar eventos de partida (gol, cartão, expulsão, início/fim de período/partida) assim que
-  são registrados, para quem estiver acompanhando aquela partida ou o feed geral de uma temporada;
-- Notificar usuários que não estão com o app aberto no momento de eventos importantes (gol, cartão
-  vermelho, início/fim de partida) — provavelmente via push notification, o que é um mecanismo
-  separado da conexão em tempo real em si.
+## Comunicação em tempo real
 
-Já existe uma decisão tomada sobre **onde mora a fonte da verdade do tempo de jogo** (o cálculo do
-cronômetro é sempre feito no servidor, nunca confiado ao cliente) — ver
-[`docs/adr/ADR001_Cronometro.md`](docs/adr/ADR001_Cronometro.md). O que ainda não foi decidido é
-**qual tecnologia/infra vai transportar essas atualizações até o cliente**.
+O acompanhamento ao vivo usa **Server-Sent Events (SSE)** com broadcaster em memória por processo
+([ADR 0003](docs/adr/ADR003_EnvioDeEventos.md)). O cronômetro é sempre calculado no servidor
+([ADR 0001](docs/adr/ADR001_Cronometro.md)).
 
-### Pontos a decidir
+1. O cliente pede um ticket de 30 s em `POST /api/realtime/ticket` (com ou sem login; visitantes
+   têm limite de taxa por IP).
+2. Conecta em `GET /api/season/{id}/live?ticket=...` (feed) ou
+   `GET /api/match/{id}/live?ticket=...` (detalhe; só partidas `IN_PROGRESS`).
+3. Ao reconectar, sincroniza o estado com `GET /api/match/{id}` (schema público).
 
-- **Protocolo/mecanismo**: WebSocket, Server-Sent Events, polling curto, ou um serviço gerenciado
-  de pub/sub (ex.: Redis Pub/Sub, um broker externo, etc.);
-- **Escopo dos canais**: hoje a especificação sugere um agrupamento por temporada (feed geral) e
-  outro por partida específica (detalhe), mas isso pode mudar dependendo da solução escolhida;
-- **Escala**: quantas partidas simultâneas e quantos clientes conectados por partida o sistema
-  precisa suportar, e se o backend (hoje um único processo FastAPI/uvicorn) aguenta manter essas
-  conexões abertas ou se isso deveria ser delegado a outro componente;
-- **Reconexão e consistência**: como um cliente que reconecta (ex.: reload de tela, app voltando
-  do background) recupera o estado atual sem depender de ter recebido todos os eventos anteriores;
-- **Push notifications**: se ficam acopladas à mesma infra de tempo real ou são tratadas como um
-  serviço à parte (ex.: FCM/APNs disparado pelo backend nos mesmos pontos onde eventos são
-  registrados).
-
-Os documentos citados acima (`UC016` e `ADR001`) servem como ponto de partida — descrevem o
-comportamento esperado do ponto de vista de produto e uma decisão já tomada sobre a fonte da
-verdade do cronômetro — mas não fecham qual infra de tempo real deve ser usada. Essa é a decisão
-em aberto.
+Conexões SSE são limitadas por usuário e por IP. Push notifications (UC016, Fluxo Alternativo 2)
+ainda não estão implementadas.
 
 ## Como rodar o projeto
 

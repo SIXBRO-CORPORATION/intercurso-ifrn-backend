@@ -22,3 +22,7 @@ class ModalityRepositoryPort(BaseRepositoryPort[Modality]):
     @abstractmethod
     async def find_by_ids(self, modality_ids: List[UUID]) -> List[Modality]:
         pass
+
+    @abstractmethod
+    async def find_active_by_season(self, season_id: UUID) -> List[Modality]:
+        pass

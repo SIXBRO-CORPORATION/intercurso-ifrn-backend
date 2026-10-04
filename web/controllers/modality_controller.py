@@ -1,9 +1,12 @@
 from typing import Annotated
+from typing import List
+from uuid import UUID
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 from fastapi.params import Depends
 
 from core.business.modality.create_modality_port import CreateModalityPort
+from core.business.modality.list_modalities_port import ListModalitiesPort
 from core.context import Context
 from domain.enums.score_type import ScoreType
 from domain.modality.modality import Modality
@@ -12,13 +15,37 @@ from domain.modality.volleyball_modality_configuration import VolleyballModality
 from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import require_monitor
-from web.dependencies.business.modality_dependencies import get_create_modality_port
+from web.dependencies.business.modality_dependencies import (
+    get_create_modality_port,
+    get_list_modalities_port,
+)
 from web.dependencies.mapper_dependencies import get_modality_model_mapper
 from web.mappers.modality_model_mapper import ModalityModelMapper
 from web.models.request.modality.modality_create_request import ModalityCreateRequest
 from web.models.response.modality.modality_create_response import ModalityCreateResponse
+from web.models.response.modality.modality_summary_response import (
+    ModalitySummaryResponse,
+)
 
 router = APIRouter(prefix="/api/modality", tags=["modality"])
+
+
+@router.get("/", response_model=ApiResponse[List[ModalitySummaryResponse]])
+async def list_modalities(
+    list_modalities_port: Annotated[
+        ListModalitiesPort, Depends(get_list_modalities_port)
+    ],
+    mapper: Annotated[ModalityModelMapper, Depends(get_modality_model_mapper)],
+    season_id: Annotated[
+        UUID | None, Query(description="Restringe às modalidades da temporada")
+    ] = None,
+):
+    """Público (ADR 0004): lista modalidades ativas, opcionalmente de uma temporada."""
+    context = Context()
+    if season_id is not None:
+        context.put_property("season_id", season_id)
+    modalities = await list_modalities_port.execute(context)
+    return ApiResponse(data=mapper.to_summary_responses(modalities))
 
 
 @router.post(

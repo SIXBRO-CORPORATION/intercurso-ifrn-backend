@@ -1,8 +1,11 @@
-from typing import Optional
+from typing import List, Optional
 
 from domain.modality.modality import Modality
 from domain.modality.modality_configuration import ModalityConfiguration
 from domain.modality.volleyball_modality_configuration import VolleyballModalityConfiguration
+from web.models.response.modality.modality_summary_response import (
+    ModalitySummaryResponse,
+)
 from web.models.response.modality.modality_create_response import (
     ModalityConfigurationResponse,
     ModalityCreateResponse,
@@ -10,6 +13,19 @@ from web.models.response.modality.modality_create_response import (
 
 
 class ModalityModelMapper:
+    def to_summary_responses(
+        self, modalities: List[Modality]
+    ) -> List[ModalitySummaryResponse]:
+        return [
+            ModalitySummaryResponse(
+                modality_id=m.id,
+                name=m.name,
+                min_members=m.min_members,
+                max_members=m.max_members,
+            )
+            for m in modalities
+        ]
+
     def to_create_response(
         self,
         modality: Modality,

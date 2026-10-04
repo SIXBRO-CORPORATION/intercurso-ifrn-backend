@@ -14,3 +14,7 @@ class BracketGroupRepositoryPort(BaseRepositoryPort[BracketGroup]):
     @abstractmethod
     async def delete_by_bracket(self, bracket_id: UUID) -> int:
         pass
+
+    @abstractmethod
+    async def find_by_ids(self, group_ids: List[UUID]) -> List[BracketGroup]:
+        pass

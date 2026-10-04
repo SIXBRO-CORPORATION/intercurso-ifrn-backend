@@ -2,6 +2,8 @@
 
 > Baseado na leitura dos 18 casos de uso em `docs/` e na análise do código-fonte atual do repositório `SIXBRO-CORPORATION/intercurso-ifrn-backend` (branch `main`).
 >
+> **Nota de 2026-10-04:** a Fase 6 (tempo real, UC016) e as leituras públicas do [ADR 0004](../adr/ADR004_ModeloDeAcesso.md) foram implementadas depois da data abaixo; as seções de UC016, Fase 6 e Fase 8 refletem esse estado. As demais seções permanecem como estavam em 2026-08-23.
+>
 > **Atualizado em 2026-08-23** após a conclusão do UC017 (Corrigir Evento) dentro da Fase 5, fechando por completo a Gestão de Partidas (UC013-015 e 017). O diagnóstico e a tabela abaixo refletem o estado real do código nesta data, não mais o estado descrito nas versões anteriores deste plano.
 
 ---
@@ -20,7 +22,7 @@ O projeto segue uma arquitetura em camadas (hexagonal/ports & adapters): `domain
 - **Jobs automáticos (UC001/UC002):** implementados via APScheduler (`scheduling/configuration/scheduler.py` + `scheduling/jobs/season_scheduler_jobs.py`), rodando a cada 1 minuto para abrir/fechar inscrições automaticamente.
 - **Auditoria:** existe infraestrutura própria (`domain/audit/audit_log.py`, `core/business/audit/audit_logger.py`, tabela `logs`) e já é usada em `season`, `team`, `bracket`, no `start_match_adapter` (UC013), no UC015 (`AuditAction.MATCH_FINISHED` em `finish_match_adapter`/`end_penalty_shootout_adapter`, `AuditAction.PENALTY_SHOOTOUT_STARTED` em `start_penalty_shootout_adapter`) e agora no UC017 (`AuditAction.MATCH_EVENT_UNDONE`/`MATCH_EVENT_DELETED` para correções em partida `IN_PROGRESS`, e `AuditAction.MATCH_POST_FINISH_CORRECTION` — com destaque especial, RN29-35 — sempre que a partida já está `FINISHED`, independentemente de o placar ter mudado). **Os sete adapters do UC014 (gol, cartão, pausar/retomar cronômetro, período, set) continuam sem chamar o `AuditLogger`** — decisão consciente tomada no início da rodada do UC015 (fechar esse débito específico em uma rodada separada, dedicada só a isso, em vez de misturar com o UC015 ou o UC017) — RN41-42 do UC014 segue, portanto, incompleta.
 - **UC018 (Reportar Jogador):** não existe absolutamente nada — nem domínio, nem persistência, nem enum de status.
-- **UC016 (Visualizar Partida em Tempo Real):** nenhuma infraestrutura de tempo real implementada ainda, mas a decisão de transporte já foi tomada no [ADR 0003](../adr/ADR003_EnvioDeEventos.md): **SSE**, não WebSocket (o documento do UC usa a palavra "WebSocket", mas o ADR argumenta que o canal é unidirecional servidor→aluno, então SSE via `StreamingResponse`/`EventSource` é suficiente e mais simples). Nenhuma ocorrência de `websocket` ou de `sse-starlette`/`EventSourceResponse` no código ainda — é só a decisão, a implementação (Fase 6) não começou.
+- **UC016 (Visualizar Partida em Tempo Real):** implementado com **SSE** (decisão do [ADR 0003](../adr/ADR003_EnvioDeEventos.md)): canais `GET /api/season/{id}/live` e `GET /api/match/{id}/live` com ticket de admissão (`POST /api/realtime/ticket`, aceita visitante com limite por IP), broadcaster em memória com limite de conexões por usuário e por IP, e publicação a partir dos controllers de partida. Leituras públicas conforme o [ADR 0004](../adr/ADR004_ModeloDeAcesso.md): `GET /api/season/active`, `GET /api/modality/`, `GET /api/match/` (lista paginada) e `GET /api/match/{id}` (schema sem `matricula`). **Pendente:** Push Notification, classificação/chaveamento/lista de temporadas públicos.
 
 ### Tabela: Casos de uso × estado das camadas
 
@@ -41,7 +43,7 @@ O projeto segue uma arquitetura em camadas (hexagonal/ports & adapters): `domain
 | 013 | Iniciar Partida | ✅ | ✅ | ✅ | ✅ |
 | 014 | Registrar Evento | ✅ | ✅ | ✅ | ✅ |
 | 015 | Finalizar Partida | ✅ | ✅ | ✅ | ✅ |
-| 016 | Visualizar Partida (tempo real) | ✅ (parcial) | ✅ | ❌ | ❌ (sem WebSocket) |
+| 016 | Visualizar Partida (tempo real) | ✅ | ✅ | ✅ (push ❌) | ✅ (SSE + leituras públicas) |
 | 017 | Corrigir Evento | ✅ | ✅ | ✅ | ✅ |
 | 018 | Reportar Jogador | ❌ | ❌ | ❌ | ❌ |
 
@@ -160,12 +162,17 @@ UC005/009/010 já concluídos nas Fases 0/1. Nesta fase:
   - **Pendência explícita para confirmar antes de produção:** a decisão 3 acima (correção em partida `IN_PROGRESS` restrita ao monitor responsável original) foi implementada como assumida, não como confirmada — vale validar com o time se "qualquer Monitor" (decisão 2) deveria valer também para esse caso.
 - Também não implementado até aqui (fora do escopo de UC013/UC014/UC015/UC017): endpoints de consulta de partida (`GET /api/match/{match_id}`, listagens por temporada/time) — mesmo padrão de débito técnico já assumido para os `GET`s de chaveamento na Fase 4, e o débito técnico de auditoria do UC014 (item 7 da lista de próximos passos, adiado conscientemente duas vezes) segue igualmente pendente, agora como o próximo item da lista.
 
-### Fase 6 — Tempo real (UC016)
-- Hoje não há nenhuma infraestrutura de tempo real implementada, mas a decisão de transporte já foi tomada no [ADR 0003](../adr/ADR003_EnvioDeEventos.md) (ainda em `Status: Proposta`): **SSE** em vez de WebSocket, com reconciliação por `GET` de estado completo a cada reconexão. Falta implementar:
-  - Os dois canais SSE previstos pelo ADR: `GET /api/season/{season_id}/live` e `GET /api/match/{match_id}/live` (`StreamingResponse`, com broadcaster em memória por conexão) na primeira versão.
-  - Publicação nas filas a partir dos adapters da Fase 5 — hoje nenhum dos adapters do UC013/UC014 publica em canal algum; será necessário instrumentá-los (`score_update`, `goal_scored`/`point_scored`, `card_issued`, `player_expelled`, `clock_update`, `period_ended`/`period_started`, `set_finished` etc.).
-  - Push Notifications (mencionadas nos documentos) — definir provedor (FCM/APNs) e camada de integração (`core/notifications/`, ainda inexistente).
-- Esta fase depende funcionalmente da Fase 5 estar concluída (os eventos precisam existir antes de serem transmitidos) — **Fase 5 concluída**: UC013/UC014/UC015/UC017 já geram todos os eventos do Bloco de Dados 4 do UC016 (incluindo `MATCH_END`, `PENALTY_GOAL`/`PENALTY_MISS`, e as correções do UC017 continuam publicando os mesmos tipos de evento por trás, só que soft-deletados).
+### Fase 6 — Tempo real (UC016) ✅ CONCLUÍDA (exceto push)
+- **Entregue:** canais SSE de temporada e de partida; ticket de admissão (visitante ou autenticado, limite por IP); broadcaster em memória com limite de conexões; reconciliação via `GET /api/match/{id}` com schema público (ADR 0003 e ADR 0004).
+- **Leituras públicas para a aba Jogos (ADR 0004):**
+  - `GET /api/modality/` — modalidades ativas, `season_id` opcional (`ModalityRepositoryPort.find_active_by_season`, uma query com join).
+  - `GET /api/match/` — partidas da temporada, filtros (`modality_id`, `status`, `date_from`, `date_to`) e paginação (`size` ≤ 100), via `MatchRepositoryPort.search_by_season` (filtro, ordenação, `LIMIT/OFFSET` e total no SQL). Nomes e logos vêm de `find_by_ids` em lote (times, chaveamentos, grupos, modalidades), sem N+1.
+  - `GET /api/season/active`, `GET /api/match/{id}` e ticket anônimo já estavam públicos.
+- **Pendente:**
+  - Push Notifications — definir provedor (FCM/APNs) e camada de integração (`core/notifications/`, ainda inexistente); depende de registro de token de dispositivo.
+  - Leituras públicas de classificação de grupo, chaveamento (`GET /api/bracket/*` exige monitor) e lista de temporadas sem rascunhos (`GET /api/season/` exige monitor).
+  - Cache HTTP nas leituras públicas (UC016, RN32): hoje só há paginação.
+  - Teste de que rotas de escrita retornam 401 sem token.
 
 ### Fase 7 — Gestão de Reportes (UC018)
 Único caso de uso sem nenhuma camada implementada — precisa ser construído do zero, seguindo o mesmo padrão das demais entidades:
@@ -179,7 +186,7 @@ UC005/009/010 já concluídos nas Fases 0/1. Nesta fase:
 - **Testes:** `tests/unit` já existe e cobre `season`/`modality`; falta ampliar para `team`/`users`, além de estruturar `tests/integration` (banco sqlite em memória via `aiosqlite`, já presente nas deps de dev) e `tests/e2e`. Ativar `task coverage` no CI.
 - **CI:** não há indício de pipeline de CI no repositório — configurar GitHub Actions rodando `task lint` e `task test` a cada PR, para que quebras de build como a corrigida na Fase 0 sejam pegas automaticamente.
 - **`user_controller.py`:** já implementado e registrado em `main.py` (endpoints de administração de usuário) — item concluído, removido do backlog.
-- **Documentação técnica:** `README.md` está vazio — vale documentar como rodar o projeto localmente (setup `uv`, variáveis de ambiente, docker-compose).
+- **Documentação técnica:** `README.md` já documenta setup (`uv`, variáveis de ambiente, docker-compose), modelo de acesso e tempo real — item concluído.
 
 ---
 
@@ -191,7 +198,7 @@ Fase 1 (Temporadas)       →  ✅ concluída  →  Fase 2 (Modalidades)  →  �
         ↓
 Fase 3 (Equipes, UC006-008)  →  ✅ concluída
         ↓
-Fase 4 (Chaveamento, UC011-012)  →  ✅ concluída  →  Fase 5 (Partidas, UC013-015 e 017)  →  ✅ concluída  →  Fase 6 (Tempo real)
+Fase 4 (Chaveamento, UC011-012)  →  ✅ concluída  →  Fase 5 (Partidas, UC013-015 e 017)  →  ✅ concluída  →  Fase 6 (Tempo real)  →  ✅ concluída (push pendente)
         ↓ (paralelo, independente)
 Fase 7 (Reportes)
         ↓ (contínuo, do início ao fim)

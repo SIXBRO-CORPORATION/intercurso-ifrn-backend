@@ -30,7 +30,10 @@ Divergência adicional do UC016 relevante para este tema: o UC descrevia WebSock
 `/seasons/{id}/live` e `/matches/{id}/live`; o ADR003 trocou o transporte para SSE e os caminhos
 reais são `/api/season/{id}/live` e `/api/match/{id}/live`.
 
-### Como está no código hoje
+### Como estava no código na data da decisão
+
+> Retrato histórico, usado para justificar a decisão. O estado atual está em
+> [Estado de implementação](#estado-de-implementação).
 
 **Rotas de leitura (`GET`)**
 
@@ -144,21 +147,48 @@ Em resumo, por ator:
 - [x] UC016: pré-condição de visualização removida (nenhuma; Aluno apenas para push); atores
       ajustados; WebSocket trocado por SSE; caminhos corrigidos para
       `/api/season/{id}/live` e `/api/match/{id}/live`.
-- [ ] ADR003: nota sobre autenticação de leitura e sobre o ticket (referenciando este ADR).
-- [ ] README: seção "Modelo de acesso" com a matriz acima.
-- [ ] Planejamento: registrar as tarefas de código abaixo.
+- [x] ADR003: nota sobre autenticação de leitura e sobre o ticket (referenciando este ADR).
+- [x] README: seção "Modelo de acesso" com a matriz acima.
+- [x] Planejamento: estado do UC016 e das tarefas de código abaixo.
 
 ### Código (sugestão de PRs independentes)
-1. Corrigir o 500 do ticket de temporada (issue já aberta).
-2. Criar schema público de partida (sem `matricula`) e usá-lo em `GET /api/match/{id}`.
-3. Ticket anônimo: `get_optional_current_user` na emissão, `sub` opcional em `verify_ticket`,
-   limite de taxa por IP.
-4. Limite de conexões SSE por IP e por canal.
-5. `GET /api/season/active` público.
-6. Endpoints públicos de lista de partidas da temporada, classificação e chaveamento, com schemas
-   públicos e paginação.
-7. Testes: visitante recebe SSE; resposta pública não contém `matricula`; rotas de escrita seguem
-   retornando 401 sem token.
+1. [x] Corrigir o 500 do ticket de temporada.
+2. [x] Schema público de partida (sem `matricula`) em `GET /api/match/{id}` (`MatchPublicResponse`).
+3. [x] Ticket anônimo: `get_optional_current_user` na emissão, `sub` opcional em `verify_ticket`,
+   limite de taxa por IP (`IpRateLimiter`).
+4. [x] Limite de conexões SSE por usuário (2) e por IP (100) no `Broadcaster`.
+5. [x] `GET /api/season/active` público.
+6. Endpoints públicos de leitura:
+   - [x] Lista de partidas da temporada (`GET /api/match/`), com filtros e paginação.
+   - [x] Lista de modalidades (`GET /api/modality/`), opcionalmente por temporada.
+   - [ ] Classificação de grupo e chaveamento (hoje `GET /api/bracket/*` exige monitor).
+   - [ ] Lista pública de temporadas, sem rascunhos (hoje `GET /api/season/` exige monitor).
+7. [x] Testes: visitante recebe SSE e lista partidas sem token; resposta pública não contém
+   `matricula`. Pendente: teste de que rotas de escrita retornam 401 sem token.
+
+## Estado de implementação
+
+Atualizado em 2026-10-04. Leituras públicas disponíveis hoje (sem token):
+
+| Rota | Observação |
+|---|---|
+| `GET /api/season/active` | Temporada ativa (`SeasonSummary`). |
+| `GET /api/modality/?season_id=` | Modalidades ativas; `season_id` opcional. |
+| `GET /api/match/?season_id=` | Obrigatório `season_id`. Filtros: `modality_id`, `status`, `date_from`, `date_to`. Paginação: `page` (≥1) e `size` (1–100, padrão 20). Ordena por `scheduled_date` (sem data por último). Partidas BYE não aparecem. |
+| `GET /api/match/{id}` | `MatchPublicResponse`, sem `matricula`. |
+| `POST /api/realtime/ticket` | Aceita visitante; 429 acima do limite por IP; 409 se a partida não está `IN_PROGRESS`. |
+| `GET /api/season/{id}/live`, `GET /api/match/{id}/live` | SSE com ticket. |
+
+Convenções da lista de partidas (`GET /api/match/`):
+- `date_from`/`date_to` são calculados pelo cliente no fuso local (ex.: "hoje" em Natal); o
+  servidor não interpreta "hoje".
+- `team1`/`team2` são `null` enquanto o time não está definido ("A definir").
+- Partida sem `scheduled_date` aparece no filtro sem datas, depois das datadas; some quando
+  `date_from`/`date_to` é informado.
+- O schema da lista não traz jogadores; o detalhe vem de `GET /api/match/{id}`.
+
+Continuam restritas: `GET /api/season/` e `/{id}` (monitor), `GET /api/bracket/*` (monitor),
+`GET /api/team/*` (autenticado).
 
 ## Referências
 - [UC016 — Visualizar Partida](../spec/UC016_InterfaceUsuário_VisualizarPartida.md)

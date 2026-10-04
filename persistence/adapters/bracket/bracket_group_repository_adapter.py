@@ -61,3 +61,13 @@ class BracketGroupRepositoryAdapter(BracketGroupRepositoryPort):
         result = await self.session.execute(query)
         await self.session.flush()
         return result.rowcount
+
+    async def find_by_ids(self, group_ids: List[UUID]) -> List[BracketGroup]:
+        if not group_ids:
+            return []
+        query = select(BracketGroupEntity).where(
+            BracketGroupEntity.id.in_(group_ids),
+            BracketGroupEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        return [self.mapper.to_domain(e) for e in result.scalars().all()]
