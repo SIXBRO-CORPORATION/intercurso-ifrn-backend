@@ -7,6 +7,7 @@ import pytest
 from business.season.create_season_adapter import CreateSeasonAdapter
 from core.context import Context
 from domain.enums.audit_action import AuditAction
+from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
 from domain.season.season import Season
@@ -110,7 +111,7 @@ class TestCreateSeasonAdapter:
                 audit_logger.log.await_args.kwargs["action"] == AuditAction.SEASON_CREATED
         )
 
-    async def test_open_immediately_deactivates_current_active_season(self):
+    async def test_draft_season_is_created_inactive(self):
         (
             adapter,
             season_repository,
@@ -121,28 +122,78 @@ class TestCreateSeasonAdapter:
         ) = make_adapter()
         modality_id = uuid4()
         modality_repository.find_by_ids.return_value = [
-            Modality(
-                id=modality_id, name="Futsal", min_members=5, max_members=10, active=True
-            )
+            Modality(id=modality_id, name="Futsal", min_members=5, max_members=10, active=True)
         ]
-        current_active = Season(id=uuid4(), name="Antiga", active=True)
-        season_repository.find_active_season.return_value = current_active
-        season_repository.save.return_value = Season(id=uuid4(), name="Nova")
+        season_repository.save.side_effect = lambda s: s
         season_modality_repository.save.return_value = SeasonModality(
             id=uuid4(), modality_id=modality_id
         )
 
-        context = make_context(
-            modality_ids=[modality_id],
-            registration_start_date=None,
-            open_immediately=True,
+        await adapter.execute(make_context(modality_ids=[modality_id]))
+
+        saved = season_repository.save.await_args.args[0]
+        assert saved.active is False
+        assert saved.status == SeasonStatus.DRAFT
+
+    async def test_open_immediately_is_blocked_when_another_season_is_active(self):
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            user_repository,
+            audit_logger,
+        ) = make_adapter()
+        modality_id = uuid4()
+        modality_repository.find_by_ids.return_value = [
+            Modality(id=modality_id, name="Futsal", min_members=5, max_members=10, active=True)
+        ]
+        season_repository.find_active_season.return_value = Season(
+            id=uuid4(), name="Atual", active=True, status=SeasonStatus.IN_PROGRESS
         )
 
-        await adapter.execute(context)
+        with pytest.raises(BusinessException, match="Finalize a temporada atual"):
+            await adapter.execute(
+                make_context(
+                    modality_ids=[modality_id],
+                    registration_start_date=None,
+                    open_immediately=True,
+                )
+            )
 
-        assert current_active.active is False
-        # uma vez para desativar a antiga, outra para salvar a nova
-        assert season_repository.save.await_count == 2
+        season_repository.save.assert_not_awaited()
+
+    async def test_open_immediately_creates_season_active_when_none_is_active(self):
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            user_repository,
+            audit_logger,
+        ) = make_adapter()
+        modality_id = uuid4()
+        modality_repository.find_by_ids.return_value = [
+            Modality(id=modality_id, name="Futsal", min_members=5, max_members=10, active=True)
+        ]
+        season_repository.find_active_season.return_value = None
+        season_repository.save.side_effect = lambda s: s
+        season_modality_repository.save.return_value = SeasonModality(
+            id=uuid4(), modality_id=modality_id
+        )
+
+        await adapter.execute(
+            make_context(
+                modality_ids=[modality_id],
+                registration_start_date=None,
+                open_immediately=True,
+            )
+        )
+
+        saved = season_repository.save.await_args.args[0]
+        assert saved.active is True
+        assert saved.status == SeasonStatus.REGISTRATION_OPEN
+        season_repository.save.assert_awaited_once()
 
     async def test_blocks_empty_name(self):
         adapter, *_ = make_adapter()

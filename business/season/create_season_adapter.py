@@ -91,6 +91,14 @@ class CreateSeasonAdapter(CreateSeasonPort):
                     f"Modalidade '{modality.name}' está inativa e não pode ser selecionada"
                 )
 
+
+        if open_immediately:
+            currently_active = await self.season_repository.find_active_season()
+            if currently_active is not None:
+                raise BusinessException(
+                    "Finalize a temporada atual antes de abrir as inscrições de uma nova temporada"
+                )
+
         new_season = Season(
             name=season.name.strip(),
             year=season.year,
@@ -109,12 +117,8 @@ class CreateSeasonAdapter(CreateSeasonPort):
             rules_document=season.rules_document,
             created_by=created_by,
         )
-
-        if open_immediately:
-            currently_active = await self.season_repository.find_active_season()
-            if currently_active is not None:
-                currently_active.active = False
-                await self.season_repository.save(currently_active)
+        # Rascunho nasce inativo (UC001 passo 8). Só a abertura torna a temporada ativa.
+        new_season.active = open_immediately
 
         saved_season = await self.season_repository.save(new_season)
 

@@ -18,10 +18,15 @@ async def run_open_seasons_job() -> None:
 
             seasons_to_open = await repository.find_draft_ready_to_open(now)
             for season in seasons_to_open:
+
                 currently_active = await repository.find_active_season()
-                if currently_active is not None and currently_active.id != season.id:
-                    currently_active.active = False
-                    await repository.save(currently_active)
+                if currently_active is not None:
+                    logger.warning(
+                        "Abertura automática da temporada %s adiada: a temporada %s ainda está ativa",
+                        season.id,
+                        currently_active.id,
+                    )
+                    continue
 
                 season.status = SeasonStatus.REGISTRATION_OPEN
                 season.active = True
