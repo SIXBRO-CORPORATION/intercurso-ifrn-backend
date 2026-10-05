@@ -17,4 +17,7 @@ class UserModelMapper:
             role=user.role.name if user.role else None,
             atleta=bool(user.atleta),
             active=bool(user.active),
+            gender=user.gender,
+            curso=user.curso,
+            campus=user.campus,
         )

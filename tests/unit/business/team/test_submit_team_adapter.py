@@ -8,6 +8,8 @@ from business.team.submit_team_adapter import SubmitTeamAdapter
 from core.context import Context
 from domain.enums.audit_action import AuditAction
 from domain.enums.donation_status import DonationStatus
+from domain.enums.gender import Gender
+from domain.enums.modality_gender_mode import ModalityGenderMode
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.enums.user_role import UserRole
@@ -118,6 +120,118 @@ class TestSubmitTeamAdapter:
         audit_kwargs = audit_logger.log.await_args.kwargs
         assert audit_kwargs["action"] == AuditAction.TEAM_SUBMITTED
         assert audit_kwargs["actor_id"] == owner_id
+
+    async def test_blocks_when_mixed_modality_gender_quota_not_met(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            season_repository,
+            modality_repository,
+            user_repository,
+            audit_logger,
+        ) = make_adapter()
+
+        owner_id = uuid4()
+        season_id = uuid4()
+        team = Team(
+            id=uuid4(),
+            name="Turma A",
+            owner_id=owner_id,
+            season_id=season_id,
+            modality_id=uuid4(),
+            status=TeamStatus.DRAFT,
+        )
+        season = make_open_season(season_id)
+        # 6 membros no total, mas só 1 mulher (precisa de 2)
+        members = [
+            TeamMember(
+                id=uuid4(),
+                team_id=team.id,
+                user_id=uuid4(),
+                donation_status=DonationStatus.DONATION_CONFIRMED,
+            )
+            for _ in range(6)
+        ]
+
+        team_repository.get.return_value = team
+        season_repository.find_active_season.return_value = season
+        team_member_repository.find_members_by_team_id.return_value = members
+        modality_repository.get.return_value = Modality(
+            id=team.modality_id,
+            name="Voleibol",
+            min_members=6,
+            max_members=12,
+            gender_mode=ModalityGenderMode.MIXED,
+            min_male_members=4,
+            min_female_members=2,
+        )
+        user_repository.find_by_ids.return_value = [
+            User(id=m.user_id, gender=Gender.MALE) for m in members[:5]
+        ] + [User(id=members[5].user_id, gender=Gender.FEMALE)]
+
+        context = make_context(team.id, owner_id)
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+        team_repository.save.assert_not_awaited()
+
+    async def test_allows_mixed_modality_when_gender_quota_met(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            season_repository,
+            modality_repository,
+            user_repository,
+            audit_logger,
+        ) = make_adapter()
+
+        owner_id = uuid4()
+        season_id = uuid4()
+        team = Team(
+            id=uuid4(),
+            name="Turma A",
+            owner_id=owner_id,
+            season_id=season_id,
+            modality_id=uuid4(),
+            status=TeamStatus.DRAFT,
+        )
+        season = make_open_season(season_id)
+        members = [
+            TeamMember(
+                id=uuid4(),
+                team_id=team.id,
+                user_id=uuid4(),
+                donation_status=DonationStatus.DONATION_CONFIRMED,
+            )
+            for _ in range(6)
+        ]
+
+        team_repository.get.return_value = team
+        season_repository.find_active_season.return_value = season
+        team_member_repository.find_members_by_team_id.return_value = members
+        modality_repository.get.return_value = Modality(
+            id=team.modality_id,
+            name="Voleibol",
+            min_members=6,
+            max_members=12,
+            gender_mode=ModalityGenderMode.MIXED,
+            min_male_members=4,
+            min_female_members=2,
+        )
+        team_repository.save.side_effect = lambda t: t
+        user_repository.get.return_value = User(id=owner_id, role=UserRole.USER)
+        user_repository.find_by_ids.return_value = [
+            User(id=m.user_id, gender=Gender.MALE) for m in members[:4]
+        ] + [User(id=m.user_id, gender=Gender.FEMALE) for m in members[4:]]
+
+        context = make_context(team.id, owner_id)
+
+        result = await adapter.execute(context)
+
+        assert result.status == TeamStatus.SUBMITTED
 
     async def test_blocks_when_requester_is_not_owner(self):
         adapter, team_repository, *_ = make_adapter()

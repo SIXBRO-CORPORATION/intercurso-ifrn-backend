@@ -83,6 +83,14 @@ class LoginWithSuapAdapter(LoginWithSuapPort):
 
             existing_user.name = suap_data.name
             existing_user.email = suap_data.email
+            existing_user.email_classroom = suap_data.email_classroom
+            existing_user.gender = suap_data.gender
+            existing_user.tipo_usuario = suap_data.tipo_usuario
+            existing_user.campus = suap_data.campus
+            existing_user.curso = suap_data.curso
+            existing_user.turno = suap_data.turno
+            existing_user.photo = suap_data.photo
+            existing_user.birth_date = suap_data.birth_date
 
             if cpf_clean is not None:
                 existing_user.cpf = cpf_clean
@@ -92,8 +100,16 @@ class LoginWithSuapAdapter(LoginWithSuapPort):
         new_user = User(
             name=suap_data.name,
             email=suap_data.email,
+            email_classroom=suap_data.email_classroom,
             cpf=cpf_clean,
             matricula=matricula_clean,
+            gender=suap_data.gender,
+            tipo_usuario=suap_data.tipo_usuario,
+            campus=suap_data.campus,
+            curso=suap_data.curso,
+            turno=suap_data.turno,
+            photo=suap_data.photo,
+            birth_date=suap_data.birth_date,
             active=True,
         )
 

@@ -8,6 +8,8 @@ from business.team.join_team_via_invite_adapter import JoinTeamViaInviteAdapter
 from core.context import Context
 from domain.enums.audit_action import AuditAction
 from domain.enums.donation_status import DonationStatus
+from domain.enums.gender import Gender
+from domain.enums.modality_gender_mode import ModalityGenderMode
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
@@ -178,6 +180,134 @@ class TestJoinTeamViaInviteAdapter:
         await adapter.execute(context)
 
         user_repository.save.assert_not_awaited()
+
+    async def test_blocks_when_joining_user_gender_does_not_match_modality(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            modality_repository,
+            audit_logger,
+        ) = make_adapter()
+
+        season = make_open_season()
+        team = make_draft_team(season_id=season.id)
+        requesting_user_id = uuid4()
+        context = make_context(requesting_user_id=requesting_user_id)
+
+        setup_happy_path(
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            modality_repository,
+            team,
+            season,
+            requesting_user_id,
+        )
+        modality_repository.get.return_value = Modality(
+            id=team.modality_id,
+            name="Futsal Feminino",
+            min_members=5,
+            max_members=10,
+            gender_mode=ModalityGenderMode.FEMALE,
+        )
+        user_repository.get.return_value = User(
+            id=requesting_user_id, gender=Gender.MALE, atleta=False
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+        team_member_repository.save.assert_not_awaited()
+
+    async def test_allows_when_joining_user_gender_matches_modality(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            modality_repository,
+            audit_logger,
+        ) = make_adapter()
+
+        season = make_open_season()
+        team = make_draft_team(season_id=season.id)
+        requesting_user_id = uuid4()
+        context = make_context(requesting_user_id=requesting_user_id)
+
+        setup_happy_path(
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            modality_repository,
+            team,
+            season,
+            requesting_user_id,
+        )
+        modality_repository.get.return_value = Modality(
+            id=team.modality_id,
+            name="Futsal Feminino",
+            min_members=5,
+            max_members=10,
+            gender_mode=ModalityGenderMode.FEMALE,
+        )
+        user_repository.get.return_value = User(
+            id=requesting_user_id, gender=Gender.FEMALE, atleta=False
+        )
+
+        result = await adapter.execute(context)
+
+        assert result is not None
+        team_member_repository.save.assert_awaited_once()
+
+    async def test_allows_mixed_modality_regardless_of_joining_user_gender(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            modality_repository,
+            audit_logger,
+        ) = make_adapter()
+
+        season = make_open_season()
+        team = make_draft_team(season_id=season.id)
+        requesting_user_id = uuid4()
+        context = make_context(requesting_user_id=requesting_user_id)
+
+        setup_happy_path(
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            modality_repository,
+            team,
+            season,
+            requesting_user_id,
+        )
+        modality_repository.get.return_value = Modality(
+            id=team.modality_id,
+            name="Voleibol",
+            min_members=6,
+            max_members=12,
+            gender_mode=ModalityGenderMode.MIXED,
+            min_male_members=2,
+            min_female_members=2,
+        )
+        user_repository.get.return_value = User(
+            id=requesting_user_id, gender=Gender.MALE, atleta=False
+        )
+
+        result = await adapter.execute(context)
+
+        assert result is not None
+        team_member_repository.save.assert_awaited_once()
 
     async def test_blocks_when_token_not_found(self):
         (adapter, team_repository, *_rest) = make_adapter()

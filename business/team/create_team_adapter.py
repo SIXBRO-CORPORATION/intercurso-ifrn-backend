@@ -14,6 +14,7 @@ from core.persistence.team.team_member_repository_port import TeamMemberReposito
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
+from domain.enums.modality_gender_mode import ModalityGenderMode
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.donation_status import DonationStatus
@@ -67,7 +68,8 @@ class CreateTeamAdapter(CreateTeamPort):
         if active_season.registration_end_date and now > active_season.registration_end_date:
             raise BusinessException("O período de inscrição já foi encerrado")
 
-        if not await self.modality_repository.exists_by_id(team.modality_id):
+        modality = await self.modality_repository.get(team.modality_id)
+        if modality is None:
             raise BusinessException("Modalidade informada não existe")
 
         modality_in_season = await self.season_modality_repository.exists_by_season_and_modality(
@@ -78,6 +80,19 @@ class CreateTeamAdapter(CreateTeamPort):
                 "Modalidade informada não faz parte da temporada ativa"
             )
 
+        creator_user = await self.user_repository.get(creator_user_id)
+
+        if modality.gender_mode in (ModalityGenderMode.MALE, ModalityGenderMode.FEMALE):
+            if creator_user is None or creator_user.gender is None:
+                raise BusinessException(
+                    "Não foi possível confirmar seu gênero junto ao SUAP para "
+                    "validar a inscrição nesta modalidade"
+                )
+            if creator_user.gender.name != modality.gender_mode.name:
+                raise BusinessException(
+                    f"Esta modalidade é exclusiva para o gênero "
+                    f"{modality.gender_mode.value}"
+                )
 
         already_in_modality = await self.team_repository.exists_by_user_season_and_modality(
             creator_user_id, active_season.id, team.modality_id
@@ -109,7 +124,6 @@ class CreateTeamAdapter(CreateTeamPort):
         )
         saved_owner_member = await self.team_member_repository.save(owner_member)
 
-        creator_user = await self.user_repository.get(creator_user_id)
         if creator_user is not None and not creator_user.atleta:
             creator_user.atleta = True
             await self.user_repository.save(creator_user)

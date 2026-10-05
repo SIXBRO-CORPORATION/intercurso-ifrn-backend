@@ -6,8 +6,11 @@ import pytest
 
 from business.team.create_team_adapter import CreateTeamAdapter
 from core.context import Context
+from domain.enums.gender import Gender
+from domain.enums.modality_gender_mode import ModalityGenderMode
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
+from domain.modality.modality import Modality
 from domain.season.season import Season
 from domain.team.team import Team
 from domain.user.user import User
@@ -105,6 +108,126 @@ class TestCreateTeamAdapter:
 
         owner_member = context.get_property("owner_member", object)
         assert owner_member is not None
+
+    async def test_blocks_when_creator_gender_does_not_match_modality(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            audit_logger,
+        ) = make_adapter()
+
+        active_season = make_open_season()
+        creator_user_id = uuid4()
+        context, team = make_context(creator_user_id=creator_user_id)
+
+        season_repository.find_active_season.return_value = active_season
+        modality_repository.get.return_value = Modality(
+            id=team.modality_id,
+            name="Futsal Feminino",
+            min_members=5,
+            max_members=10,
+            gender_mode=ModalityGenderMode.FEMALE,
+        )
+        season_modality_repository.exists_by_season_and_modality.return_value = True
+        user_repository.get.return_value = User(
+            id=creator_user_id, gender=Gender.MALE
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+        team_repository.save.assert_not_awaited()
+
+    async def test_allows_when_creator_gender_matches_modality(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            audit_logger,
+        ) = make_adapter()
+
+        active_season = make_open_season()
+        creator_user_id = uuid4()
+        context, team = make_context(creator_user_id=creator_user_id)
+
+        season_repository.find_active_season.return_value = active_season
+        modality_repository.get.return_value = Modality(
+            id=team.modality_id,
+            name="Futsal Masculino",
+            min_members=5,
+            max_members=10,
+            gender_mode=ModalityGenderMode.MALE,
+        )
+        season_modality_repository.exists_by_season_and_modality.return_value = True
+        team_repository.exists_by_user_season_and_modality.return_value = False
+        user_repository.get.return_value = User(
+            id=creator_user_id, gender=Gender.MALE, atleta=False
+        )
+        team_repository.save.return_value = Team(
+            id=uuid4(),
+            name=team.name,
+            modality_id=team.modality_id,
+            season_id=active_season.id,
+            owner_id=creator_user_id,
+        )
+
+        result = await adapter.execute(context)
+
+        assert result is not None
+        team_repository.save.assert_awaited_once()
+
+    async def test_allows_mixed_modality_regardless_of_creator_gender(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            audit_logger,
+        ) = make_adapter()
+
+        active_season = make_open_season()
+        creator_user_id = uuid4()
+        context, team = make_context(creator_user_id=creator_user_id)
+
+        season_repository.find_active_season.return_value = active_season
+        modality_repository.get.return_value = Modality(
+            id=team.modality_id,
+            name="Voleibol",
+            min_members=6,
+            max_members=12,
+            gender_mode=ModalityGenderMode.MIXED,
+            min_male_members=2,
+            min_female_members=2,
+        )
+        season_modality_repository.exists_by_season_and_modality.return_value = True
+        team_repository.exists_by_user_season_and_modality.return_value = False
+        user_repository.get.return_value = User(
+            id=creator_user_id, gender=Gender.FEMALE, atleta=False
+        )
+        team_repository.save.return_value = Team(
+            id=uuid4(),
+            name=team.name,
+            modality_id=team.modality_id,
+            season_id=active_season.id,
+            owner_id=creator_user_id,
+        )
+
+        result = await adapter.execute(context)
+
+        assert result is not None
+        team_repository.save.assert_awaited_once()
 
     async def test_blocks_when_no_active_season(self):
         (

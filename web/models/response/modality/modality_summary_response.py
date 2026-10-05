@@ -1,6 +1,9 @@
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from domain.enums.modality_gender_mode import ModalityGenderMode
 
 
 class ModalitySummaryResponse(BaseModel):
@@ -11,3 +14,6 @@ class ModalitySummaryResponse(BaseModel):
     name: str = Field()
     min_members: int = Field()
     max_members: int = Field()
+    gender_mode: ModalityGenderMode = Field()
+    min_male_members: Optional[int] = Field(default=None)
+    min_female_members: Optional[int] = Field(default=None)

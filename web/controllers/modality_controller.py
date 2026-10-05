@@ -65,6 +65,9 @@ async def create_modality(
         name=request.name,
         min_members=request.min_members,
         max_members=request.max_members,
+        gender_mode=request.gender_mode,
+        min_male_members=request.min_male_members,
+        min_female_members=request.min_female_members,
     )
     configuration_domain = ModalityConfiguration(
         num_periods=request.num_periods,

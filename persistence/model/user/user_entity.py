@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, Date
 from persistence.model.abstract_entity import AbstractEntity
 
 
@@ -16,3 +16,19 @@ class UserEntity(AbstractEntity):
     atleta = Column(Boolean, nullable=False, default=False)
 
     role = Column(String(20), nullable=False, default="USER", index=True)
+
+    gender = Column(String(1), nullable=True)
+
+    tipo_usuario = Column(String(50), nullable=True)
+
+    campus = Column(String(50), nullable=True)
+
+    curso = Column(String(255), nullable=True)
+
+    turno = Column(String(50), nullable=True)
+
+    email_classroom = Column(String(255), nullable=True)
+
+    photo = Column(String, nullable=True)
+
+    birth_date = Column(Date, nullable=True)

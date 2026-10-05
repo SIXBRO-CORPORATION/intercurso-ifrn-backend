@@ -59,6 +59,9 @@ Este caso de uso permite que o monitor cadastre novas modalidades esportivas no 
 | Nome                     | E             | Nome da modalidade (ex: "Futsal", "Vôlei")            |
 | Mínimo de Membros        | E             | Quantidade mínima de jogadores por time (>= 1)        |
 | Máximo de Membros        | E             | Quantidade máxima de jogadores por time               |
+| Regra de Gênero (`gender_mode`) | E     | Um de: `MALE`, `FEMALE`, `MIXED`. Regulamento Jogos Internos, Art. 10: modalidades masculinas e femininas são cadastradas como modalidades distintas (ex: "Futsal Masculino" e "Futsal Feminino"); `MIXED` é só para modalidades de formato misto (Voleibol, Queimada, Handebol) |
+| Mínimo de Homens (`min_male_members`) | E | Obrigatório e só aplicável quando `gender_mode = MIXED` (Art. 10 §1º-§3º) |
+| Mínimo de Mulheres (`min_female_members`) | E | Obrigatório e só aplicável quando `gender_mode = MIXED` (Art. 10 §1º-§3º) |
 | Descrição                | E             | Descrição opcional da modalidade                      |
 | Ícone                    | E             | URL ou código do ícone (opcional)                     |
 | Status                   | S             | Ativo/Inativo                                         |
@@ -91,7 +94,11 @@ Este caso de uso permite que o monitor cadastre novas modalidades esportivas no 
 13. **Sistema de Pontuação** é obrigatório e deve ser um dos valores suportados (Gols, Pontos, Sets);
 14. **Disputa de Terceiro Lugar** tem padrão "não" quando não informado;
 15. A configuração de partida é criada junto com a modalidade, na mesma operação, e é obrigatória — não é possível cadastrar uma modalidade sem configuração de partida;
-16. A configuração de partida pertence à modalidade (não à temporada); ao ser editada, vale imediatamente para todas as partidas futuras dessa modalidade, inclusive em temporadas já em andamento.
+16. A configuração de partida pertence à modalidade (não à temporada); ao ser editada, vale imediatamente para todas as partidas futuras dessa modalidade, inclusive em temporadas já em andamento;
+17. **Regra de Gênero (`gender_mode`)** é obrigatória para toda modalidade (Regulamento Jogos Internos, Art. 10): `MALE`, `FEMALE` ou `MIXED`;
+18. Quando `gender_mode = MIXED`, **Mínimo de Homens** e **Mínimo de Mulheres** são obrigatórios (podem ser 0), e a soma de ambos não pode ultrapassar **Máximo de Membros** nem **Mínimo de Membros** — ou seja, `min_members` precisa ser suficiente para cobrir as duas cotas;
+19. Quando `gender_mode` é `MALE` ou `FEMALE`, **Mínimo de Homens** e **Mínimo de Mulheres** não devem ser informados (são exclusivos de `MIXED`);
+20. Modalidades `MALE`/`FEMALE` não compartilham chaveamento entre si: cada modalidade cadastrada gera seu próprio chaveamento (UC011), então "Futsal Masculino" e "Futsal Feminino" são duas modalidades e dois chaveamentos independentes, não uma única modalidade com duas categorias internas.
 
 ## 7. Critérios de Aceitação
 - O sistema deve bloquear cadastro com nome duplicado;

@@ -22,6 +22,9 @@ class ModalityModelMapper:
                 name=m.name,
                 min_members=m.min_members,
                 max_members=m.max_members,
+                gender_mode=m.gender_mode,
+                min_male_members=m.min_male_members,
+                min_female_members=m.min_female_members,
             )
             for m in modalities
         ]
@@ -37,6 +40,9 @@ class ModalityModelMapper:
             name=modality.name,
             min_members=modality.min_members,
             max_members=modality.max_members,
+            gender_mode=modality.gender_mode,
+            min_male_members=modality.min_male_members,
+            min_female_members=modality.min_female_members,
             active=modality.active,
             configuration=self._to_configuration_response(
                 configuration, volleyball_configuration

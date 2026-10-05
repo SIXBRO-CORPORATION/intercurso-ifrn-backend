@@ -11,6 +11,8 @@ from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.donation_status import DonationStatus
+from domain.enums.gender import Gender
+from domain.enums.modality_gender_mode import ModalityGenderMode
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
@@ -88,6 +90,32 @@ class SubmitTeamAdapter(SubmitTeamPort):
                 f"O time precisa de pelo menos {modality.min_members} membros para "
                 f"ser submetido. Faltam {faltantes} membro(s)."
             )
+
+        if modality is not None and modality.gender_mode == ModalityGenderMode.MIXED:
+            member_users = await self.user_repository.find_by_ids(
+                [m.user_id for m in members]
+            )
+            male_count = sum(1 for u in member_users if u.gender == Gender.MALE)
+            female_count = sum(1 for u in member_users if u.gender == Gender.FEMALE)
+
+            if (
+                modality.min_male_members is not None
+                and male_count < modality.min_male_members
+            ):
+                raise BusinessException(
+                    f"Modalidade mista: o time precisa de pelo menos "
+                    f"{modality.min_male_members} integrante(s) do gênero "
+                    f"masculino. Atualmente tem {male_count}."
+                )
+            if (
+                modality.min_female_members is not None
+                and female_count < modality.min_female_members
+            ):
+                raise BusinessException(
+                    f"Modalidade mista: o time precisa de pelo menos "
+                    f"{modality.min_female_members} integrante(s) do gênero "
+                    f"feminino. Atualmente tem {female_count}."
+                )
 
         team.status = TeamStatus.SUBMITTED
         team.token_active = False

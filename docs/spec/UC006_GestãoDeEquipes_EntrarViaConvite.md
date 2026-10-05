@@ -58,6 +58,11 @@ Este caso de uso permite que um aluno entre em um time existente através de um 
 2. O sistema exibe mensagem de erro informando a restrição;
 3. O ator é redirecionado para a listagem de seus times.
 
+### Fluxo Alternativo 7: Gênero Incompatível com a Modalidade
+1. O ator acessa link de time de modalidade com `gender_mode = MALE` ou `FEMALE` diferente do seu gênero;
+2. O sistema bloqueia a operação e exibe mensagem: "Esta modalidade é exclusiva para o gênero {gender_mode}";
+3. O ator é redirecionado para a página inicial.
+
 ### Fluxo Alternativo 6: Período de Inscrição Fechado
 1. O ator acessa link fora do período de inscrição;
 2. O sistema exibe mensagem informando que o período está fechado;
@@ -93,6 +98,7 @@ Este caso de uso permite que um aluno entre em um time existente através de um 
 5. Time não pode estar cheio (`members_count < max_members`);
 6. Aluno não pode já ser membro do time;
 7. Aluno não pode estar em outro time da mesma modalidade na mesma temporada;
+7a. Se a modalidade tiver `gender_mode = MALE` ou `FEMALE`, o gênero do aluno (obtido do SUAP) deve coincidir com o `gender_mode` da modalidade — caso contrário, a entrada é bloqueada (Regulamento Jogos Internos, Art. 10). Modalidades `MIXED` não têm essa restrição na entrada (a cota de gênero é validada só na submissão, UC008);
 8. Ao entrar, aluno recebe automaticamente `role = MEMBER` e `donation_status = PENDING_DONATION`;
 9. `user.is_athlete` do aluno é atualizado para `true`;
 10. `joined_at` é preenchido automaticamente com timestamp atual;

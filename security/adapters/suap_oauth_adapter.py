@@ -15,6 +15,7 @@ class SUAPOAuthAdapter(OAuthProviderPort):
         self.authorization_url = settings.suap_authorization_url
         self.token_url = settings.suap_token_url
         self.user_info_url = settings.suap_user_info_url
+        self.identification_url = settings.suap_identification_url
 
     def get_authorization_url(self, state: Optional[str] = None) -> str:
         params = {
@@ -55,22 +56,32 @@ class SUAPOAuthAdapter(OAuthProviderPort):
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")
 
+    async def _fetch_json(self, client: httpx.AsyncClient, url: str, access_token: str) -> dict:
+        response = await client.get(
+            url,
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        if response.status_code != 200:
+            raise BusinessException(
+                f"Erro ao buscar dados do usuário no SUAP ({url}): {response.text}"
+            )
+        return response.json()
+
     async def get_user_info(self, access_token: str) -> User:
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.get(
-                    self.user_info_url,
-                    headers={"Authorization": f"Bearer {access_token}"},
+
+                identificacao = await self._fetch_json(
+                    client, self.identification_url, access_token
                 )
 
-                if response.status_code != 200:
-                    raise BusinessException(
-                        f"Erro ao buscar dados do usuário no SUAP: {response.text}"
+                dados_aluno = None
+                if identificacao.get("tipo_usuario") == "Aluno":
+                    dados_aluno = await self._fetch_json(
+                        client, self.user_info_url, access_token
                     )
 
-                data = response.json()
-                user = User.from_suap_dict(data)
-                return user
+                return User.from_suap_dict(identificacao, dados_aluno)
 
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")

@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from domain.enums.gender import Gender
+
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -14,3 +16,6 @@ class UserResponse(BaseModel):
     role: str = Field()
     atleta: bool = Field()
     active: bool = Field()
+    gender: Optional[Gender] = Field(default=None)
+    curso: Optional[str] = Field(default=None)
+    campus: Optional[str] = Field(default=None)

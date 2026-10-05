@@ -6,6 +6,7 @@ import pytest
 from business.modality.create_modality_adapter import CreateModalityAdapter
 from core.context import Context
 from domain.enums.audit_action import AuditAction
+from domain.enums.modality_gender_mode import ModalityGenderMode
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
@@ -43,12 +44,24 @@ def make_context(
     max_members=10,
     configuration=None,
     created_by=None,
+    gender_mode=ModalityGenderMode.MIXED,
+    min_male_members=0,
+    min_female_members=0,
 ):
     context = Context(
         data=Modality(
             name=name,
             min_members=min_members,
             max_members=max_members,
+            gender_mode=gender_mode,
+            min_male_members=(
+                min_male_members if gender_mode == ModalityGenderMode.MIXED else None
+            ),
+            min_female_members=(
+                min_female_members
+                if gender_mode == ModalityGenderMode.MIXED
+                else None
+            ),
         )
     )
 
@@ -231,6 +244,97 @@ class TestCreateModalityAdapter:
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
+
+    async def test_blocks_missing_gender_mode(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = make_context(
+            gender_mode=None,
+            configuration=make_valid_configuration(),
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+    async def test_blocks_mixed_without_gender_quotas(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = make_context(
+            gender_mode=ModalityGenderMode.MIXED,
+            min_male_members=None,
+            min_female_members=None,
+            configuration=make_valid_configuration(),
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+    async def test_blocks_gender_quota_sum_above_max_members(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = make_context(
+            min_members=5,
+            max_members=10,
+            gender_mode=ModalityGenderMode.MIXED,
+            min_male_members=6,
+            min_female_members=6,
+            configuration=make_valid_configuration(),
+        )
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+    async def test_blocks_male_or_female_with_gender_quotas_set(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = Context(
+            data=Modality(
+                name="Futsal Masculino",
+                min_members=5,
+                max_members=10,
+                gender_mode=ModalityGenderMode.MALE,
+                min_male_members=2,
+                min_female_members=0,
+            )
+        )
+        context.put_property("modality_configuration", make_valid_configuration())
+        context.put_property("created_by", uuid4())
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+    async def test_creates_mixed_modality_with_gender_quotas(self):
+        (
+            adapter,
+            modality_repository,
+            modality_configuration_repository,
+            _volleyball_repository,
+            _audit_logger,
+        ) = make_adapter()
+
+        modality_repository.find_by_name.return_value = None
+        modality_repository.save.side_effect = lambda m: m
+        modality_configuration_repository.save.side_effect = lambda c: c
+
+        context = make_context(
+            name="Voleibol",
+            min_members=6,
+            max_members=12,
+            gender_mode=ModalityGenderMode.MIXED,
+            min_male_members=2,
+            min_female_members=2,
+            configuration=make_valid_configuration(),
+        )
+
+        result = await adapter.execute(context)
+
+        assert result.gender_mode == ModalityGenderMode.MIXED
+        assert result.min_male_members == 2
+        assert result.min_female_members == 2
 
     async def test_blocks_missing_score_type(self):
         adapter, *_ = make_adapter()

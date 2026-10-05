@@ -33,6 +33,11 @@ Este caso de uso permite que o dono (owner) de um time submeta sua equipe para a
 3. O sistema exibe mensagem informando quantos membros faltam;
 4. Owner não consegue submeter até atingir mínimo.
 
+### Fluxo Alternativo 7: Cota de Gênero Não Atingida (Modalidade Mista)
+1. O owner tenta submeter time de modalidade `MIXED` sem atingir `min_male_members` e/ou `min_female_members`;
+2. O sistema bloqueia a operação e informa quantos membros de cada gênero ainda faltam;
+3. Owner não consegue submeter até atingir as duas cotas.
+
 ### Fluxo Alternativo 2: Fora do Período de Inscrição
 1. Sistema detecta que temporada está em REGISTRATION_CLOSED ou IN_PROGRESS;
 2. Sistema bloqueia botão "Submeter";
@@ -90,6 +95,7 @@ Este caso de uso permite que o dono (owner) de um time submeta sua equipe para a
 4. Temporada deve estar em **REGISTRATION_OPEN**;
 5. Data atual deve estar dentro do período de inscrição (`registration_start_date` a `registration_end_date`);
 6. Quantidade de membros deve ser >= `min_members` da modalidade;
+6a. Se a modalidade tiver `gender_mode = MIXED`, a quantidade de membros do gênero masculino deve ser >= `min_male_members` e a quantidade de membros do gênero feminino deve ser >= `min_female_members` (Regulamento Jogos Internos, Art. 10 §1º-§3º). Essa validação só ocorre na submissão, pois a composição do time pode mudar livremente até esse momento;
 7. Ao submeter, status muda automaticamente para **PENDING_APPROVAL**;
 8. `invite_active` é definido como `false` (convite desativado);
 9. `submitted_at` é preenchido com timestamp da submissão;

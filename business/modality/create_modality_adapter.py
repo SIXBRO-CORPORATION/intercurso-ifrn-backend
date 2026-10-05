@@ -10,6 +10,7 @@ from core.persistence.modality.modality_repository_port import ModalityRepositor
 from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
 from domain.enums.audit_action import AuditAction
+from domain.enums.modality_gender_mode import ModalityGenderMode
 from domain.enums.score_type import ScoreType
 from domain.exceptions.business_exception import BusinessException
 from domain.modality.modality import Modality
@@ -50,6 +51,47 @@ class CreateModalityAdapter(CreateModalityPort):
             raise BusinessException(
                 "Máximo de membros deve ser maior ou igual ao mínimo de membros"
             )
+
+        if modality.gender_mode is None:
+            raise BusinessException(
+                "Regra de gênero da modalidade (gender_mode) é obrigatória: "
+                "MALE, FEMALE ou MIXED"
+            )
+
+        if modality.gender_mode == ModalityGenderMode.MIXED:
+            if modality.min_male_members is None or modality.min_male_members < 0:
+                raise BusinessException(
+                    "Para modalidades mistas (MIXED), min_male_members é "
+                    "obrigatório e deve ser >= 0"
+                )
+            if modality.min_female_members is None or modality.min_female_members < 0:
+                raise BusinessException(
+                    "Para modalidades mistas (MIXED), min_female_members é "
+                    "obrigatório e deve ser >= 0"
+                )
+            if (
+                modality.min_male_members + modality.min_female_members
+                > modality.max_members
+            ):
+                raise BusinessException(
+                    "A soma de min_male_members e min_female_members não "
+                    "pode ser maior que max_members"
+                )
+            if (
+                modality.min_male_members + modality.min_female_members
+                > modality.min_members
+            ):
+                raise BusinessException(
+                    "min_members deve ser suficiente para cobrir a cota "
+                    "mínima de cada gênero (min_male_members + "
+                    "min_female_members)"
+                )
+        else:
+            if modality.min_male_members is not None or modality.min_female_members is not None:
+                raise BusinessException(
+                    "min_male_members e min_female_members só são "
+                    "aplicáveis a modalidades MIXED"
+                )
 
         if configuration is None:
             raise BusinessException("Configuração de partida é obrigatória")
@@ -115,6 +157,9 @@ class CreateModalityAdapter(CreateModalityPort):
             name=normalized_name,
             min_members=modality.min_members,
             max_members=modality.max_members,
+            gender_mode=modality.gender_mode,
+            min_male_members=modality.min_male_members,
+            min_female_members=modality.min_female_members,
             active=True,
         )
 

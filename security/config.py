@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     suap_authorization_url: str = "https://suap.ifrn.edu.br/o/authorize/"
     suap_token_url: str = "https://suap.ifrn.edu.br/o/token/"
     suap_user_info_url: str = "https://suap.ifrn.edu.br/api/rh/meus-dados/"
+    suap_identification_url: str = "https://suap.ifrn.edu.br/api/rh/eu/"
 
     # JWT
     jwt_secret_key: str

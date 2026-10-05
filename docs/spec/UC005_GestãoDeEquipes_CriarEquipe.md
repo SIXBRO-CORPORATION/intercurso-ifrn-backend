@@ -48,6 +48,11 @@ Este caso de uso permite que um aluno crie um novo time para participar de uma m
 1. O ator tenta criar time de modalidade inativa;
 2. O sistema não exibe a modalidade na lista de opções disponíveis.
 
+### Fluxo Alternativo 6: Gênero Incompatível com a Modalidade
+1. O ator tenta criar time em modalidade com `gender_mode = MALE` ou `FEMALE` diferente do seu gênero;
+2. O sistema bloqueia a operação e exibe mensagem: "Esta modalidade é exclusiva para o gênero {gender_mode}";
+3. O ator é redirecionado para a listagem de modalidades.
+
 ### Fluxo Alternativo 5: Temporada Encerra Durante Criação
 1. Aluno está preenchendo formulário;
 2. Sistema detecta que temporada mudou para REGISTRATION_CLOSED;
@@ -81,6 +86,7 @@ Este caso de uso permite que um aluno crie um novo time para participar de uma m
 3. Data atual deve estar dentro do período de inscrição;
 4. Aluno não pode estar em outro time da mesma modalidade na mesma temporada;
 5. Modalidade deve existir e estar ativa na temporada;
+5a. Se a modalidade tiver `gender_mode = MALE` ou `FEMALE`, o gênero do ator (obtido do SUAP) deve coincidir com o `gender_mode` da modalidade — caso contrário, a criação é bloqueada (Regulamento Jogos Internos, Art. 10). Modalidades `MIXED` não têm essa restrição na criação (a cota de gênero é validada só na submissão, UC008);
 6. Time é automaticamente vinculado à **temporada ativa**;
 7. Time é criado com status **DRAFT**;
 8. Sistema gera `invite_token` único automaticamente (UUID);

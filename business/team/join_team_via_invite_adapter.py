@@ -11,6 +11,7 @@ from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.donation_status import DonationStatus
+from domain.enums.modality_gender_mode import ModalityGenderMode
 from domain.enums.season_status import SeasonStatus
 from domain.enums.team_member_role import TeamMemberRole
 from domain.enums.team_status import TeamStatus
@@ -68,6 +69,8 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
         if already_member:
             raise BusinessException("Você já é membro deste time")
 
+        requesting_user = await self.user_repository.get(requesting_user_id)
+
         modality = await self.modality_repository.get(team.modality_id)
         if modality is not None:
             members_count = await self.team_member_repository.count_by_team(team.id)
@@ -75,6 +78,21 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
                 raise BusinessException(
                     "Este time já atingiu o limite máximo de membros"
                 )
+
+            if modality.gender_mode in (
+                ModalityGenderMode.MALE,
+                ModalityGenderMode.FEMALE,
+            ):
+                if requesting_user is None or requesting_user.gender is None:
+                    raise BusinessException(
+                        "Não foi possível confirmar seu gênero junto ao SUAP "
+                        "para validar a entrada nesta modalidade"
+                    )
+                if requesting_user.gender.name != modality.gender_mode.name:
+                    raise BusinessException(
+                        f"Esta modalidade é exclusiva para o gênero "
+                        f"{modality.gender_mode.value}"
+                    )
 
         already_in_modality = await self.team_repository.exists_by_user_season_and_modality(
             requesting_user_id, team.season_id, team.modality_id
@@ -93,7 +111,6 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
         )
         saved_member = await self.team_member_repository.save(new_member)
 
-        requesting_user = await self.user_repository.get(requesting_user_id)
         if requesting_user is not None and not requesting_user.atleta:
             requesting_user.atleta = True
             await self.user_repository.save(requesting_user)
