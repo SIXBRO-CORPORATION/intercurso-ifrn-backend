@@ -30,6 +30,7 @@ class UserMapper:
             email_classroom=entity.email_classroom,
             photo=entity.photo,
             birth_date=entity.birth_date,
+            frequencia_percentual=entity.frequencia_percentual,
         )
 
     def to_entity(self, user: User) -> UserEntity:
@@ -52,6 +53,7 @@ class UserMapper:
             email_classroom=user.email_classroom,
             photo=user.photo,
             birth_date=user.birth_date,
+            frequencia_percentual=user.frequencia_percentual,
         )
 
         return entity

@@ -6,10 +6,12 @@ from core.business.team.approve_team_port import ApproveTeamPort
 from core.context import Context
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.team.team import Team
+from security.config import settings
 
 
 class ApproveTeamAdapter(ApproveTeamPort):
@@ -17,10 +19,12 @@ class ApproveTeamAdapter(ApproveTeamPort):
         self,
         team_repository: TeamRepositoryPort,
         team_member_repository: TeamMemberRepositoryPort,
+        user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
+        self.user_repository = user_repository
         self.audit_logger = audit_logger
 
     async def execute(self, context: Context) -> Team:
@@ -49,6 +53,25 @@ class ApproveTeamAdapter(ApproveTeamPort):
         if pending_donations_count > 0:
             raise BusinessException(
                 "Todos os membros devem ter a doação confirmada antes da aprovação"
+            )
+
+        members = await self.team_member_repository.find_members_by_team_id(team_id)
+        users = await self.user_repository.find_by_ids([m.user_id for m in members])
+        # Só alunos têm frequência; None (nunca consultada/SUAP falhou) bloqueia.
+        irregulares = [
+            u.name
+            for u in users
+            if u.tipo_usuario == "Aluno"
+            and (
+                u.frequencia_percentual is None
+                or u.frequencia_percentual < settings.min_attendance_percent
+            )
+        ]
+        if irregulares:
+            raise BusinessException(
+                f"Membros sem frequência mínima de {settings.min_attendance_percent}% "
+                f"(ou ainda não verificada; peça para entrarem no app novamente): "
+                f"{', '.join(irregulares)}"
             )
 
         team.status = TeamStatus.APPROVED

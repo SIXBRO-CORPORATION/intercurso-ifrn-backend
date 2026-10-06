@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     suap_token_url: str = "https://suap.ifrn.edu.br/o/token/"
     suap_user_info_url: str = "https://suap.ifrn.edu.br/api/rh/meus-dados/"
     suap_identification_url: str = "https://suap.ifrn.edu.br/api/rh/eu/"
+    suap_attendance_url: str = (
+        "https://suap.ifrn.edu.br/api/ensino/frequencia-periodo-letivo/{ano}/{periodo}"
+    )
+    # Frequência mínima (%) para aprovar time; ano/período letivo consultados no SUAP
+    min_attendance_percent: int = 75
+    attendance_year: int | None = None  # None = ano corrente
+    attendance_period: int = 1
 
     # JWT
     jwt_secret_key: str

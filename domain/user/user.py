@@ -6,6 +6,13 @@ from domain.enums.user_role import UserRole
 from dataclasses import dataclass, field
 
 
+def _to_int(value) -> Optional[int]:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 @dataclass
 class User(AbstractDomain):
     name: str = None
@@ -22,10 +29,14 @@ class User(AbstractDomain):
     email_classroom: Optional[str] = None
     photo: Optional[str] = None
     birth_date: Optional[date] = None
+    frequencia_percentual: Optional[int] = None
 
     @classmethod
     def from_suap_dict(
-        cls, identificacao: dict, dados_aluno: Optional[dict] = None
+        cls,
+        identificacao: dict,
+        dados_aluno: Optional[dict] = None,
+        frequencia: Optional[dict] = None,
     ) -> "User":
 
         tipo_usuario = identificacao.get("tipo_usuario")
@@ -63,4 +74,5 @@ class User(AbstractDomain):
             gender=gender,
             photo=identificacao.get("foto"),
             birth_date=birth_date,
+            frequencia_percentual=_to_int((frequencia or {}).get("percentual_frequencia")),
         )

@@ -8,13 +8,20 @@ from core.context import Context
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.team.team import Team
+from domain.team.team_member import TeamMember
+from domain.user.user import User
 
 
 def make_adapter():
     team_repository = AsyncMock()
     team_member_repository = AsyncMock()
+    user_repository = AsyncMock()
+    user_repository.find_by_ids.return_value = []
     audit_logger = AsyncMock()
-    adapter = ApproveTeamAdapter(team_repository, team_member_repository, audit_logger)
+    adapter = ApproveTeamAdapter(
+        team_repository, team_member_repository, user_repository, audit_logger
+    )
+    adapter.user_repository = user_repository
     return adapter, team_repository, team_member_repository
 
 
@@ -92,3 +99,39 @@ class TestApproveTeamAdapter:
             await adapter.execute(context)
 
         team_repository.get.assert_not_awaited()
+
+    @pytest.mark.parametrize("frequencia", [None, 74])
+    async def test_blocks_student_below_min_or_unverified_attendance(self, frequencia):
+        adapter, team_repository, team_member_repository = make_adapter()
+        team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
+        team_repository.get.return_value = team
+        team_member_repository.count_by_team.return_value = 1
+        team_member_repository.count_pending_donations_by_team.return_value = 0
+        member = TeamMember(user_id=uuid4())
+        team_member_repository.find_members_by_team_id.return_value = [member]
+        adapter.user_repository.find_by_ids.return_value = [
+            User(id=member.user_id, name="Fulano", tipo_usuario="Aluno", frequencia_percentual=frequencia)
+        ]
+
+        with pytest.raises(BusinessException, match="Fulano"):
+            await adapter.execute(make_context(team.id))
+
+        team_repository.save.assert_not_awaited()
+
+    async def test_approves_at_min_attendance_and_ignores_non_students(self):
+        adapter, team_repository, team_member_repository = make_adapter()
+        team = Team(id=uuid4(), name="Time A", status=TeamStatus.SUBMITTED)
+        team_repository.get.return_value = team
+        team_repository.save.return_value = team
+        team_member_repository.count_by_team.return_value = 2
+        team_member_repository.count_pending_donations_by_team.return_value = 0
+        a, b = TeamMember(user_id=uuid4()), TeamMember(user_id=uuid4())
+        team_member_repository.find_members_by_team_id.return_value = [a, b]
+        adapter.user_repository.find_by_ids.return_value = [
+            User(id=a.user_id, name="Aluno", tipo_usuario="Aluno", frequencia_percentual=75),
+            User(id=b.user_id, name="Servidor", tipo_usuario="Servidor"),
+        ]
+
+        result = await adapter.execute(make_context(team.id))
+
+        assert result.status == TeamStatus.APPROVED

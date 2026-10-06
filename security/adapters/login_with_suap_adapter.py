@@ -91,6 +91,7 @@ class LoginWithSuapAdapter(LoginWithSuapPort):
             existing_user.turno = suap_data.turno
             existing_user.photo = suap_data.photo
             existing_user.birth_date = suap_data.birth_date
+            existing_user.frequencia_percentual = suap_data.frequencia_percentual
 
             if cpf_clean is not None:
                 existing_user.cpf = cpf_clean
@@ -110,6 +111,7 @@ class LoginWithSuapAdapter(LoginWithSuapPort):
             turno=suap_data.turno,
             photo=suap_data.photo,
             birth_date=suap_data.birth_date,
+            frequencia_percentual=suap_data.frequencia_percentual,
             active=True,
         )
 

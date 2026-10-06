@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Date
+from sqlalchemy import Column, String, Boolean, Date, Integer
 from persistence.model.abstract_entity import AbstractEntity
 
 
@@ -32,3 +32,5 @@ class UserEntity(AbstractEntity):
     photo = Column(String, nullable=True)
 
     birth_date = Column(Date, nullable=True)
+
+    frequencia_percentual = Column(Integer, nullable=True)
