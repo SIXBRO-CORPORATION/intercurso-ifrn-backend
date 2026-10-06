@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest_asyncio
+from unittest.mock import MagicMock
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -38,6 +39,7 @@ from persistence.model.modality.modality_entity import ModalityEntity
 from persistence.model.season.season_modality_entity import SeasonModalityEntity
 from persistence.model.team.team_entity import TeamEntity
 from web.dependencies.business.match_dependencies import get_list_public_matches_port
+from web.dependencies.business.storage_dependencies import get_file_storage
 from web.main import app
 
 
@@ -160,6 +162,9 @@ class TestPublicMatchListEndToEnd:
             TeamRepositoryAdapter(session, TeamMapper()),
             ModalityRepositoryAdapter(session, ModalityMapper()),
         )
+        app.dependency_overrides[get_file_storage] = lambda: MagicMock(
+            generate_presigned_url=lambda key: f"https://signed.test/{key}?sig=1"
+        )
         try:
             async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as client:
                 ok = await client.get("/api/match/", params={"season_id": str(season), "size": 10})
@@ -167,6 +172,7 @@ class TestPublicMatchListEndToEnd:
                 no_season = await client.get("/api/match/")
         finally:
             app.dependency_overrides.pop(get_list_public_matches_port, None)
+            app.dependency_overrides.pop(get_file_storage, None)
 
         assert ok.status_code == 200 and too_big.status_code == 422 and no_season.status_code == 422
         data = ok.json()["data"]
@@ -174,6 +180,18 @@ class TestPublicMatchListEndToEnd:
         by_status = {i["status"]: i for i in data["items"]}
         item = by_status["IN_PROGRESS"]
         assert item["modality_name"] == "Futsal" and item["group_name"] == "A"
-        assert item["team1"]["name"] == "Time A" and item["team1"]["photo"] == "logo.png"
+        assert item["team1"]["name"] == "Time A" and item["team1"]["photo"] == "https://signed.test/logo.png?sig=1"
         assert item["team1"]["score"] == 2 and item["team2"] is None  # A definir
         assert "matricula" not in ok.text
+
+
+class TestMatchTeamPhotoUrl:
+    def test_team_without_photo_has_no_url_and_never_hits_storage(self):
+        from domain.team.team import Team
+        from web.mappers.match_model_mapper import MatchModelMapper
+
+        storage = MagicMock()
+        resp = MatchModelMapper(storage)._to_team_response(Team(id=uuid4(), name="Sem foto"), 0)
+
+        assert resp.photo is None
+        storage.generate_presigned_url.assert_not_called()

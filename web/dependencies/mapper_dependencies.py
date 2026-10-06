@@ -34,5 +34,7 @@ def get_bracket_model_mapper() -> BracketModelMapper:
     return BracketModelMapper()
 
 
-def get_match_model_mapper() -> MatchModelMapper:
-    return MatchModelMapper()
+def get_match_model_mapper(
+    file_storage: Annotated[FileStoragePort, Depends(get_file_storage)],
+) -> MatchModelMapper:
+    return MatchModelMapper(file_storage)

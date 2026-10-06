@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
+from core.storage.file_storage_port import FileStoragePort
 from domain.match.match import Match
 from domain.match.match_event import MatchEvent
 from domain.match.match_set import MatchSet
@@ -27,6 +28,14 @@ from web.models.response.match.match_management_response import (
 
 
 class MatchModelMapper:
+    def __init__(self, file_storage: FileStoragePort):
+        self.file_storage = file_storage
+
+    def _resolve_photo_url(self, photo_object_key: Optional[str]) -> Optional[str]:
+        if not photo_object_key:
+            return None
+        return self.file_storage.generate_presigned_url(photo_object_key)
+
     def to_list_response(
         self,
         matches: List[Match],
@@ -77,7 +86,7 @@ class MatchModelMapper:
         return MatchTeamResponse(
             team_id=team.id,
             name=team.name,
-            photo=team.photo,
+            photo=self._resolve_photo_url(team.photo),
             score=score,
             sets_won=sets_won,
             penalty_score=penalty_score,
