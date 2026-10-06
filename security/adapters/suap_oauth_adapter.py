@@ -1,4 +1,5 @@
 import httpx
+from datetime import date
 from typing import Optional
 from urllib.parse import urlencode
 from core.security.oauth_provider_port import OAuthProviderPort
@@ -67,6 +68,22 @@ class SUAPOAuthAdapter(OAuthProviderPort):
             )
         return response.json()
 
+    async def _fetch_attendance(
+        self, client: httpx.AsyncClient, access_token: str
+    ) -> Optional[dict]:
+        # Falha aqui não derruba o login: frequência fica None e a aprovação do time bloqueia.
+        url = settings.suap_attendance_url.format(
+            ano=settings.attendance_year or date.today().year,
+            periodo=settings.attendance_period,
+        )
+        try:
+            response = await client.get(
+                url, headers={"Authorization": f"Bearer {access_token}"}
+            )
+            return response.json() if response.status_code == 200 else None
+        except (httpx.HTTPError, ValueError):
+            return None
+
     async def get_user_info(self, access_token: str) -> User:
         async with httpx.AsyncClient() as client:
             try:
@@ -81,7 +98,11 @@ class SUAPOAuthAdapter(OAuthProviderPort):
                         client, self.user_info_url, access_token
                     )
 
-                return User.from_suap_dict(identificacao, dados_aluno)
+                frequencia = None
+                if dados_aluno is not None:
+                    frequencia = await self._fetch_attendance(client, access_token)
+
+                return User.from_suap_dict(identificacao, dados_aluno, frequencia)
 
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")

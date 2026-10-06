@@ -84,9 +84,12 @@ def get_approve_team_port(
     team_member_repository: Annotated[
         TeamMemberRepositoryPort, Depends(get_team_member_repository)
     ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> ApproveTeamPort:
-    return ApproveTeamAdapter(team_repository, team_member_repository, audit_logger)
+    return ApproveTeamAdapter(
+        team_repository, team_member_repository, user_repository, audit_logger
+    )
 
 
 def get_confirm_donation_team_port(
