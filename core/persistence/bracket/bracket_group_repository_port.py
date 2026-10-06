@@ -18,3 +18,7 @@ class BracketGroupRepositoryPort(BaseRepositoryPort[BracketGroup]):
     @abstractmethod
     async def find_by_ids(self, group_ids: List[UUID]) -> List[BracketGroup]:
         pass
+
+    @abstractmethod
+    async def insert_all(self, models: List[BracketGroup]) -> List[BracketGroup]:
+        pass

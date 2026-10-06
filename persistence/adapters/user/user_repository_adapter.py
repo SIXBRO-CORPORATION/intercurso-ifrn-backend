@@ -1,7 +1,7 @@
 from typing import Optional, List
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.persistence.commons.read_repository_port import T
@@ -73,3 +73,15 @@ class UserRepositoryAdapter(UserRepositoryPort):
         result = await self.session.execute(selecionar)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def clear_atleta(self, user_ids: List[UUID]) -> int:
+        if not user_ids:
+            return 0
+        query = (
+            update(UserEntity)
+            .where(UserEntity.id.in_(user_ids), UserEntity.atleta.is_(True))
+            .values(atleta=False)
+        )
+        result = await self.session.execute(query)
+        await self.session.flush()
+        return result.rowcount

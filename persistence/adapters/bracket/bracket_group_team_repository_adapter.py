@@ -117,3 +117,9 @@ class BracketGroupTeamRepositoryAdapter(BracketGroupTeamRepositoryPort):
         result = await self.session.execute(query)
         await self.session.flush()
         return result.rowcount
+
+    async def insert_all(self, models: List[BracketGroupTeam]) -> List[BracketGroupTeam]:
+        entities = [self.mapper.to_entity(model) for model in models]
+        self.session.add_all(entities)
+        await self.session.flush()
+        return [self.mapper.to_domain(entity) for entity in entities]

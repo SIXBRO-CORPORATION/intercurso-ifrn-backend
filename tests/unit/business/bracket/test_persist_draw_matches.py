@@ -17,7 +17,7 @@ class TestPersistDrawMatches:
     @pytest.mark.asyncio
     async def test_next_match_id_resolves_to_the_real_persisted_id(self):
         match_repository = AsyncMock()
-        match_repository.save.side_effect = lambda match: match  # eco (merge simulado)
+        match_repository.insert_all.side_effect = lambda matches: matches  # eco
 
         teams = make_team_ids(8)
         plan = build_draw(ModalityFormat.KNOCKOUT, teams, {})
@@ -27,7 +27,8 @@ class TestPersistDrawMatches:
             match_repository, bracket_id, [], plan.matches
         )
 
-        assert match_repository.save.await_count == len(plan.matches)
+        match_repository.insert_all.assert_awaited_once()
+        assert len(saved_matches) == len(plan.matches)
         assert all(m.bracket_id == bracket_id for m in saved_matches)
 
         by_type = {}

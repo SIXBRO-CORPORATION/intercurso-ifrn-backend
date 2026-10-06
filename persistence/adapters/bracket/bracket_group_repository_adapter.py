@@ -71,3 +71,9 @@ class BracketGroupRepositoryAdapter(BracketGroupRepositoryPort):
         )
         result = await self.session.execute(query)
         return [self.mapper.to_domain(e) for e in result.scalars().all()]
+
+    async def insert_all(self, models: List[BracketGroup]) -> List[BracketGroup]:
+        entities = [self.mapper.to_entity(model) for model in models]
+        self.session.add_all(entities)
+        await self.session.flush()
+        return [self.mapper.to_domain(entity) for entity in entities]

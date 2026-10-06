@@ -139,7 +139,8 @@ class TestCreateBracketAdapterSuccess:
         assert context.get_property("season_transitioned_to_in_progress", bool) is True
         assert context.get_property("teams_count", int) == 8
         assert context.get_property("matches_created", int) == 8
-        assert match_repository.save.await_count == 8
+        match_repository.insert_all.assert_awaited_once()
+        assert len(match_repository.insert_all.await_args.args[0]) == 8
         audit_logger.log.assert_awaited_once()
         assert (
                 audit_logger.log.await_args.kwargs["action"]
@@ -204,15 +205,23 @@ class TestCreateBracketAdapterSuccess:
             modality_id,
             team_count=12,
         )
-        bracket_group_repository.save.side_effect = lambda g: type(g)(
-            id=uuid4(), bracket_id=g.bracket_id, name=g.name, display_order=g.display_order
-        )
+        bracket_group_repository.insert_all.side_effect = lambda groups: [
+            type(g)(
+                id=uuid4(),
+                bracket_id=g.bracket_id,
+                name=g.name,
+                display_order=g.display_order,
+            )
+            for g in groups
+        ]
 
         context = make_context(modality_id, ModalityFormat.GROUP_STAGE_KNOCKOUT)
         await adapter.execute(context)
 
-        assert bracket_group_repository.save.await_count == 4
-        assert bracket_group_team_repository.save.await_count == 12
+        bracket_group_repository.insert_all.assert_awaited_once()
+        bracket_group_team_repository.insert_all.assert_awaited_once()
+        assert len(bracket_group_repository.insert_all.await_args.args[0]) == 4
+        assert len(bracket_group_team_repository.insert_all.await_args.args[0]) == 12
         assert context.get_property("groups_created", int) == 4
 
 

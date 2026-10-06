@@ -26,3 +26,7 @@ class BracketGroupTeamRepositoryPort(BaseRepositoryPort[BracketGroupTeam]):
     @abstractmethod
     async def delete_by_bracket(self, bracket_id: UUID) -> int:
         pass
+
+    @abstractmethod
+    async def insert_all(self, models: List[BracketGroupTeam]) -> List[BracketGroupTeam]:
+        pass

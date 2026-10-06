@@ -26,3 +26,7 @@ class SeasonModalityRepositoryPort(BaseRepositoryPort[SeasonModality]):
     @abstractmethod
     async def delete_by_season(self, season_id: UUID) -> int:
         pass
+
+    @abstractmethod
+    async def insert_all(self, models: List[SeasonModality]) -> List[SeasonModality]:
+        pass
