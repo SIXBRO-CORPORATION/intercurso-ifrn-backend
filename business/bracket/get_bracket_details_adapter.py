@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 from uuid import UUID
 
 from business.bracket._read_shared import build_bracket_stats, load_team_names
+from business.bracket._standings import order_group_standings
 from core.business.bracket.get_bracket_details_port import GetBracketDetailsPort
 from core.context import Context
 from core.persistence.bracket.bracket_group_repository_port import (
@@ -63,7 +64,8 @@ class GetBracketDetailsAdapter(GetBracketDetailsPort):
             )
 
         groups_with_teams: List[Tuple[BracketGroup, List[BracketGroupTeam]]] = [
-            (group, teams_by_group[group.id]) for group in groups_sorted
+            (group, order_group_standings(teams_by_group[group.id], matches))
+            for group in groups_sorted
         ]
 
         team_ids = {match.team1_id for match in matches} | {

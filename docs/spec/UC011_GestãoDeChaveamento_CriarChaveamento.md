@@ -84,6 +84,35 @@ Este caso de uso permite que o monitor crie o chaveamento de uma modalidade apó
 | ROUND_ROBIN              | Todos contra todos (pontos corridos)           | Número de turnos                                 |
 | TRIANGULAR               | 3 times jogam entre si                         | Turno único ou ida e volta                       |
 
+### Classificação e Desempate em Fase de Grupos (GROUP_STAGE_KNOCKOUT, ROUND_ROBIN, TRIANGULAR)
+
+A classificação exibida em `GET /api/bracket/{id}` ordena os times de cada
+grupo pelo Regulamento Jogos Internos, Art. 26 a 28:
+
+1. Número de pontos ganhos (vitória=3, empate=1, derrota=0);
+2. Em caso de empate, critérios de desempate aplicados em sequência — cada
+   um só sobre o subconjunto que continua empatado após o anterior, sem
+   retroceder a um critério já usado (Art. 28, § Único):
+   - I. Confronto direto entre as equipes empatadas;
+   - II. Maior número de vitórias;
+   - III. Saldo apenas nos jogos entre as equipes empatadas;
+   - IV. Average apenas nos jogos entre as equipes empatadas;
+   - V. Menor número de gols/pontos sofridos (geral, no grupo);
+   - VI. Saldo geral do grupo;
+   - VII. Average geral do grupo;
+   - VIII. Sorteio — ato manual da Comissão Técnica Desportiva, fora do
+     alcance do sistema; equipes que chegam a este ponto são exibidas em
+     ordem estável (não é um resultado oficial de sorteio).
+
+Implementado em `business/bracket/_standings.py::order_group_standings`,
+usado por `GetBracketDetailsAdapter`. Só partidas finalizadas da fase de
+grupos entram nesse cálculo — partidas de mata-mata não contam.
+
+**Avanço para o mata-mata é manual**: o sistema não preenche
+automaticamente os times classificados nas partidas do mata-mata — o
+monitor define manualmente via `PATCH /api/match/{id}` (`UpdateMatch`),
+observando a classificação exibida.
+
 ### Bloco de Dados 2 – Chaveamento Criado
 
 | Campo                    | Entrada/Saída | Observações                                           |
