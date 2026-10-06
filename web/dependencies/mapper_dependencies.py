@@ -1,3 +1,9 @@
+from typing import Annotated
+
+from fastapi import Depends
+
+from core.storage.file_storage_port import FileStoragePort
+from web.dependencies.business.storage_dependencies import get_file_storage
 from web.mappers.modality_model_mapper import ModalityModelMapper
 from web.mappers.season_model_mapper import SeasonModelMapper
 from web.mappers.team_model_mapper import TeamModelMapper
@@ -14,8 +20,10 @@ def get_modality_model_mapper() -> ModalityModelMapper:
     return ModalityModelMapper()
 
 
-def get_team_model_mapper() -> TeamModelMapper:
-    return TeamModelMapper()
+def get_team_model_mapper(
+    file_storage: Annotated[FileStoragePort, Depends(get_file_storage)],
+) -> TeamModelMapper:
+    return TeamModelMapper(file_storage)
 
 
 def get_season_model_mapper() -> SeasonModelMapper:

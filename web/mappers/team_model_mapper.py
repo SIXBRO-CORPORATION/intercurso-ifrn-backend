@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 from uuid import UUID
 
+from core.storage.file_storage_port import FileStoragePort
 from domain.enums.donation_status import DonationStatus
 from domain.modality.modality import Modality
 from domain.team.team import Team
@@ -35,6 +36,15 @@ def _modality_limits(modality: Optional[Modality]) -> dict:
 
 
 class TeamModelMapper:
+    def __init__(self, file_storage: FileStoragePort):
+        self.file_storage = file_storage
+
+    def _resolve_photo_url(self, photo_object_key: Optional[str]) -> Optional[str]:
+
+        if not photo_object_key:
+            return None
+        return self.file_storage.generate_presigned_url(photo_object_key)
+
     def to_register_response(
         self, team: Team, owner_member: TeamMember, owner_user: User
     ) -> TeamRegisterResponse:
@@ -43,7 +53,7 @@ class TeamModelMapper:
             name=team.name,
             modality_id=team.modality_id,
             status=team.status.value,
-            photo=team.photo,
+            photo=self._resolve_photo_url(team.photo),
             invite_token=team.invite_token,
             owner_id=team.owner_id,
             message="Time cadastrado com sucesso! Compartilhe o link de convite com os demais membros.",
@@ -74,7 +84,7 @@ class TeamModelMapper:
             name=team.name,
             modality_id=team.modality_id,
             modality_name=modality.name if modality else None,
-            photo=team.photo,
+            photo=self._resolve_photo_url(team.photo),
             members_count=members_count,
             captain_name=captain_user.name if captain_user else None,
             owner_name=owner_user.name if owner_user else None,
@@ -125,7 +135,7 @@ class TeamModelMapper:
             season_id=team.season_id,
             modality_id=team.modality_id,
             modality_name=modality.name if modality else None,
-            photo=team.photo,
+            photo=self._resolve_photo_url(team.photo),
             status=team.status.value,
             owner_id=team.owner_id,
             owner_name=owner_user.name if owner_user else None,

@@ -12,6 +12,7 @@ from persistence.database import AsyncSessionLocal, close_db
 from security.config import settings
 from web.commons.exception_handler import register_exception_handler
 from web.controllers.team_controller import router as team_router
+from web.controllers.storage_controller import router as storage_router
 from web.controllers.auth_controller import router as auth_router
 from web.controllers.season_controller import router as season_router
 from web.controllers.modality_controller import router as modality_router
@@ -63,6 +64,7 @@ app.add_middleware(
 
 register_exception_handler(app)
 app.include_router(team_router)
+app.include_router(storage_router)
 app.include_router(season_router)
 app.include_router(modality_router)
 app.include_router(user_router)

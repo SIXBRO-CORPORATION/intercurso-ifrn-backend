@@ -1,16 +1,16 @@
+import re
 from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+_TEAM_PHOTO_OBJECT_KEY_PATTERN = re.compile(
+    r"^teams/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{12}\.(png|jpg|jpeg)$"
+)
+
 
 class TeamRegisterRequest(BaseModel):
-    """UC005 - Criar Equipe.
-
-    O time e criado apenas pelo aluno-dono (owner); os demais membros
-    entram posteriormente via convite (UC006), portanto nenhuma lista de
-    membros e aceita neste request.
-    """
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -24,3 +24,16 @@ class TeamRegisterRequest(BaseModel):
         if not v or v.strip() == "":
             raise ValueError("Nome do time não pode ser vazio")
         return v.strip()
+
+    @field_validator("photo")
+    @classmethod
+    def validate_photo(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v.strip() == "":
+            return None
+        v = v.strip()
+        if not _TEAM_PHOTO_OBJECT_KEY_PATTERN.match(v):
+            raise ValueError(
+                "Foto do time deve ser o `object_key` retornado por "
+                "POST /api/storage/team-photo, não uma URL nem o conteúdo do arquivo"
+            )
+        return v

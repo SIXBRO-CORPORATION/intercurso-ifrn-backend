@@ -58,6 +58,11 @@ from web.dependencies.business.modality_dependencies import (
     get_create_modality_port,
 )
 
+from web.dependencies.business.storage_dependencies import (
+    get_file_storage,
+    get_upload_team_photo_port,
+)
+
 from web.dependencies.business.season_dependencies import (
     get_active_season_port,
     get_create_season_port,
@@ -166,6 +171,10 @@ __all__ = [
 
     # Business Dependencies - Modalities
     "get_create_modality_port",
+
+    # Business Dependencies - Storage
+    "get_file_storage",
+    "get_upload_team_photo_port",
 
     # Business Dependencies - Seasons
     "get_active_season_port",
