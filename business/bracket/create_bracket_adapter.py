@@ -130,6 +130,7 @@ class CreateBracketAdapter(CreateBracketPort):
         saved_bracket = await self.bracket_repository.save(new_bracket)
 
         saved_group_ids: list = []
+        # N + 1
         for group_spec in draw_plan.groups:
             saved_group = await self.bracket_group_repository.save(
                 BracketGroup(

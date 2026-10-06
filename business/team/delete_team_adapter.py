@@ -51,7 +51,7 @@ class DeleteTeamAdapter(DeleteTeamPort):
         team.deleted_at = datetime.now()
         await self.team_repository.save(team)
 
-        # N + 1?
+        # N + 1
         member_user_ids = [member.user_id for member in members]
         if member_user_ids:
             users = await self.user_repository.find_by_ids(member_user_ids)

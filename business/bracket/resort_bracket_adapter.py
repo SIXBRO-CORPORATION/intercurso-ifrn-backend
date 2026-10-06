@@ -90,6 +90,7 @@ class ResortBracketAdapter(ResortBracketPort):
         await self.match_repository.delete_by_bracket(bracket.id)
 
         saved_group_ids: list = []
+        # N + 1
         for group_spec in draw_plan.groups:
             saved_group = await self.bracket_group_repository.save(
                 BracketGroup(

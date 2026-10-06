@@ -123,6 +123,7 @@ class CreateSeasonAdapter(CreateSeasonPort):
         saved_season = await self.season_repository.save(new_season)
 
         season_modalities = []
+        # N + 1
         for modality_id in modality_ids:
             season_modality = SeasonModality(
                 season_id=saved_season.id,
