@@ -14,6 +14,7 @@ from domain.enums.team_status import TeamStatus
 from domain.enums.user_role import UserRole
 from domain.exceptions.business_exception import BusinessException
 from domain.team.team import Team
+from domain.team.team_member import TeamMember
 from domain.user.user import User
 
 
@@ -45,6 +46,24 @@ class TestDeleteTeamAdapter:
         saved = team_repository.save.await_args.args[0]
         assert saved.deleted_at is not None
         assert audit.log.await_args.kwargs["action"] == AuditAction.TEAM_DELETED
+
+    async def test_clears_athlete_flag_in_one_call_only_for_users_without_other_teams(self):
+        team_repository, member_repository, user_repository, audit = (
+            AsyncMock(), AsyncMock(), AsyncMock(), AsyncMock()
+        )
+        owner_id, kept_id, freed_id = uuid4(), uuid4(), uuid4()
+        team = Team(id=uuid4(), name="Turma A", owner_id=owner_id, status=TeamStatus.DRAFT)
+        team_repository.get.return_value = team
+        member_repository.find_members_by_team_id.return_value = [
+            TeamMember(user_id=kept_id), TeamMember(user_id=freed_id)
+        ]
+        team_repository.find_user_ids_with_active_teams.return_value = {kept_id}
+
+        adapter = DeleteTeamAdapter(team_repository, member_repository, user_repository, audit)
+        await adapter.execute(make_context(team_id=team.id, requesting_user_id=owner_id))
+
+        user_repository.clear_atleta.assert_awaited_once_with([freed_id])
+        user_repository.save.assert_not_awaited()
 
     async def test_blocks_when_not_owner(self):
         team_repository = AsyncMock()

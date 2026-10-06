@@ -30,3 +30,7 @@ class UserRepositoryPort(BaseRepositoryPort[User]):
     @abstractmethod
     async def find_by_matricula(self, matricula: str) -> Optional[User]:
         pass
+
+    @abstractmethod
+    async def clear_atleta(self, user_ids: List[UUID]) -> int:
+        pass

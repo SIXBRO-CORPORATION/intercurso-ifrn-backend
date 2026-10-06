@@ -86,3 +86,7 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
         limit: int,
     ) -> Tuple[List[Match], int]:
         pass
+
+    @abstractmethod
+    async def insert_all(self, models: List[Match]) -> List[Match]:
+        pass

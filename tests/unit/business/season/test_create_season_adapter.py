@@ -93,9 +93,7 @@ class TestCreateSeasonAdapter:
         season_repository.save.return_value = Season(
             id=uuid4(), name="Intercurso 2026", year=datetime.now(timezone.utc).year
         )
-        season_modality_repository.save.return_value = SeasonModality(
-            id=uuid4(), modality_id=modality_id
-        )
+        season_modality_repository.insert_all.side_effect = lambda models: models
 
         context = make_context(modality_ids=[modality_id])
 
@@ -103,7 +101,7 @@ class TestCreateSeasonAdapter:
 
         assert result is not None
         season_repository.save.assert_awaited_once()
-        season_modality_repository.save.assert_awaited_once()
+        season_modality_repository.insert_all.assert_awaited_once()
         # Abertura não imediata: não deve nem consultar temporada ativa
         season_repository.find_active_season.assert_not_awaited()
         audit_logger.log.assert_awaited_once()

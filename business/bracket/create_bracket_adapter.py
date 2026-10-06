@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from business.bracket._shared import persist_draw_matches
+from business.bracket._shared import persist_draw_groups, persist_draw_matches
 from business.bracket.engine.config_suggester import (
     resolve_configuration,
     validate_team_count_for_format,
@@ -22,8 +22,6 @@ from core.persistence.season.season_modality_repository_port import (
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.bracket.bracket import Bracket
-from domain.bracket.bracket_group import BracketGroup
-from domain.bracket.bracket_group_team import BracketGroupTeam
 from domain.enums.audit_action import AuditAction
 from domain.enums.bracket_status import BracketStatus
 from domain.enums.season_status import SeasonStatus
@@ -129,32 +127,12 @@ class CreateBracketAdapter(CreateBracketPort):
         )
         saved_bracket = await self.bracket_repository.save(new_bracket)
 
-        saved_group_ids: list = []
-        # N + 1
-        for group_spec in draw_plan.groups:
-            saved_group = await self.bracket_group_repository.save(
-                BracketGroup(
-                    bracket_id=saved_bracket.id,
-                    name=group_spec.name,
-                    display_order=group_spec.display_order,
-                )
-            )
-            saved_group_ids.append(saved_group.id)
-
-            for team_id in group_spec.team_ids:
-                await self.bracket_group_team_repository.save(
-                    BracketGroupTeam(
-                        bracket_group_id=saved_group.id,
-                        team_id=team_id,
-                        points=0,
-                        wins=0,
-                        draws=0,
-                        losses=0,
-                        goals_for=0,
-                        goals_against=0,
-                        goals_difference=0,
-                    )
-                )
+        saved_group_ids = await persist_draw_groups(
+            self.bracket_group_repository,
+            self.bracket_group_team_repository,
+            saved_bracket.id,
+            draw_plan.groups,
+        )
 
         await persist_draw_matches(
             self.match_repository, saved_bracket.id, saved_group_ids, draw_plan.matches
