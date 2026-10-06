@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Set
 from uuid import UUID
 
 from core.persistence.commons.base_repository_port import BaseRepositoryPort
@@ -18,6 +18,19 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
 
     @abstractmethod
     async def find_teams_by_user_id(self, user_id: UUID) -> List[Team]:
+        pass
+
+    @abstractmethod
+    async def find_teams_by_user_id_with_filters(
+        self,
+        user_id: UUID,
+        season_id: Optional[UUID] = None,
+        status: Optional[TeamStatus] = None,
+    ) -> List[Team]:
+        pass
+
+    @abstractmethod
+    async def find_user_ids_with_active_teams(self, user_ids: List[UUID]) -> Set[UUID]:
         pass
 
     @abstractmethod

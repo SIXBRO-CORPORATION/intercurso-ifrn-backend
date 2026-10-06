@@ -45,7 +45,7 @@ em `docs/spec`, seguindo as regras de negócio documentadas ali.
 - **Autenticação institucional** via OAuth2 do SUAP, com emissão de JWT e refresh token
 - **Gestão de temporadas** (criar, gerenciar, encerrar, reabrir inscrições)
 - **Gestão de modalidades esportivas**
-- **Gestão de equipes** (criação, convites, membros, capitão, aprovação, confirmação de doação)
+- **Gestão de equipes** (criação, convites e regeneração de convite, membros, capitão, submissão, aprovação ou rejeição com motivo, confirmação de doação, exclusão em rascunho)
 - **Gestão de chaveamento** (criação e reorganização de brackets, sugestão automática de
   configuração)
 - **Gestão de partidas** (início, registro e correção de eventos, cronômetro, finalização)

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Set
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -79,6 +79,47 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         result = await self.session.execute(selecionar)
         team_entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in team_entities]
+
+    async def find_teams_by_user_id_with_filters(
+        self,
+        user_id: UUID,
+        season_id: Optional[UUID] = None,
+        status: Optional[TeamStatus] = None,
+    ) -> List[Team]:
+        conditions = [
+            TeamMemberEntity.user_id == user_id,
+            TeamEntity.deleted_at.is_(None),
+            TeamMemberEntity.deleted_at.is_(None),
+        ]
+        if season_id is not None:
+            conditions.append(TeamEntity.season_id == season_id)
+        if status is not None:
+            conditions.append(TeamEntity.status == status.value)
+
+        selecionar = (
+            select(TeamEntity)
+            .join(TeamMemberEntity, TeamMemberEntity.team_id == TeamEntity.id)
+            .where(*conditions)
+            .order_by(TeamEntity.created_at.desc())
+        )
+        result = await self.session.execute(selecionar)
+        return [self.mapper.to_domain(entity) for entity in result.scalars().all()]
+
+    async def find_user_ids_with_active_teams(self, user_ids: List[UUID]) -> Set[UUID]:
+        if not user_ids:
+            return set()
+        selecionar = (
+            select(TeamMemberEntity.user_id)
+            .join(TeamEntity, TeamEntity.id == TeamMemberEntity.team_id)
+            .where(
+                TeamMemberEntity.user_id.in_(user_ids),
+                TeamEntity.deleted_at.is_(None),
+                TeamMemberEntity.deleted_at.is_(None),
+            )
+            .distinct()
+        )
+        result = await self.session.execute(selecionar)
+        return set(result.scalars().all())
 
     async def exists_by_user_id(self, user_id: UUID) -> bool:
         selecionar = (

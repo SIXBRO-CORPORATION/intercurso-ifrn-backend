@@ -40,5 +40,9 @@ class TeamMemberRepositoryPort(BaseRepositoryPort[TeamMember]):
         pass
 
     @abstractmethod
+    async def reset_donations_to_pending(self, team_id: UUID) -> int:
+        pass
+
+    @abstractmethod
     async def delete(self, team_member_id: UUID) -> int:
         pass

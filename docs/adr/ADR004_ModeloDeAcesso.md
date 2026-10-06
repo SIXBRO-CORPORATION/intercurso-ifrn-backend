@@ -172,7 +172,7 @@ Atualizado em 2026-10-04. Leituras públicas disponíveis hoje (sem token):
 
 | Rota | Observação |
 |---|---|
-| `GET /api/season/active` | Temporada ativa (`SeasonSummary`). |
+| `GET /api/season/active` | Temporada ativa (`SeasonSummary`). Sem temporada ativa responde 404. |
 | `GET /api/modality/?season_id=` | Modalidades ativas; `season_id` opcional. |
 | `GET /api/match/?season_id=` | Obrigatório `season_id`. Filtros: `modality_id`, `status`, `date_from`, `date_to`. Paginação: `page` (≥1) e `size` (1–100, padrão 20). Ordena por `scheduled_date` (sem data por último). Partidas BYE não aparecem. |
 | `GET /api/match/{id}` | `MatchPublicResponse`, sem `matricula`. |

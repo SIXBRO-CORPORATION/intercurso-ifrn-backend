@@ -149,14 +149,13 @@ class TestRegenerateInviteAdapter:
 
 @pytest.mark.unit
 class TestListTeamsStudentFilters:
-    async def test_student_list_respects_season_and_status_filters(self):
+    async def test_season_and_status_are_pushed_down_to_the_query(self):
+        """Filtro roda no SQL (sem puxar todos os times e filtrar em memória)."""
         team_repository = AsyncMock()
         member_repository, user_repository, modality_repository = AsyncMock(), AsyncMock(), AsyncMock()
-        season_a, season_b = uuid4(), uuid4()
-        mine_a = Team(id=uuid4(), season_id=season_a, status=TeamStatus.DRAFT)
-        mine_b = Team(id=uuid4(), season_id=season_b, status=TeamStatus.DRAFT)
-        mine_a_submitted = Team(id=uuid4(), season_id=season_a, status=TeamStatus.SUBMITTED)
-        team_repository.find_teams_by_user_id.return_value = [mine_a, mine_b, mine_a_submitted]
+        season_id, requesting_user_id = uuid4(), uuid4()
+        expected = [Team(id=uuid4(), season_id=season_id, status=TeamStatus.DRAFT)]
+        team_repository.find_teams_by_user_id_with_filters.return_value = expected
         modality_repository.find_by_ids.return_value = []
         user_repository.find_by_ids.return_value = []
         member_repository.count_by_teams.return_value = {}
@@ -164,9 +163,13 @@ class TestListTeamsStudentFilters:
 
         adapter = ListTeamsAdapter(team_repository, member_repository, user_repository, modality_repository)
         context = make_context(
-            requesting_user_id=uuid4(), requesting_user_role=UserRole.USER,
-            season_id=season_a, status=TeamStatus.DRAFT,
+            requesting_user_id=requesting_user_id, requesting_user_role=UserRole.USER,
+            season_id=season_id, status=TeamStatus.DRAFT,
         )
         result = await adapter.execute(context)
 
-        assert result == [mine_a]
+        assert result == expected
+        team_repository.find_teams_by_user_id_with_filters.assert_awaited_once_with(
+            requesting_user_id, season_id, TeamStatus.DRAFT
+        )
+        team_repository.find_teams_by_user_id.assert_not_called()

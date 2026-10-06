@@ -131,6 +131,23 @@ class TeamMemberRepositoryAdapter(TeamMemberRepositoryPort):
         result = await self.session.execute(selecionar)
         return {team_id: count for team_id, count in result.all()}
 
+    async def reset_donations_to_pending(self, team_id: UUID) -> int:
+        statement = (
+            update(TeamMemberEntity)
+            .where(
+                TeamMemberEntity.team_id == team_id,
+                TeamMemberEntity.donation_status != DonationStatus.PENDING_DONATION.value,
+                TeamMemberEntity.deleted_at.is_(None),
+            )
+            .values(
+                donation_status=DonationStatus.PENDING_DONATION.value,
+                modified_at=datetime.now(),
+            )
+        )
+        result = await self.session.execute(statement)
+        await self.session.flush()
+        return result.rowcount
+
     async def delete(self, team_member_id: UUID) -> int:
         statement = (
             update(TeamMemberEntity)

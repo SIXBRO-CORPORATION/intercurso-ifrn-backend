@@ -123,10 +123,9 @@ class SubmitTeamAdapter(SubmitTeamPort):
 
         saved_team = await self.team_repository.save(team)
 
+        await self.team_member_repository.reset_donations_to_pending(team_id)
         for member in members:
-            if member.donation_status != DonationStatus.PENDING_DONATION:
-                member.donation_status = DonationStatus.PENDING_DONATION
-                await self.team_member_repository.save(member)
+            member.donation_status = DonationStatus.PENDING_DONATION
 
         context.put_property("members", members)
 

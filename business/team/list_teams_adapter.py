@@ -40,8 +40,8 @@ class ListTeamsAdapter(ListTeamsPort):
         if is_monitor_operation:
             teams = await self._find_teams_for_monitor(status_filter, season_id_filter)
         else:
-            teams = await self.team_repository.find_teams_by_user_id(
-                requesting_user_id
+            teams = await self.team_repository.find_teams_by_user_id_with_filters(
+                requesting_user_id, season_id_filter, status_filter
             )
             if season_id_filter is not None:
                 teams = [t for t in teams if t.season_id == season_id_filter]

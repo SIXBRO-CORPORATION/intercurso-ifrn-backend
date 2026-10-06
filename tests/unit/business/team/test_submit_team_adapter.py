@@ -115,7 +115,7 @@ class TestSubmitTeamAdapter:
         assert result.status == TeamStatus.SUBMITTED
         assert result.token_active is False
         assert result.submmited_at is not None
-        assert team_member_repository.save.await_count == len(members)
+        team_member_repository.reset_donations_to_pending.assert_awaited_once_with(team.id)
         audit_logger.log.assert_awaited_once()
         audit_kwargs = audit_logger.log.await_args.kwargs
         assert audit_kwargs["action"] == AuditAction.TEAM_SUBMITTED

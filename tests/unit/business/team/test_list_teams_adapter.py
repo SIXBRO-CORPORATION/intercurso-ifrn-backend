@@ -62,7 +62,7 @@ class TestListTeamsAdapter:
         ) = make_adapter()
         requesting_user_id = uuid4()
         team = Team(id=uuid4(), name="Time A", modality_id=uuid4(), owner_id=uuid4())
-        team_repository.find_teams_by_user_id.return_value = [team]
+        team_repository.find_teams_by_user_id_with_filters.return_value = [team]
         setup_extra_info_mocks(
             modality_repository, user_repository, team_member_repository, teams=[team]
         )
@@ -71,8 +71,8 @@ class TestListTeamsAdapter:
         result = await adapter.execute(context)
 
         assert result == [team]
-        team_repository.find_teams_by_user_id.assert_awaited_once_with(
-            requesting_user_id
+        team_repository.find_teams_by_user_id_with_filters.assert_awaited_once_with(
+            requesting_user_id, None, None
         )
         team_repository.find_all.assert_not_called()
         team_repository.find_teams_by_status.assert_not_called()
@@ -91,7 +91,7 @@ class TestListTeamsAdapter:
             user_repository,
             modality_repository,
         ) = make_adapter()
-        team_repository.find_teams_by_user_id.return_value = []
+        team_repository.find_teams_by_user_id_with_filters.return_value = []
         setup_extra_info_mocks(modality_repository, user_repository, team_member_repository)
 
         context = make_context(requesting_user_role=UserRole.USER)
@@ -260,7 +260,7 @@ class TestListTeamsAdapter:
         await adapter.execute(context)
 
         team_repository.find_all.assert_awaited_once()
-        team_repository.find_teams_by_user_id.assert_not_called()
+        team_repository.find_teams_by_user_id_with_filters.assert_not_called()
 
     async def test_blocks_when_requesting_user_missing(self):
         (adapter, *_rest) = make_adapter()
