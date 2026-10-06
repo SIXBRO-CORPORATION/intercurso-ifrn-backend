@@ -99,8 +99,14 @@ async def test_insert_all_persists_batch_without_per_row_selects(session_and_sta
 async def test_clear_atleta_updates_only_given_athletes_in_one_statement(session_and_statements):
     session, statements = session_and_statements
     repo = UserRepositoryAdapter(session, UserMapper())
-    mk = lambda atleta: User(id=uuid4(), name="x", cpf=str(uuid4().int)[:11],
-                             matricula=str(uuid4().int)[:14], atleta=atleta)
+    def mk(atleta):
+        return User(
+            id=uuid4(),
+            name="x",
+            cpf=str(uuid4().int)[:11],
+            matricula=str(uuid4().int)[:14],
+            atleta=atleta,
+        )
     freed, kept, not_athlete = mk(True), mk(True), mk(False)
     for u in (freed, kept, not_athlete):
         await repo.save(u)
