@@ -1,8 +1,9 @@
 from typing import Annotated, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, File, Form, Query, UploadFile, status
 from fastapi.params import Depends
+from pydantic import StringConstraints
 
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.business.team.confirm_donation_port import ConfirmDonationPort
@@ -24,10 +25,10 @@ from domain.modality.modality import Modality
 from domain.team.team import Team
 from domain.enums.user_role import UserRole
 from domain.team.team_member import TeamMember
+from domain.team.team_photo import MAX_TEAM_PHOTO_BYTES
 from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.mappers.team_model_mapper import TeamModelMapper
-from web.models.request.team.team_register_request import TeamRegisterRequest
 from web.models.request.team.team_reject_request import TeamRejectRequest
 from web.models.response.team.team_details_response import TeamDetailsResponse
 from web.models.response.team.team_invite_preview_response import (
@@ -66,19 +67,27 @@ router = APIRouter(prefix="/api/team", tags=["team"])
     "/",
     response_model=ApiResponse[TeamRegisterResponse],
     status_code=status.HTTP_201_CREATED,
+    description=(
+        "`multipart/form-data` com `name`, `modality_id` e `photo` (arquivo opcional, "
+        "PNG/JPG/WEBP até 5MB). A pré-visualização da foto é responsabilidade do cliente."
+    ),
 )
 async def create_team(
-    request: TeamRegisterRequest,
+    name: Annotated[
+        str, Form(), StringConstraints(strip_whitespace=True, min_length=3, max_length=255)
+    ],
+    modality_id: Annotated[UUID, Form()],
     create_team_port: Annotated[CreateTeamPort, Depends(get_create_team_port)],
     mapper: Annotated[TeamModelMapper, Depends(get_team_model_mapper)],
     current_user: User = Depends(require_authenticated_user),
+    photo: UploadFile | None = File(default=None),
 ):
-    team_domain = Team(
-        name=request.name, photo=request.photo, modality_id=request.modality_id
-    )
+    team_domain = Team(name=name, modality_id=modality_id)
 
     context = Context(data=team_domain)
     context.put_property("creator_user_id", current_user.id)
+    if photo is not None:
+        context.put_property("photo_bytes", await photo.read(MAX_TEAM_PHOTO_BYTES + 1))
 
     saved_team = await create_team_port.execute(context)
 

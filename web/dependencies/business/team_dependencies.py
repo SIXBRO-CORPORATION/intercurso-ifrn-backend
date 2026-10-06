@@ -38,6 +38,8 @@ from business.team.submit_team_adapter import SubmitTeamAdapter
 from business.team.delete_team_adapter import DeleteTeamAdapter
 from business.team.reject_team_adapter import RejectTeamAdapter
 from business.team.regenerate_invite_adapter import RegenerateInviteAdapter
+from core.storage.file_storage_port import FileStoragePort
+from web.dependencies.business.storage_dependencies import get_file_storage
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
     get_user_repository,
@@ -63,6 +65,7 @@ def get_create_team_port(
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    file_storage: Annotated[FileStoragePort, Depends(get_file_storage)],
 ) -> CreateTeamPort:
     return CreateTeamAdapter(
         team_repository,
@@ -72,6 +75,7 @@ def get_create_team_port(
         season_modality_repository,
         modality_repository,
         audit_logger,
+        file_storage,
     )
 
 

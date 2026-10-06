@@ -67,7 +67,7 @@ Este caso de uso permite que um aluno crie um novo time para participar de uma m
 | Campo                    | Entrada/Saída | Observações                                           |
 |--------------------------|---------------|-------------------------------------------------------|
 | Nome do Time             | E             | Nome único para o time                                |
-| Foto/Logo                | E             | URL da imagem (opcional)                              |
+| Foto/Logo                | E             | Arquivo de imagem PNG/JPG/WEBP até 5MB, enviado em multipart no mesmo request (opcional) |
 | Modalidade               | E             | Modalidade selecionada da temporada ativa             |
 | Temporada                | S             | Temporada ativa automaticamente vinculada             |
 | Status                   | S             | Sempre criado como DRAFT                              |
