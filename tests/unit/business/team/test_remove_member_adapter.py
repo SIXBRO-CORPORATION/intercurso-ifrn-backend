@@ -68,8 +68,8 @@ class TestRemoveMemberAdapter:
         assert audit_kwargs["action"] == AuditAction.TEAM_MEMBER_REMOVED
         assert audit_kwargs["actor_id"] == owner_id
 
-    async def test_monitor_removes_member_regardless_of_team_status(self):
-        adapter, team_repository, team_member_repository, user_repository, audit_logger = (
+    async def test_monitor_cannot_remove_member_even_in_draft(self):
+        adapter, team_repository, team_member_repository, user_repository, *_ = (
             make_adapter()
         )
 
@@ -77,33 +77,18 @@ class TestRemoveMemberAdapter:
         monitor_id = uuid4()
         target_user_id = uuid4()
         team = Team(
-            id=uuid4(),
-            name="Turma A",
-            owner_id=owner_id,
-            status=TeamStatus.APPROVED,
+            id=uuid4(), name="Turma A", owner_id=owner_id, status=TeamStatus.DRAFT
         )
-        member = TeamMember(id=uuid4(), team_id=team.id, user_id=target_user_id)
-        monitor_user = User(id=monitor_id, role=UserRole.MONITOR)
-        target_user = User(id=target_user_id, role=UserRole.USER, atleta=True)
 
         team_repository.get.return_value = team
-        user_repository.get.side_effect = lambda user_id: (
-            monitor_user if user_id == monitor_id else target_user
-        )
-        team_member_repository.find_by_team_and_user.return_value = member
-        team_repository.exists_by_user_id.return_value = False
+        user_repository.get.return_value = User(id=monitor_id, role=UserRole.MONITOR)
 
         context = make_context(team.id, target_user_id, monitor_id)
 
-        result = await adapter.execute(context)
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
 
-        assert result.id == member.id
-        assert context.get_property("administrative_operation", bool) is True
-        audit_logger.log.assert_awaited_once()
-        assert (
-            audit_logger.log.await_args.kwargs["action"]
-            == AuditAction.TEAM_MEMBER_REMOVED
-        )
+        team_member_repository.delete.assert_not_awaited()
 
     async def test_blocks_when_non_owner_non_monitor_tries_to_remove(self):
         adapter, team_repository, team_member_repository, user_repository, *_ = (

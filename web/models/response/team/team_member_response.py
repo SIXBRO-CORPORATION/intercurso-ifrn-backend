@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -9,3 +10,4 @@ class TeamMemberResponse(BaseModel):
     matricula: str = Field()
     role: str = Field()
     donation_status: str = Field()
+    gender: Optional[str] = Field(default=None, description="M ou F (SUAP)")

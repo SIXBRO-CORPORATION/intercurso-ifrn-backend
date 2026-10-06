@@ -1,7 +1,7 @@
 from core.business.season.get_active_season_port import GetActiveSeasonPort
 from core.context import Context
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
-from domain.exceptions.business_exception import BusinessException
+from domain.exceptions.not_found_exception import NotFoundException
 from domain.season.season import Season
 
 
@@ -13,6 +13,6 @@ class GetActiveSeasonAdapter(GetActiveSeasonPort):
         season = await self.season_repository.find_active_season()
 
         if season is None:
-            raise BusinessException("Nenhuma temporada ativa no momento")
+            raise NotFoundException("Nenhuma temporada ativa no momento")
 
         return season

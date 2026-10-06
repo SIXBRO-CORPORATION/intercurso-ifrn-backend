@@ -13,6 +13,9 @@ from core.business.team.select_captain_port import SelectCaptainPort
 from core.business.team.remove_member_port import RemoveMemberPort
 from core.business.team.leave_team_port import LeaveTeamPort
 from core.business.team.submit_team_port import SubmitTeamPort
+from core.business.team.delete_team_port import DeleteTeamPort
+from core.business.team.reject_team_port import RejectTeamPort
+from core.business.team.regenerate_invite_port import RegenerateInvitePort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
@@ -32,6 +35,9 @@ from business.team.select_captain_adapter import SelectCaptainAdapter
 from business.team.remove_member_adapter import RemoveMemberAdapter
 from business.team.leave_team_adapter import LeaveTeamAdapter
 from business.team.submit_team_adapter import SubmitTeamAdapter
+from business.team.delete_team_adapter import DeleteTeamAdapter
+from business.team.reject_team_adapter import RejectTeamAdapter
+from business.team.regenerate_invite_adapter import RegenerateInviteAdapter
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
     get_user_repository,
@@ -229,3 +235,30 @@ def get_team_details_port(
         user_repository,
         modality_repository,
     )
+
+
+def get_delete_team_port(
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
+    user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> DeleteTeamPort:
+    return DeleteTeamAdapter(
+        team_repository, team_member_repository, user_repository, audit_logger
+    )
+
+
+def get_reject_team_port(
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> RejectTeamPort:
+    return RejectTeamAdapter(team_repository, audit_logger)
+
+
+def get_regenerate_invite_port(
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> RegenerateInvitePort:
+    return RegenerateInviteAdapter(team_repository, audit_logger)

@@ -43,6 +43,10 @@ class ListTeamsAdapter(ListTeamsPort):
             teams = await self.team_repository.find_teams_by_user_id(
                 requesting_user_id
             )
+            if season_id_filter is not None:
+                teams = [t for t in teams if t.season_id == season_id_filter]
+            if status_filter is not None:
+                teams = [t for t in teams if t.status == status_filter]
 
         team_extra_info = await self._build_extra_info_by_team(teams)
 

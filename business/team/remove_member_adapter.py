@@ -8,12 +8,12 @@ from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.team_status import TeamStatus
-from domain.enums.user_role import UserRole
 from domain.exceptions.business_exception import BusinessException
 from domain.team.team_member import TeamMember
 
 
 class RemoveMemberAdapter(RemoveMemberPort):
+
     def __init__(
         self,
         team_repository: TeamRepositoryPort,
@@ -45,19 +45,11 @@ class RemoveMemberAdapter(RemoveMemberPort):
         if requesting_user is None:
             raise BusinessException("Usuário não encontrado")
 
-        is_monitor_operation = requesting_user.role in (
-            UserRole.MONITOR,
-            UserRole.ADMIN,
-        )
+        if team.owner_id != requesting_user_id:
+            raise BusinessException("Apenas o dono do time pode remover membros")
 
-        if not is_monitor_operation:
-            if team.owner_id != requesting_user_id:
-                raise BusinessException(
-                    "Apenas o dono do time ou um monitor podem remover membros"
-                )
-
-            if team.status != TeamStatus.DRAFT:
-                raise BusinessException("Este time não aceita mais alterações")
+        if team.status != TeamStatus.DRAFT:
+            raise BusinessException("Este time não aceita mais alterações")
 
         if target_user_id == team.owner_id:
             raise BusinessException(
@@ -84,15 +76,11 @@ class RemoveMemberAdapter(RemoveMemberPort):
 
         context.put_property("team", team)
         context.put_property("removed_user", target_user)
-        context.put_property("administrative_operation", is_monitor_operation)
+        context.put_property("administrative_operation", False)
 
-        operation_kind = "administrativa" if is_monitor_operation else "pelo dono"
         await self.audit_logger.log(
             action=AuditAction.TEAM_MEMBER_REMOVED,
-            description=(
-                f"Membro removido do time '{team.name}' "
-                f"(operação {operation_kind})"
-            ),
+            description=f"Membro removido do time '{team.name}' pelo dono",
             actor_id=requesting_user_id,
             actor=requesting_user,
         )

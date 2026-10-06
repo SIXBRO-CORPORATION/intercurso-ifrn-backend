@@ -6,6 +6,9 @@ from fastapi.params import Depends
 
 from core.business.team.approve_team_port import ApproveTeamPort
 from core.business.team.confirm_donation_port import ConfirmDonationPort
+from core.business.team.delete_team_port import DeleteTeamPort
+from core.business.team.regenerate_invite_port import RegenerateInvitePort
+from core.business.team.reject_team_port import RejectTeamPort
 from core.business.team.create_team_port import CreateTeamPort
 from core.business.team.get_team_details_port import GetTeamDetailsPort
 from core.business.team.get_team_invite_info_port import GetTeamInviteInfoPort
@@ -19,11 +22,13 @@ from core.context import Context
 from domain.enums.team_status import TeamStatus
 from domain.modality.modality import Modality
 from domain.team.team import Team
+from domain.enums.user_role import UserRole
 from domain.team.team_member import TeamMember
 from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.mappers.team_model_mapper import TeamModelMapper
 from web.models.request.team.team_register_request import TeamRegisterRequest
+from web.models.request.team.team_reject_request import TeamRejectRequest
 from web.models.response.team.team_details_response import TeamDetailsResponse
 from web.models.response.team.team_invite_preview_response import (
     TeamInvitePreviewResponse,
@@ -31,6 +36,11 @@ from web.models.response.team.team_invite_preview_response import (
 from web.models.response.team.team_join_response import TeamJoinResponse
 from web.models.response.team.team_register_response import TeamRegisterResponse
 from web.models.response.team.team_summary_response import TeamSummaryResponse
+from web.dependencies.business.team_dependencies import (
+    get_delete_team_port,
+    get_reject_team_port,
+    get_regenerate_invite_port,
+)
 from web.dependencies import (
     get_create_team_port,
     get_approve_team_port,
@@ -134,8 +144,19 @@ async def get_team_details(
     owner_user = context.get_property("owner_user", User)
     captain_user = context.get_property("captain_user", User)
 
+    can_see_invite = current_user.id == team.owner_id or current_user.role in (
+        UserRole.MONITOR,
+        UserRole.ADMIN,
+    )
+
     response_data = mapper.to_details_response(
-        team, modality, members, member_users_by_id, owner_user, captain_user
+        team,
+        modality,
+        members,
+        member_users_by_id,
+        owner_user,
+        captain_user,
+        invite_token=team.invite_token if can_see_invite else None,
     )
 
     return ApiResponse(data=response_data)
@@ -378,4 +399,88 @@ async def leave_team(
             "user_id": str(current_user.id),
         },
         message="Você saiu do time com sucesso!",
+    )
+
+
+@router.delete(
+    "/{team_id}",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def delete_team(
+    team_id: UUID,
+    delete_team_port: Annotated[DeleteTeamPort, Depends(get_delete_team_port)],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("requesting_user_id", current_user.id)
+
+    await delete_team_port.execute(context)
+
+    return ApiResponse.success(
+        data={"team_id": str(team_id)},
+        message="Time excluído com sucesso!",
+    )
+
+
+@router.patch(
+    "/{team_id}/reject",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def reject_team(
+    team_id: UUID,
+    request: TeamRejectRequest,
+    reject_team_port: Annotated[RejectTeamPort, Depends(get_reject_team_port)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("rejection_reason", request.reason)
+    context.put_property("rejected_by_user_id", current_user.id)
+
+    rejected_team = await reject_team_port.execute(context)
+
+    return ApiResponse.success(
+        data={
+            "team_id": str(rejected_team.id),
+            "name": rejected_team.name,
+            "status": rejected_team.status.value,
+            "rejection_reason": rejected_team.rejection_reason,
+            "rejected_at": (
+                rejected_team.rejected_at.isoformat()
+                if rejected_team.rejected_at
+                else None
+            ),
+        },
+        message="Time rejeitado e devolvido para rascunho.",
+    )
+
+
+@router.post(
+    "/{team_id}/invite/regenerate",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def regenerate_invite(
+    team_id: UUID,
+    regenerate_invite_port: Annotated[
+        RegenerateInvitePort, Depends(get_regenerate_invite_port)
+    ],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("requesting_user_id", current_user.id)
+
+    team = await regenerate_invite_port.execute(context)
+
+    return ApiResponse.success(
+        data={
+            "team_id": str(team.id),
+            "invite_token": team.invite_token,
+            "token_active": team.token_active,
+        },
+        message="Novo convite gerado. O link anterior não funciona mais.",
     )

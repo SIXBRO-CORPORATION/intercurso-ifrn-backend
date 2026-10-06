@@ -16,6 +16,24 @@ from web.models.response.team.team_register_response import TeamRegisterResponse
 from web.models.response.team.team_summary_response import TeamSummaryResponse
 
 
+def _modality_limits(modality: Optional[Modality]) -> dict:
+    if modality is None:
+        return {
+            "min_members": None,
+            "max_members": None,
+            "gender_mode": None,
+            "min_male_members": None,
+            "min_female_members": None,
+        }
+    return {
+        "min_members": modality.min_members,
+        "max_members": modality.max_members,
+        "gender_mode": modality.gender_mode.value if modality.gender_mode else None,
+        "min_male_members": modality.min_male_members,
+        "min_female_members": modality.min_female_members,
+    }
+
+
 class TeamModelMapper:
     def to_register_response(
         self, team: Team, owner_member: TeamMember, owner_user: User
@@ -40,6 +58,7 @@ class TeamModelMapper:
             matricula=user.matricula,
             role=member.role.value,
             donation_status=member.donation_status.value,
+            gender=user.gender.value if user.gender else None,
         )
 
     def to_invite_preview_response(
@@ -57,9 +76,9 @@ class TeamModelMapper:
             modality_name=modality.name if modality else None,
             photo=team.photo,
             members_count=members_count,
-            max_members=modality.max_members if modality else None,
             captain_name=captain_user.name if captain_user else None,
             owner_name=owner_user.name if owner_user else None,
+            **_modality_limits(modality),
         )
 
     def to_summary_response(self, team: Team, extra_info: dict) -> TeamSummaryResponse:
@@ -86,6 +105,7 @@ class TeamModelMapper:
         member_users_by_id: Dict[UUID, User],
         owner_user: Optional[User],
         captain_user: Optional[User],
+        invite_token: Optional[str] = None,
     ) -> TeamDetailsResponse:
         member_responses = [
             self.to_member_response(member, member_users_by_id[member.user_id])
@@ -112,12 +132,15 @@ class TeamModelMapper:
             captain_id=team.captain_id,
             captain_name=captain_user.name if captain_user else None,
             token_active=team.token_active,
+            invite_token=invite_token,
             submmited_at=team.submmited_at,
             approved_at=team.approved_at,
             rejected_at=team.rejected_at,
+            rejection_reason=team.rejection_reason,
             members=member_responses,
             donations_confirmed=donations_confirmed,
             donations_total=donations_total,
+            **_modality_limits(modality),
         )
 
     def to_join_response(self, team: Team, member: TeamMember) -> TeamJoinResponse:

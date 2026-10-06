@@ -21,3 +21,4 @@ class Team(AbstractDomain):
     approved_by: UUID = None
     rejected_at: datetime = None
     rejected_by: UUID = None
+    rejection_reason: str = None

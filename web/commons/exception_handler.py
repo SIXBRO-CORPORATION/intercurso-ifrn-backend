@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 
 from domain.exceptions.business_exception import BusinessException
+from domain.exceptions.not_found_exception import NotFoundException
 from web.commons.api_response import ApiResponse
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,17 @@ def register_exception_handler(app: FastAPI) -> None:
 
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
+            content=response.model_dump(mode="json"),
+        )
+
+    @app.exception_handler(NotFoundException)
+    async def not_found_exception_handler(
+        request: Request, exc: NotFoundException
+    ) -> JSONResponse:
+        response = ApiResponse.failure(error=str(exc), code="NOT_FOUND")
+
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
             content=response.model_dump(mode="json"),
         )
 

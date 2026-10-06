@@ -29,3 +29,5 @@ class TeamEntity(AbstractEntity):
     approved_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     rejected_at = Column(DateTime(timezone=True), nullable=True)
     rejected_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
+    rejection_reason = Column(Text, nullable=True)
