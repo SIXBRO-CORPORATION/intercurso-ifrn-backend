@@ -15,6 +15,7 @@ class TeamSummaryResponse(BaseModel):
     season_id: Optional[UUID] = Field(default=None)
     modality_id: UUID = Field()
     modality_name: Optional[str] = Field(default=None)
+    photo: Optional[str] = Field(default=None)
     status: str = Field()
     owner_id: Optional[UUID] = Field(default=None)
     owner_name: Optional[str] = Field(default=None)

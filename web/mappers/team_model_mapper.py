@@ -98,6 +98,7 @@ class TeamModelMapper:
             season_id=team.season_id,
             modality_id=team.modality_id,
             modality_name=extra_info.get("modality_name"),
+            photo=self._resolve_photo_url(team.photo),
             status=team.status.value,
             owner_id=team.owner_id,
             owner_name=extra_info.get("owner_name"),
