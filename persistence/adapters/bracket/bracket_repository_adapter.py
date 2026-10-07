@@ -62,9 +62,13 @@ class BracketRepositoryAdapter(BracketRepositoryPort):
         return [self.mapper.to_domain(entity) for entity in entities]
 
     async def exists_by_season(self, season_id: UUID) -> bool:
-        query = select(BracketEntity.id).where(
-            BracketEntity.season_id == season_id,
-            BracketEntity.deleted_at.is_(None),
+        query = (
+            select(BracketEntity.id)
+            .where(
+                BracketEntity.season_id == season_id,
+                BracketEntity.deleted_at.is_(None),
+            )
+            .limit(1)
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
