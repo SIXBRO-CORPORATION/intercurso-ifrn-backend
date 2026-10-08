@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     suap_user_info_url: str = "https://suap.ifrn.edu.br/api/rh/meus-dados/"
     suap_identification_url: str = "https://suap.ifrn.edu.br/api/rh/eu/"
     suap_attendance_url: str = (
-        "https://suap.ifrn.edu.br/api/ensino/frequencia-periodo-letivo/{ano}/{periodo}"
+        "https://suap.ifrn.edu.br/api/ensino/frequencia-periodo-letivo/{ano}/{periodo}/"
     )
     # Frequência mínima (%) para aprovar time; ano/período letivo consultados no SUAP
     min_attendance_percent: int = 75
