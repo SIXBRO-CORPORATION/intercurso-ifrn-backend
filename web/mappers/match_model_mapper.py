@@ -78,11 +78,13 @@ class MatchModelMapper:
 
     def _to_team_response(
         self,
-        team: Team,
+        team: Optional[Team],
         score: int,
         sets_won: Optional[int] = None,
         penalty_score: Optional[int] = None,
-    ) -> MatchTeamResponse:
+    ) -> Optional[MatchTeamResponse]:
+        if team is None:
+            return None
         return MatchTeamResponse(
             team_id=team.id,
             name=team.name,
@@ -171,8 +173,8 @@ class MatchModelMapper:
     def to_management_response(
         self,
         match: Match,
-        team1: Team,
-        team2: Team,
+        team1: Optional[Team],
+        team2: Optional[Team],
         team1_players: List[Tuple[TeamMember, User]],
         team2_players: List[Tuple[TeamMember, User]],
         modality: Optional[Modality],

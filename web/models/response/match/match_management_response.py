@@ -110,8 +110,12 @@ class MatchManagementResponse(BaseModel):
         ),
     )
 
-    team1: MatchTeamResponse = Field()
-    team2: MatchTeamResponse = Field()
+    team1: Optional[MatchTeamResponse] = Field(
+        default=None, description="Nulo enquanto o time não está definido (A definir)"
+    )
+    team2: Optional[MatchTeamResponse] = Field(
+        default=None, description="Nulo enquanto o time não está definido (A definir)"
+    )
     team1_players: List[MatchPlayerResponse] = Field(default_factory=list)
     team2_players: List[MatchPlayerResponse] = Field(default_factory=list)
 
