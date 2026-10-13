@@ -79,6 +79,7 @@ from web.dependencies.business.bracket_dependencies import (
     get_list_brackets_by_season_port,
     get_create_bracket_port,
     get_resort_bracket_port,
+    get_draw_knockout_stage_port,
     get_update_match_port,
     get_delete_match_port,
 )
@@ -190,6 +191,7 @@ __all__ = [
     "get_list_brackets_by_season_port",
     "get_create_bracket_port",
     "get_resort_bracket_port",
+    "get_draw_knockout_stage_port",
     "get_update_match_port",
     "get_delete_match_port",
 

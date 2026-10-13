@@ -6,6 +6,7 @@ from fastapi.params import Depends
 
 from core.business.bracket.create_bracket_port import CreateBracketPort
 from core.business.bracket.delete_match_port import DeleteMatchPort
+from core.business.bracket.draw_knockout_stage_port import DrawKnockoutStagePort
 from core.business.bracket.get_bracket_config_suggestion_port import (
     GetBracketConfigSuggestionPort,
 )
@@ -26,6 +27,7 @@ from web.dependencies import (
     get_bracket_model_mapper,
     get_create_bracket_port,
     get_delete_match_port,
+    get_draw_knockout_stage_port,
     get_list_bracket_matches_port,
     get_list_brackets_by_season_port,
     get_resort_bracket_port,
@@ -245,6 +247,41 @@ async def resort_bracket(
     )
 
     return ApiResponse(data=response_data, message="Chaveamento re-sorteado com sucesso!")
+
+
+@router.post(
+    "/{bracket_id}/knockout-draw",
+    response_model=ApiResponse[BracketResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def draw_knockout_stage(
+    bracket_id: UUID,
+    draw_knockout_stage_port: Annotated[
+        DrawKnockoutStagePort, Depends(get_draw_knockout_stage_port)
+    ],
+    mapper: Annotated[BracketModelMapper, Depends(get_bracket_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    context.put_property("bracket_id", bracket_id)
+    context.put_property("requested_by", current_user.id)
+
+    saved_bracket = await draw_knockout_stage_port.execute(context)
+
+    classified_count = context.get_property("classified_count", int) or 0
+    knockout_matches_filled = (
+        context.get_property("knockout_matches_filled", int) or 0
+    )
+
+    response_data = mapper.to_bracket_response(
+        saved_bracket,
+        teams_count=classified_count,
+        groups_created=0,
+        matches_created=knockout_matches_filled,
+        byes_created=0,
+    )
+
+    return ApiResponse(data=response_data, message="Mata-mata sorteado com sucesso!")
 
 
 @router.patch(

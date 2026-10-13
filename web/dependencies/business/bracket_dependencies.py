@@ -3,6 +3,7 @@ from fastapi import Depends
 
 from core.business.bracket.create_bracket_port import CreateBracketPort
 from core.business.bracket.delete_match_port import DeleteMatchPort
+from core.business.bracket.draw_knockout_stage_port import DrawKnockoutStagePort
 from core.business.bracket.get_bracket_config_suggestion_port import (
     GetBracketConfigSuggestionPort,
 )
@@ -26,6 +27,7 @@ from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from business.bracket.create_bracket_adapter import CreateBracketAdapter
 from business.bracket.delete_match_adapter import DeleteMatchAdapter
+from business.bracket.draw_knockout_stage_adapter import DrawKnockoutStageAdapter
 from business.bracket.get_bracket_config_suggestion_adapter import (
     GetBracketConfigSuggestionAdapter,
 )
@@ -109,6 +111,26 @@ def get_resort_bracket_port(
         bracket_group_team_repository,
         match_repository,
         team_repository,
+        audit_logger,
+    )
+
+
+def get_draw_knockout_stage_port(
+    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    bracket_group_repository: Annotated[
+        BracketGroupRepositoryPort, Depends(get_bracket_group_repository)
+    ],
+    bracket_group_team_repository: Annotated[
+        BracketGroupTeamRepositoryPort, Depends(get_bracket_group_team_repository)
+    ],
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> DrawKnockoutStagePort:
+    return DrawKnockoutStageAdapter(
+        bracket_repository,
+        bracket_group_repository,
+        bracket_group_team_repository,
+        match_repository,
         audit_logger,
     )
 
