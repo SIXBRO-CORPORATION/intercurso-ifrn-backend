@@ -44,3 +44,41 @@ async def test_logged_out_token_is_rejected_without_killing_other_sessions():
         await service.refresh_access_token("plain")
 
     repo.revoke_all_by_user.assert_not_awaited()
+
+
+def _service_with_tokens(stored):
+    service, repo = _service(stored)
+    service.jwt_provider.create_token_pair.return_value = (MagicMock(), "novo")
+    return service, repo
+
+
+@pytest.mark.asyncio
+async def test_retry_within_grace_issues_tokens_without_killing_sessions():
+    original_replacement = uuid4()
+    stored = _token(
+        revoked=True,
+        replaced_by_token=original_replacement,
+        revoked_at=datetime.utcnow() - timedelta(seconds=2),
+    )
+    service, repo = _service_with_tokens(stored)
+
+    _, new_plain, _ = await service.refresh_access_token("plain")
+
+    assert new_plain == "novo"
+    repo.revoke_all_by_user.assert_not_awaited()
+    assert stored.replaced_by_token == original_replacement
+
+
+@pytest.mark.asyncio
+async def test_reuse_after_grace_still_revokes_all_sessions():
+    stored = _token(
+        revoked=True,
+        replaced_by_token=uuid4(),
+        revoked_at=datetime.utcnow() - timedelta(seconds=60),
+    )
+    service, repo = _service_with_tokens(stored)
+
+    with pytest.raises(BusinessException):
+        await service.refresh_access_token("plain")
+
+    repo.revoke_all_by_user.assert_awaited_once_with(stored.user_id)
