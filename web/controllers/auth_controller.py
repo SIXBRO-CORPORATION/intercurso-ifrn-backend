@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -31,6 +32,8 @@ from web.mappers.user_model_mapper import UserModelMapper
 from web.models.request.auth.refresh_token_request import RefreshTokenRequest
 from web.models.response.user.user_response import UserResponse
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 REFRESH_TOKEN_COOKIE_NAME = "refresh_token"
@@ -48,6 +51,14 @@ def _set_refresh_token_cookie(response: Response, refresh_token: str) -> None:
         max_age=_REFRESH_TOKEN_MAX_AGE_SECONDS,
         path="/api/auth",
     )
+
+
+def _login_error_redirect(code: str) -> RedirectResponse:
+    response = RedirectResponse(
+        url=f"{settings.frontend_url}/login?{urlencode({'erro': code})}"
+    )
+    response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/auth")
+    return response
 
 
 @router.get("/login/suap")
@@ -82,10 +93,7 @@ async def auth_callback(
     login_with_suap_port: LoginWithSuapPort = Depends(get_login_with_suap_port),
 ):
     if not is_valid_oauth_state(state, oauth_state_cookie):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="State inválido ou expirado. Tente fazer login novamente.",
-        )
+        return _login_error_redirect("state_invalido")
 
     platform = get_platform_from_state(state)
 
@@ -95,7 +103,10 @@ async def auth_callback(
     try:
         access_token = await login_with_suap_port.execute(context)
     except BusinessException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        logger.warning("Falha no login via SUAP: %s", e)
+        if platform == "mobile":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        return _login_error_redirect("login_falhou")
 
     refresh_token = context.get_property("refresh_token", str)
 
@@ -113,10 +124,9 @@ async def auth_callback(
         response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/auth")
         return response
 
-    frontend_url = settings.frontend_url
-    redirect_url = f"{frontend_url}/auth/callback?token={access_token.access_token}"
-
-    response = RedirectResponse(url=redirect_url)
+    # Web: o access token NUNCA vai na URL (histórico, logs, Referer). O front
+    # recupera a sessão chamando POST /refresh, que usa o cookie definido abaixo.
+    response = RedirectResponse(url=f"{settings.frontend_url}/auth/callback")
     response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/auth")
 
     if refresh_token:
