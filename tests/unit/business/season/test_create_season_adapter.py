@@ -20,12 +20,15 @@ def make_adapter():
     modality_repository = AsyncMock()
     user_repository = AsyncMock()
     audit_logger = AsyncMock()
+    file_storage = AsyncMock()
+    file_storage.upload.side_effect = lambda **kw: kw["object_key"]
 
     adapter = CreateSeasonAdapter(
         season_repository,
         season_modality_repository,
         modality_repository,
         audit_logger,
+        file_storage,
     )
     return (
         adapter,
@@ -44,6 +47,7 @@ def make_context(
         registration_start_date=None,
         registration_end_date=None,
         open_immediately=False,
+        rules_document_bytes=None,
 ):
     now = datetime.now(timezone.utc)
     year = year if year is not None else now.year
@@ -70,6 +74,8 @@ def make_context(
     context.put_property("modality_ids", modality_ids)
     context.put_property("open_immediately", open_immediately)
     context.put_property("created_by", uuid4())
+    if rules_document_bytes is not None:
+        context.put_property("rules_document_bytes", rules_document_bytes)
     return context
 
 
@@ -261,3 +267,106 @@ class TestCreateSeasonAdapter:
 
         with pytest.raises(BusinessException):
             await adapter.execute(context)
+
+
+PDF = b"%PDF-1.4" + b"0" * 32
+DOCX = b"PK\x03\x04" + b"0" * 32
+
+
+def arrange_valid_flow(parts, rules_document_bytes):
+    (
+        adapter,
+        season_repository,
+        season_modality_repository,
+        modality_repository,
+        user_repository,
+        audit_logger,
+    ) = parts
+    modality_id = uuid4()
+    modality_repository.find_by_ids.return_value = [
+        Modality(id=modality_id, name="Futsal", min_members=5, max_members=10, active=True)
+    ]
+    season_repository.save.side_effect = lambda s: s
+    season_modality_repository.insert_all.side_effect = lambda models: models
+    context = make_context(
+        modality_ids=[modality_id], rules_document_bytes=rules_document_bytes
+    )
+    return adapter, season_repository, context
+
+
+@pytest.mark.unit
+class TestCreateSeasonRulesDocument:
+    @pytest.mark.parametrize(
+        "data,ext,ctype",
+        [
+            (PDF, "pdf", "application/pdf"),
+            (
+                DOCX,
+                "docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ),
+        ],
+    )
+    async def test_uploads_rules_document_and_stores_object_key(self, data, ext, ctype):
+        adapter, _, context = arrange_valid_flow(make_adapter(), data)
+
+        season = await adapter.execute(context)
+
+        kwargs = adapter.file_storage.upload.await_args.kwargs
+        assert kwargs["object_key"].startswith("seasons/rules-documents/")
+        assert kwargs["object_key"].endswith(f".{ext}")
+        assert kwargs["content_type"] == ctype and kwargs["file_bytes"] == data
+        assert season.rules_document == kwargs["object_key"]
+
+    async def test_no_rules_document_means_no_upload(self):
+        adapter, _, context = arrange_valid_flow(make_adapter(), None)
+
+        season = await adapter.execute(context)
+
+        adapter.file_storage.upload.assert_not_awaited()
+        assert season.rules_document is None
+
+    async def test_rejects_invalid_file_before_any_io(self):
+        parts = make_adapter()
+        adapter, season_repository, context = arrange_valid_flow(
+            parts, b"not a pdf nor docx"
+        )
+
+        with pytest.raises(BusinessException, match="Formato de arquivo inválido"):
+            await adapter.execute(context)
+
+        adapter.file_storage.upload.assert_not_awaited()
+        season_repository.save.assert_not_awaited()
+
+    async def test_rejects_oversized_rules_document(self):
+        adapter, _, context = arrange_valid_flow(
+            make_adapter(), PDF + b"0" * (10 * 1024 * 1024)
+        )
+
+        with pytest.raises(BusinessException, match="10MB"):
+            await adapter.execute(context)
+
+        adapter.file_storage.upload.assert_not_awaited()
+
+    async def test_business_rejection_does_not_upload(self):
+        parts = make_adapter()
+        adapter, season_repository, context = arrange_valid_flow(parts, PDF)
+        season_repository.find_active_season.return_value = Season(
+            id=uuid4(), name="Atual", active=True, status=SeasonStatus.IN_PROGRESS
+        )
+        context.put_property("open_immediately", True)
+
+        with pytest.raises(BusinessException, match="Finalize a temporada atual"):
+            await adapter.execute(context)
+
+        adapter.file_storage.upload.assert_not_awaited()
+
+    async def test_deletes_uploaded_rules_document_when_save_fails(self):
+        adapter, season_repository, context = arrange_valid_flow(make_adapter(), PDF)
+        season_repository.save.side_effect = RuntimeError("db down")
+
+        with pytest.raises(RuntimeError):
+            await adapter.execute(context)
+
+        key = adapter.file_storage.upload.await_args.kwargs["object_key"]
+        adapter.file_storage.delete.assert_awaited_once_with(key)

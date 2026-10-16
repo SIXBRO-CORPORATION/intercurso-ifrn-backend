@@ -1,3 +1,5 @@
+import uuid
+from contextlib import suppress
 from datetime import datetime, timezone
 from typing import List
 from uuid import UUID
@@ -10,11 +12,17 @@ from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
+from core.storage.file_storage_port import FileStoragePort
 from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.season.season import Season
 from domain.season.season_modality import SeasonModality
+from domain.season.season_rules_document import (
+    MAX_SEASON_RULES_DOCUMENT_BYTES,
+    SEASON_RULES_DOCUMENT_FOLDER,
+    sniff_season_rules_document,
+)
 
 
 class CreateSeasonAdapter(CreateSeasonPort):
@@ -24,11 +32,13 @@ class CreateSeasonAdapter(CreateSeasonPort):
         season_modality_repository: SeasonModalityRepositoryPort,
         modality_repository: ModalityRepositoryPort,
         audit_logger: AuditLogger,
+        file_storage: FileStoragePort,
     ):
         self.season_repository = season_repository
         self.season_modality_repository = season_modality_repository
         self.modality_repository = modality_repository
         self.audit_logger = audit_logger
+        self.file_storage = file_storage
 
     async def execute(self, context: Context) -> Season:
         season = context.get_data(Season)
@@ -37,6 +47,19 @@ class CreateSeasonAdapter(CreateSeasonPort):
             context.get_property("open_immediately", bool) or False
         )
         created_by = context.get_property("created_by", UUID)
+
+        rules_document_bytes = context.get_property("rules_document_bytes", bytes)
+        rules_document_type = None
+        if rules_document_bytes:
+            if len(rules_document_bytes) > MAX_SEASON_RULES_DOCUMENT_BYTES:
+                raise BusinessException(
+                    "Arquivo de regulamento excede o tamanho máximo permitido de 10MB"
+                )
+            rules_document_type = sniff_season_rules_document(rules_document_bytes)
+            if rules_document_type is None:
+                raise BusinessException(
+                    "Formato de arquivo inválido. Envie um arquivo PDF ou DOCX"
+                )
 
         if season is None:
             raise BusinessException("Dados da temporada são obrigatórios")
@@ -99,6 +122,16 @@ class CreateSeasonAdapter(CreateSeasonPort):
                     "Finalize a temporada atual antes de abrir as inscrições de uma nova temporada"
                 )
 
+        rules_document_key = None
+        if rules_document_type is not None:
+            content_type, ext = rules_document_type
+            rules_document_key = f"{SEASON_RULES_DOCUMENT_FOLDER}/{uuid.uuid4()}.{ext}"
+            await self.file_storage.upload(
+                file_bytes=rules_document_bytes,
+                object_key=rules_document_key,
+                content_type=content_type,
+            )
+
         new_season = Season(
             name=season.name.strip(),
             year=season.year,
@@ -114,20 +147,26 @@ class CreateSeasonAdapter(CreateSeasonPort):
             ),
             registration_end_date=season.registration_end_date,
             registration_opened_at=season.registration_opened_at,
-            rules_document=season.rules_document,
+            rules_document=rules_document_key,
             created_by=created_by,
         )
         # Rascunho nasce inativo (UC001 passo 8). Só a abertura torna a temporada ativa.
         new_season.active = open_immediately
 
-        saved_season = await self.season_repository.save(new_season)
+        try:
+            saved_season = await self.season_repository.save(new_season)
 
-        season_modalities = await self.season_modality_repository.insert_all(
-            [
-                SeasonModality(season_id=saved_season.id, modality_id=modality_id)
-                for modality_id in modality_ids
-            ]
-        )
+            season_modalities = await self.season_modality_repository.insert_all(
+                [
+                    SeasonModality(season_id=saved_season.id, modality_id=modality_id)
+                    for modality_id in modality_ids
+                ]
+            )
+        except Exception:
+            if rules_document_key is not None:
+                with suppress(Exception):
+                    await self.file_storage.delete(rules_document_key)
+            raise
 
         context.put_property("season_modalities", season_modalities)
 

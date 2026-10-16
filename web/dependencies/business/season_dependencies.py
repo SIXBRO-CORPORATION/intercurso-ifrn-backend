@@ -26,6 +26,8 @@ from core.persistence.season.season_modality_repository_port import (
 )
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
+from core.storage.file_storage_port import FileStoragePort
+from web.dependencies.business.storage_dependencies import get_file_storage
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
     get_match_repository,
@@ -47,12 +49,14 @@ def get_create_season_port(
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    file_storage: Annotated[FileStoragePort, Depends(get_file_storage)],
 ) -> CreateSeasonPort:
     return CreateSeasonAdapter(
         season_repository,
         season_modality_repository,
         modality_repository,
         audit_logger,
+        file_storage,
     )
 
 

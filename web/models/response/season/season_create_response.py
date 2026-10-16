@@ -16,4 +16,5 @@ class SeasonCreateResponse(BaseModel):
     registration_start_date: Optional[datetime] = Field(default=None)
     registration_end_date: Optional[datetime] = Field(default=None)
     modality_ids: List[UUID] = Field(default_factory=list)
+    rules_document: Optional[str] = Field(default=None)
     message: str = Field()

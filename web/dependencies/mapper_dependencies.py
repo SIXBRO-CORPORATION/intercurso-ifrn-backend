@@ -26,8 +26,10 @@ def get_team_model_mapper(
     return TeamModelMapper(file_storage)
 
 
-def get_season_model_mapper() -> SeasonModelMapper:
-    return SeasonModelMapper()
+def get_season_model_mapper(
+    file_storage: Annotated[FileStoragePort, Depends(get_file_storage)],
+) -> SeasonModelMapper:
+    return SeasonModelMapper(file_storage)
 
 
 def get_bracket_model_mapper() -> BracketModelMapper:

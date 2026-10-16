@@ -1,8 +1,10 @@
+from datetime import datetime
 from typing import Annotated, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, File, Form, Query, UploadFile, status
 from fastapi.params import Depends
+from pydantic import StringConstraints
 
 from core.business.season.close_registration_port import CloseRegistrationPort
 from core.business.season.create_season_port import CreateSeasonPort
@@ -15,6 +17,7 @@ from core.business.season.reopen_registration_port import ReopenRegistrationPort
 from core.context import Context
 from domain.enums.season_status import SeasonStatus
 from domain.season.season import Season
+from domain.season.season_rules_document import MAX_SEASON_RULES_DOCUMENT_BYTES
 from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import require_monitor
@@ -30,7 +33,6 @@ from web.dependencies.business.season_dependencies import (
 )
 from web.dependencies.mapper_dependencies import get_season_model_mapper
 from web.mappers.season_model_mapper import SeasonModelMapper
-from web.models.request.season.season_create_request import SeasonCreateRequest
 from web.models.request.season.season_edit_dates_request import SeasonEditDatesRequest
 from web.models.request.season.season_finish_request import SeasonFinishRequest
 from web.models.request.season.season_reopen_request import SeasonReopenRequest
@@ -46,25 +48,45 @@ router = APIRouter(prefix="/api/season", tags=["season"])
     "/",
     response_model=ApiResponse[SeasonCreateResponse],
     status_code=status.HTTP_201_CREATED,
+    description=(
+        "`multipart/form-data` com `name`, `year`, `modality_ids`, "
+        "`registration_end_date`, `registration_start_date` (opcional quando "
+        "`open_immediately`), `open_immediately` e `rules_document` (arquivo "
+        "opcional do regulamento, PDF ou DOCX até 10MB)."
+    ),
 )
 async def create_season(
-    request: SeasonCreateRequest,
+    name: Annotated[
+        str,
+        Form(),
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=255),
+    ],
+    year: Annotated[int, Form()],
+    modality_ids: Annotated[List[UUID], Form()],
+    registration_end_date: Annotated[datetime, Form()],
     create_season_port: Annotated[CreateSeasonPort, Depends(get_create_season_port)],
     mapper: Annotated[SeasonModelMapper, Depends(get_season_model_mapper)],
+    registration_start_date: Annotated[Optional[datetime], Form()] = None,
+    open_immediately: Annotated[bool, Form()] = False,
     current_user: User = Depends(require_monitor),
+    rules_document: UploadFile | None = File(default=None),
 ):
     season_domain = Season(
-        name=request.name,
-        year=request.year,
-        registration_start_date=request.registration_start_date,
-        registration_end_date=request.registration_end_date,
-        rules_document=request.rules_document,
+        name=name,
+        year=year,
+        registration_start_date=registration_start_date,
+        registration_end_date=registration_end_date,
     )
 
     context = Context(data=season_domain)
-    context.put_property("modality_ids", request.modality_ids)
-    context.put_property("open_immediately", request.open_immediately)
+    context.put_property("modality_ids", modality_ids)
+    context.put_property("open_immediately", open_immediately)
     context.put_property("created_by", current_user.id)
+    if rules_document is not None:
+        context.put_property(
+            "rules_document_bytes",
+            await rules_document.read(MAX_SEASON_RULES_DOCUMENT_BYTES + 1),
+        )
 
     saved_season = await create_season_port.execute(context)
     season_modalities = context.get_property("season_modalities", list) or []
