@@ -65,3 +65,16 @@ class ModalityConfigurationRepositoryAdapter(ModalityConfigurationRepositoryPort
         )
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
+
+    async def find_by_modality_ids(
+        self, modality_ids: List[UUID]
+    ) -> List[ModalityConfiguration]:
+        if not modality_ids:
+            return []
+        query = select(ModalityConfigurationEntity).where(
+            ModalityConfigurationEntity.modality_id.in_(modality_ids),
+            ModalityConfigurationEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]

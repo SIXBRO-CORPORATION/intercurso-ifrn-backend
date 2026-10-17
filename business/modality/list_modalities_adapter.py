@@ -1,18 +1,38 @@
 from typing import List
 from uuid import UUID
 
+from business.modality.modality_configuration_assembler import attach_configurations
 from core.business.modality.list_modalities_port import ListModalitiesPort
 from core.context import Context
+from core.persistence.modality.modality_configuration_repository_port import (
+    ModalityConfigurationRepositoryPort,
+)
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
 from domain.modality.modality import Modality
 
 
 class ListModalitiesAdapter(ListModalitiesPort):
-    def __init__(self, modality_repository: ModalityRepositoryPort):
+
+    def __init__(
+        self,
+        modality_repository: ModalityRepositoryPort,
+        modality_configuration_repository: ModalityConfigurationRepositoryPort,
+    ):
         self.modality_repository = modality_repository
+        self.modality_configuration_repository = modality_configuration_repository
 
     async def execute(self, context: Context) -> List[Modality]:
         season_id = context.get_property("season_id", UUID)
         if season_id is None:
-            return await self.modality_repository.find_active_modalities()
-        return await self.modality_repository.find_active_by_season(season_id)
+            modalities = await self.modality_repository.find_active_modalities()
+        else:
+            modalities = await self.modality_repository.find_active_by_season(
+                season_id
+            )
+
+        configurations = await attach_configurations(
+            modalities, self.modality_configuration_repository
+        )
+        context.put_property("modality_configurations", configurations)
+
+        return modalities

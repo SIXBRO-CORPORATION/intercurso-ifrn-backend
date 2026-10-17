@@ -17,3 +17,13 @@ class ModalitySummaryResponse(BaseModel):
     gender_mode: ModalityGenderMode = Field()
     min_male_members: Optional[int] = Field(default=None)
     min_female_members: Optional[int] = Field(default=None)
+    active: bool = Field(description="Estado atual da modalidade (ativa/inativa)")
+    num_periods: Optional[int] = Field(
+        default=None, description="Número de períodos/tempos da partida"
+    )
+    period_durations_minutes: Optional[int] = Field(
+        default=None, description="Duração de cada período, em minutos"
+    )
+    score_type: Optional[str] = Field(
+        default=None, description="Sistema de pontuação: GOALS, POINTS ou SETS"
+    )

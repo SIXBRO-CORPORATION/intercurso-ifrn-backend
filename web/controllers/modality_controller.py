@@ -6,7 +6,11 @@ from fastapi import APIRouter, Query, status
 from fastapi.params import Depends
 
 from core.business.modality.create_modality_port import CreateModalityPort
+from core.business.modality.list_all_modalities_port import ListAllModalitiesPort
 from core.business.modality.list_modalities_port import ListModalitiesPort
+from core.business.modality.update_modality_active_port import (
+    UpdateModalityActivePort,
+)
 from core.context import Context
 from domain.enums.score_type import ScoreType
 from domain.modality.modality import Modality
@@ -17,12 +21,20 @@ from web.commons.api_response import ApiResponse
 from web.dependencies import require_monitor
 from web.dependencies.business.modality_dependencies import (
     get_create_modality_port,
+    get_list_all_modalities_port,
     get_list_modalities_port,
+    get_update_modality_active_port,
 )
 from web.dependencies.mapper_dependencies import get_modality_model_mapper
 from web.mappers.modality_model_mapper import ModalityModelMapper
 from web.models.request.modality.modality_create_request import ModalityCreateRequest
+from web.models.request.modality.modality_update_active_request import (
+    ModalityUpdateActiveRequest,
+)
 from web.models.response.modality.modality_create_response import ModalityCreateResponse
+from web.models.response.modality.modality_status_response import (
+    ModalityStatusResponse,
+)
 from web.models.response.modality.modality_summary_response import (
     ModalitySummaryResponse,
 )
@@ -40,12 +52,30 @@ async def list_modalities(
         UUID | None, Query(description="Restringe às modalidades da temporada")
     ] = None,
 ):
-    """Público (ADR 0004): lista modalidades ativas, opcionalmente de uma temporada."""
     context = Context()
     if season_id is not None:
         context.put_property("season_id", season_id)
     modalities = await list_modalities_port.execute(context)
-    return ApiResponse(data=mapper.to_summary_responses(modalities))
+    configurations = context.get_property("modality_configurations", dict) or {}
+    return ApiResponse(data=mapper.to_summary_responses(modalities, configurations))
+
+
+@router.get(
+    "/admin",
+    response_model=ApiResponse[List[ModalitySummaryResponse]],
+    status_code=status.HTTP_200_OK,
+)
+async def list_all_modalities(
+    list_all_modalities_port: Annotated[
+        ListAllModalitiesPort, Depends(get_list_all_modalities_port)
+    ],
+    mapper: Annotated[ModalityModelMapper, Depends(get_modality_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    modalities = await list_all_modalities_port.execute(context)
+    configurations = context.get_property("modality_configurations", dict) or {}
+    return ApiResponse(data=mapper.to_summary_responses(modalities, configurations))
 
 
 @router.post(
@@ -106,3 +136,34 @@ async def create_modality(
     return ApiResponse(
         data=response_data, message="Modalidade cadastrada com sucesso!"
     )
+
+
+@router.patch(
+    "/{modality_id}/",
+    response_model=ApiResponse[ModalityStatusResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def update_modality_active(
+    modality_id: UUID,
+    request: ModalityUpdateActiveRequest,
+    update_modality_active_port: Annotated[
+        UpdateModalityActivePort, Depends(get_update_modality_active_port)
+    ],
+    mapper: Annotated[ModalityModelMapper, Depends(get_modality_model_mapper)],
+    current_user: User = Depends(require_monitor),
+):
+    context = Context()
+    context.put_property("modality_id", modality_id)
+    context.put_property("active", request.active)
+    context.put_property("updated_by", current_user.id)
+
+    updated_modality = await update_modality_active_port.execute(context)
+
+    message = (
+        "Modalidade ativada com sucesso!"
+        if updated_modality.active
+        else "Modalidade desativada com sucesso!"
+    )
+    response_data = mapper.to_status_response(updated_modality, message)
+
+    return ApiResponse(data=response_data, message=message)

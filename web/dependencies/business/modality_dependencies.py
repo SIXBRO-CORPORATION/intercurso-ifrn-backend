@@ -3,10 +3,18 @@ from typing import Annotated
 from fastapi import Depends
 
 from business.modality.create_modality_adapter import CreateModalityAdapter
+from business.modality.list_all_modalities_adapter import ListAllModalitiesAdapter
 from business.modality.list_modalities_adapter import ListModalitiesAdapter
+from business.modality.update_modality_active_adapter import (
+    UpdateModalityActiveAdapter,
+)
 from core.business.audit.audit_logger import AuditLogger
 from core.business.modality.create_modality_port import CreateModalityPort
+from core.business.modality.list_all_modalities_port import ListAllModalitiesPort
 from core.business.modality.list_modalities_port import ListModalitiesPort
+from core.business.modality.update_modality_active_port import (
+    UpdateModalityActivePort,
+)
 from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
@@ -47,5 +55,32 @@ def get_list_modalities_port(
     modality_repository: Annotated[
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
+    modality_configuration_repository: Annotated[
+        ModalityConfigurationRepositoryPort,
+        Depends(get_modality_configuration_repository),
+    ],
 ) -> ListModalitiesPort:
-    return ListModalitiesAdapter(modality_repository)
+    return ListModalitiesAdapter(modality_repository, modality_configuration_repository)
+
+
+def get_list_all_modalities_port(
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+    modality_configuration_repository: Annotated[
+        ModalityConfigurationRepositoryPort,
+        Depends(get_modality_configuration_repository),
+    ],
+) -> ListAllModalitiesPort:
+    return ListAllModalitiesAdapter(
+        modality_repository, modality_configuration_repository
+    )
+
+
+def get_update_modality_active_port(
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> UpdateModalityActivePort:
+    return UpdateModalityActiveAdapter(modality_repository, audit_logger)
