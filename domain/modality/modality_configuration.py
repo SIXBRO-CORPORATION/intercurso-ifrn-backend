@@ -13,5 +13,4 @@ class ModalityConfiguration(AbstractDomain):
     num_periods: int = None
     period_durations_minutes: int = None
     score_type: ScoreType = None
-    has_third_place_match: bool = None
     metadata: Any = None

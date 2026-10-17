@@ -81,7 +81,6 @@ def make_valid_configuration(**overrides):
         num_periods=2,
         period_durations_minutes=20,
         score_type=ScoreType.GOALS,
-        has_third_place_match=True,
     )
     defaults.update(overrides)
     return ModalityConfiguration(**defaults)

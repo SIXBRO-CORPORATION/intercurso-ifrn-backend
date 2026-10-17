@@ -170,7 +170,6 @@ class CreateModalityAdapter(CreateModalityPort):
             num_periods=configuration.num_periods,
             period_durations_minutes=configuration.period_durations_minutes,
             score_type=configuration.score_type,
-            has_third_place_match=bool(configuration.has_third_place_match),
             metadata=configuration.metadata,
             active=True,
         )

@@ -103,7 +103,6 @@ async def create_modality(
         num_periods=request.num_periods,
         period_durations_minutes=request.period_durations_minutes,
         score_type=request.score_type,
-        has_third_place_match=request.has_third_place_match,
         metadata=request.metadata,
     )
 

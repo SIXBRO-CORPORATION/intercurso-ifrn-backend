@@ -61,6 +61,24 @@ class TestKnockoutDraw:
             first_round_team_ids.add(m.team2_id)
         assert first_round_team_ids == set(teams)
 
+    def test_has_third_place_defaults_to_true_when_not_configured(self):
+        teams = make_team_ids(8)
+        plan = build_draw(ModalityFormat.KNOCKOUT, teams, {})
+
+        thirds = [m for m in plan.matches if m.match_type == MatchType.THIRD_PLACE]
+        assert len(thirds) == 1
+
+    def test_has_third_place_false_omits_third_place_match(self):
+        teams = make_team_ids(8)
+        plan = build_draw(
+            ModalityFormat.KNOCKOUT, teams, {"has_third_place": False}
+        )
+
+        thirds = [m for m in plan.matches if m.match_type == MatchType.THIRD_PLACE]
+        assert thirds == []
+        # oitavas (4) + semis (2) + final (1) = 7, sem a partida de 3º lugar
+        assert len(plan.matches) == 7
+
     def test_odd_team_count_creates_single_bye_and_resolves_winner(self):
         teams = make_team_ids(7)
         plan = build_draw(ModalityFormat.KNOCKOUT, teams, {})
@@ -221,6 +239,19 @@ class TestGroupStageKnockoutDraw:
         assert len(knockout_matches) == 8
         assert all(m.team1_id is None and m.team2_id is None for m in knockout_matches)
 
+    def test_has_third_place_false_omits_third_place_match(self):
+        teams = make_team_ids(8)
+        config = resolve_configuration(
+            ModalityFormat.GROUP_STAGE_KNOCKOUT,
+            len(teams),
+            {"has_third_place": False},
+        )
+        assert config["has_third_place"] is False
+
+        plan = build_draw(ModalityFormat.GROUP_STAGE_KNOCKOUT, teams, config)
+        thirds = [m for m in plan.matches if m.match_type == MatchType.THIRD_PLACE]
+        assert thirds == []
+
     def test_group_matches_linked_to_correct_group_index(self):
         teams = make_team_ids(8)
         config = resolve_configuration(
@@ -313,8 +344,10 @@ class TestValidateTeamCountForFormat:
 
 
 class TestSuggestConfiguration:
-    def test_knockout_has_empty_config(self):
-        assert suggest_configuration(ModalityFormat.KNOCKOUT, 10) == {}
+    def test_knockout_default_config_suggests_third_place(self):
+        assert suggest_configuration(ModalityFormat.KNOCKOUT, 10) == {
+            "has_third_place": True
+        }
 
     def test_round_robin_default_single_round(self):
         assert suggest_configuration(ModalityFormat.ROUND_ROBIN, 10) == {"rounds": 1}
@@ -323,3 +356,23 @@ class TestSuggestConfiguration:
         assert suggest_configuration(ModalityFormat.TRIANGULAR, 3) == {
             "double_round": False
         }
+
+
+class TestResolveConfigurationHasThirdPlace:
+    def test_knockout_defaults_to_true(self):
+        resolved = resolve_configuration(ModalityFormat.KNOCKOUT, 10, None)
+        assert resolved["has_third_place"] is True
+
+    def test_knockout_honors_monitor_override(self):
+        resolved = resolve_configuration(
+            ModalityFormat.KNOCKOUT, 10, {"has_third_place": False}
+        )
+        assert resolved["has_third_place"] is False
+
+    def test_group_stage_knockout_honors_monitor_override(self):
+        resolved = resolve_configuration(
+            ModalityFormat.GROUP_STAGE_KNOCKOUT, 12, {"has_third_place": False}
+        )
+        assert resolved["has_third_place"] is False
+        # demais defaults de grupo continuam sendo sugeridos normalmente
+        assert resolved["num_groups"] == 4

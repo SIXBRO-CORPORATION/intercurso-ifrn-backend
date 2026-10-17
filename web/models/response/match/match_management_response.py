@@ -49,7 +49,6 @@ class MatchModalityConfigurationResponse(BaseModel):
     num_periods: Optional[int] = Field(default=None)
     period_duration_minutes: Optional[int] = Field(default=None)
     score_type: Optional[str] = Field(default=None)
-    has_third_place_match: Optional[bool] = Field(default=None)
     points_per_set: Optional[int] = Field(
         default=None, description="Vôlei (ADR002): pontos necessários para vencer um set normal"
     )

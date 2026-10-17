@@ -12,7 +12,6 @@ class ModalityConfigurationResponse(BaseModel):
     num_periods: int = Field()
     period_durations_minutes: int = Field()
     score_type: str = Field()
-    has_third_place_match: bool = Field()
     metadata: Optional[Any] = Field(default=None)
     points_per_set: Optional[int] = Field(default=None)
     final_set_points: Optional[int] = Field(default=None)
