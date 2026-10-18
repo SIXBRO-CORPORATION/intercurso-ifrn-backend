@@ -128,6 +128,17 @@ trata qualquer status diferente de 200 como falha definitiva e **não tenta de n
 cliente não deve confiar na reconexão nativa: no `onerror`, chamar `es.close()`, pedir um ticket novo
 e abrir um novo `EventSource` (com backoff), e então reconciliar via `GET /api/match/{match_id}`.
 
+### 4.2 Heartbeat, limites e erros do canal
+
+- **Heartbeat:** a cada 15s sem eventos o servidor envia `event: heartbeat` com `data: {}`. É um
+  evento nomeado, e não um comentário SSE, porque o navegador não expõe comentários ao
+  `EventSource`. O cliente usa o heartbeat só para detectar conexão parada.
+- **Limite de conexões:** 2 por usuário autenticado e 100 por IP. Ao exceder, o servidor responde
+  200, envia `event: error` com `{"code": "connection_limit", "detail": "...",
+  "retry_after_seconds": 15}` e encerra o stream.
+- **Limite de tickets anônimos:** `POST /api/realtime/ticket` responde `429` com o cabeçalho
+  `Retry-After` (segundos) quando o IP excede o limite.
+
 ### 5. Push Notifications (RN13-16 do UC016) ficam fora deste ADR
 
 Push Notification é um mecanismo independente (entrega mesmo com app fechado, via FCM/APNs) e não
