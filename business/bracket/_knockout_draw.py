@@ -1,5 +1,5 @@
 import random
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from uuid import UUID
 
 from domain.enums.match_category import MatchCategory
