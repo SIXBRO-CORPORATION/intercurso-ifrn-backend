@@ -192,5 +192,4 @@ Continuam restritas: `GET /api/season/` e `/{id}` (monitor), `GET /api/bracket/*
 
 ## Referências
 - [UC016 — Visualizar Partida](../spec/UC016_InterfaceUsuário_VisualizarPartida.md)
-- [UC018 — Criar Reporte](../spec/UC018_GestãoDeReportes_CriarReporte.md)
 - [ADR 0003 — Envio de Eventos](ADR003_EnvioDeEventos.md)
