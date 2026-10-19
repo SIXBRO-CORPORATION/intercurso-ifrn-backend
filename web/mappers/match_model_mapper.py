@@ -123,7 +123,6 @@ class MatchModelMapper:
                 if modality_configuration.score_type
                 else None
             ),
-            has_third_place_match=modality_configuration.has_third_place_match,
             points_per_set=(
                 volleyball_configuration.points_per_set
                 if volleyball_configuration

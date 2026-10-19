@@ -57,6 +57,7 @@ async def issue_live_ticket(
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Muitas solicitações de ticket anônimo. Tente novamente em instantes.",
+                headers={"Retry-After": str(rate_limiter.retry_after(client_host))},
             )
 
     if request.channel_type == LiveChannelType.MATCH:

@@ -91,7 +91,6 @@ class ModalityModelMapper:
             score_type=(
                 configuration.score_type.value if configuration.score_type else None
             ),
-            has_third_place_match=configuration.has_third_place_match,
             metadata=configuration.metadata,
             points_per_set=(
                 volleyball_configuration.points_per_set

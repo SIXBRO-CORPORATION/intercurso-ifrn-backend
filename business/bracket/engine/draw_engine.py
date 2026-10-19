@@ -243,7 +243,8 @@ def build_draw(
 
     if modality_format == ModalityFormat.KNOCKOUT:
         first_round_pairs, byes_created = _build_first_round_pairs(shuffled)
-        matches = build_knockout_tree(first_round_pairs, has_third_place=True)
+        has_third_place = bool(configuration.get("has_third_place", True))
+        matches = build_knockout_tree(first_round_pairs, has_third_place=has_third_place)
         return DrawPlan(groups=[], matches=matches, byes_created=byes_created)
 
     if modality_format == ModalityFormat.ROUND_ROBIN:
@@ -280,8 +281,11 @@ def build_draw(
         knockout_first_round_pairs: List[Tuple[Optional[UUID], Optional[UUID]]] = [
             (None, None) for _ in range(total_classified // 2)
         ]
+        has_third_place = bool(configuration.get("has_third_place", True))
         knockout_matches = build_knockout_tree(
-            knockout_first_round_pairs, has_third_place=True, group_index=None
+            knockout_first_round_pairs,
+            has_third_place=has_third_place,
+            group_index=None,
         )
 
         # Os índices de next_match_index calculados em build_knockout_tree são

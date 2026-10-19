@@ -62,10 +62,13 @@ def suggest_configuration(modality_format: ModalityFormat, team_count: int) -> d
     """Gera a configuração sugerida (UC011, fluxo principal passo 7) para o
     formato escolhido, sem persistir nada."""
     if modality_format == ModalityFormat.KNOCKOUT:
-        return {}
+        return {"has_third_place": True}
 
     if modality_format == ModalityFormat.GROUP_STAGE_KNOCKOUT:
-        return _suggest_group_stage_knockout(team_count)
+        return {
+            **_suggest_group_stage_knockout(team_count),
+            "has_third_place": True,
+        }
 
     if modality_format == ModalityFormat.ROUND_ROBIN:
         return {"rounds": 1}
@@ -83,6 +86,12 @@ def resolve_configuration(
     configuração) com os defaults sugeridos, e valida consistência."""
     suggested = suggest_configuration(modality_format, team_count)
     resolved = {**suggested, **(configuration or {})}
+
+    if modality_format in (
+        ModalityFormat.KNOCKOUT,
+        ModalityFormat.GROUP_STAGE_KNOCKOUT,
+    ):
+        resolved["has_third_place"] = bool(resolved.get("has_third_place", True))
 
     if modality_format == ModalityFormat.GROUP_STAGE_KNOCKOUT:
         num_groups = resolved.get("num_groups")
