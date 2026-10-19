@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from core.storage.file_storage_port import FileStoragePort
+from domain.enums.event_type import EventType
 from domain.match.match import Match
 from domain.match.match_event import MatchEvent
 from domain.match.match_set import MatchSet
@@ -18,12 +20,16 @@ from web.models.response.match.match_list_response import (
     MatchListResponse,
 )
 from web.models.response.match.match_management_response import (
+    MatchCardSummaryResponse,
     MatchManagementResponse,
     MatchModalityConfigurationResponse,
+    MatchPenaltyShootoutKickResponse,
+    MatchPenaltyShootoutResponse,
     MatchPlayerResponse,
     MatchSetResponse,
     MatchTeamResponse,
     MatchTimelineEventResponse,
+    MatchTopScorerResponse,
 )
 
 
@@ -156,6 +162,76 @@ class MatchModelMapper:
             for event in events
         ]
 
+    def _chronological(self, events: List[MatchEvent]) -> List[MatchEvent]:
+        return sorted(
+            events,
+            key=lambda event: (
+                event.clock_seconds if event.clock_seconds is not None else 0,
+                event.created_at or datetime.min,
+            ),
+        )
+
+    def _to_top_scorers(
+        self,
+        events: List[MatchEvent],
+        players_by_user_id: Dict[UUID, User],
+    ) -> List[MatchTopScorerResponse]:
+        goals_by_player: Dict[UUID, int] = {}
+        team_by_player: Dict[UUID, Optional[UUID]] = {}
+
+        for event in self._chronological(events):
+            if event.event_type != EventType.GOAL or event.player_id is None:
+                continue
+            goals_by_player[event.player_id] = goals_by_player.get(event.player_id, 0) + 1
+            team_by_player.setdefault(event.player_id, event.team_id)
+
+        ordered_player_ids = sorted(
+            goals_by_player.keys(), key=lambda player_id: goals_by_player[player_id], reverse=True
+        )
+
+        top_scorers: List[MatchTopScorerResponse] = []
+        for player_id in ordered_player_ids:
+            user = players_by_user_id.get(player_id)
+            if user is None:
+                continue
+            top_scorers.append(
+                MatchTopScorerResponse(
+                    player_id=player_id,
+                    name=user.name,
+                    team_id=team_by_player.get(player_id),
+                    goals=goals_by_player[player_id],
+                )
+            )
+        return top_scorers
+
+    def _to_card_summary(self, events: List[MatchEvent]) -> MatchCardSummaryResponse:
+        yellow = sum(1 for event in events if event.event_type == EventType.CARD_YELLOW)
+        red = sum(1 for event in events if event.event_type == EventType.CARD_RED)
+        return MatchCardSummaryResponse(yellow=yellow, red=red)
+
+    def _to_penalty_shootout(
+        self,
+        events: List[MatchEvent],
+        team1_id: Optional[UUID],
+        team2_id: Optional[UUID],
+    ) -> Optional[MatchPenaltyShootoutResponse]:
+        kick_types = (EventType.PENALTY_GOAL, EventType.PENALTY_MISS)
+        kicks = [event for event in self._chronological(events) if event.event_type in kick_types]
+        if not kicks:
+            return None
+
+        team1_kicks: List[MatchPenaltyShootoutKickResponse] = []
+        team2_kicks: List[MatchPenaltyShootoutKickResponse] = []
+        for event in kicks:
+            result = "GOAL" if event.event_type == EventType.PENALTY_GOAL else "MISS"
+            kick = MatchPenaltyShootoutKickResponse(player_id=event.player_id, result=result)
+            if event.team_id == team1_id:
+                team1_kicks.append(kick)
+            elif event.team_id == team2_id:
+                team2_kicks.append(kick)
+
+        return MatchPenaltyShootoutResponse(team1=team1_kicks, team2=team2_kicks)
+
     def _to_sets_response(
         self, match_sets: List[MatchSet]
     ) -> List[MatchSetResponse]:
@@ -187,6 +263,10 @@ class MatchModelMapper:
     ) -> MatchManagementResponse:
         match_sets = match_sets or []
 
+        players_by_user_id: Dict[UUID, User] = {
+            user.id: user for _, user in [*team1_players, *team2_players]
+        }
+
         return MatchManagementResponse(
             match_id=match.id,
             bracket_id=match.bracket_id,
@@ -217,6 +297,11 @@ class MatchModelMapper:
                 modality_configuration, volleyball_configuration
             ),
             timeline=self._to_timeline_response(timeline_events),
+            top_scorers=self._to_top_scorers(timeline_events, players_by_user_id),
+            card_summary=self._to_card_summary(timeline_events),
+            penalty_shootout=self._to_penalty_shootout(
+                timeline_events, match.team1_id, match.team2_id
+            ),
             sets=self._to_sets_response(match_sets),
             metadata=match.metadata_json,
             match_point_reached=match_point_reached,
