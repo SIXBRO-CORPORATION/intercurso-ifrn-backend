@@ -44,6 +44,12 @@ class TeamRepositoryPort(BaseRepositoryPort[Team]):
         pass
 
     @abstractmethod
+    async def exists_by_name_season_and_modality(
+        self, name: str, season_id: UUID, modality_id: UUID
+    ) -> bool:
+        pass
+
+    @abstractmethod
     async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
         pass
 

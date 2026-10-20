@@ -96,7 +96,6 @@ async def list_brackets_by_season(
         ListBracketsBySeasonPort, Depends(get_list_brackets_by_season_port)
     ],
     mapper: Annotated[BracketModelMapper, Depends(get_bracket_model_mapper)],
-    current_user: User = Depends(require_monitor),
 ):
     context = Context()
     context.put_property("season_id", season_id)
@@ -127,7 +126,6 @@ async def get_bracket_details(
     bracket_id: UUID,
     details_port: Annotated[GetBracketDetailsPort, Depends(get_bracket_details_port)],
     mapper: Annotated[BracketModelMapper, Depends(get_bracket_model_mapper)],
-    current_user: User = Depends(require_monitor),
 ):
     context = Context()
     context.put_property("bracket_id", bracket_id)
@@ -141,6 +139,7 @@ async def get_bracket_details(
         groups=context.get_property("bracket_groups", list) or [],
         matches=context.get_property("bracket_matches", list) or [],
         team_names=context.get_property("team_names", dict) or {},
+        round_info=context.get_property("round_info", dict) or {},
     )
 
     return ApiResponse(data=response_data)
@@ -157,7 +156,6 @@ async def list_bracket_matches(
         ListBracketMatchesPort, Depends(get_list_bracket_matches_port)
     ],
     mapper: Annotated[BracketModelMapper, Depends(get_bracket_model_mapper)],
-    current_user: User = Depends(require_monitor),
 ):
     context = Context()
     context.put_property("bracket_id", bracket_id)
@@ -166,9 +164,10 @@ async def list_bracket_matches(
 
     team_names = context.get_property("team_names", dict) or {}
     group_names = context.get_property("group_names", dict) or {}
+    round_info = context.get_property("round_info", dict) or {}
 
     response_data = [
-        mapper.to_bracket_match_response(match, team_names, group_names)
+        mapper.to_bracket_match_response(match, team_names, group_names, round_info)
         for match in matches
     ]
 

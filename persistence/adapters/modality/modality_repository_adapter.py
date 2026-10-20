@@ -84,7 +84,6 @@ class ModalityRepositoryAdapter(ModalityRepositoryPort):
             .where(
                 SeasonModalityEntity.season_id == season_id,
                 SeasonModalityEntity.deleted_at.is_(None),
-                ModalityEntity.active.is_(True),
                 ModalityEntity.deleted_at.is_(None),
             )
             .order_by(ModalityEntity.name)

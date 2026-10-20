@@ -34,5 +34,13 @@ class BracketGroupResponse(BaseModel):
 class BracketDetailResponse(BracketSummaryResponse):
 
     configuration: Dict[str, Any] = Field(default_factory=dict)
+    classified_per_group: Optional[int] = Field(
+        default=None,
+        description=(
+            "Número de times classificados por grupo para o mata-mata. "
+            "Campo tipado equivalente a configuration['classified_per_group'] "
+            "(ver docs/qa/a03-chaves.md, Fase 2, achado #2)."
+        ),
+    )
     groups: List[BracketGroupResponse] = Field(default_factory=list)
     matches: List[BracketMatchResponse] = Field(default_factory=list)

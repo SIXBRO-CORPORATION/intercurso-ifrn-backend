@@ -126,8 +126,15 @@ class CreateTeamAdapter(CreateTeamPort):
                 "Você já participa de um time nessa modalidade na temporada ativa"
             )
 
-        # Upload só depois de todas as validações de negócio: não sobra objeto
-        # órfão no bucket quando o cadastro é recusado.
+        name_already_used = await self.team_repository.exists_by_name_season_and_modality(
+            team.name, active_season.id, team.modality_id
+        )
+        if name_already_used:
+            raise BusinessException(
+                "Já existe uma equipe com este nome nesta modalidade, "
+                "nesta temporada. Escolha outro nome."
+            )
+
         photo_key = None
         if photo_type is not None:
             content_type, ext = photo_type

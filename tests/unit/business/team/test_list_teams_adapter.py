@@ -213,14 +213,17 @@ class TestListTeamsAdapter:
         assert info[team_a.id] == {
             "modality_name": "Futsal",
             "owner_name": "Dono",
+            "max_members": 10,
             "members_count": 6,
             "donations_confirmed": 5,
             "donations_total": 6,
         }
         assert info[team_b.id]["donations_confirmed"] == 5
+        assert info[team_b.id]["max_members"] == 10
         assert info[team_c.id] == {
             "modality_name": None,
             "owner_name": None,
+            "max_members": None,
             "members_count": 0,
             "donations_confirmed": 0,
             "donations_total": 0,

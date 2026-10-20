@@ -92,6 +92,10 @@ class ListTeamsAdapter(ListTeamsPort):
         modality_names = {modality.id: modality.name for modality in modalities}
         owner_names = {owner.id: owner.name for owner in owners}
 
+        modality_max_members = {
+            modality.id: modality.max_members for modality in modalities
+        }
+
         extra_info: Dict[UUID, dict] = {}
         for team in teams:
             members_count = members_count_by_team.get(team.id, 0)
@@ -99,6 +103,7 @@ class ListTeamsAdapter(ListTeamsPort):
             extra_info[team.id] = {
                 "modality_name": modality_names.get(team.modality_id),
                 "owner_name": owner_names.get(team.owner_id) if team.owner_id else None,
+                "max_members": modality_max_members.get(team.modality_id),
                 "members_count": members_count,
                 "donations_confirmed": members_count - pending_donations,
                 "donations_total": members_count,

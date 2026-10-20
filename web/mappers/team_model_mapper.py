@@ -108,6 +108,8 @@ class TeamModelMapper:
             status=team.status.value,
             owner_id=team.owner_id,
             owner_name=extra_info.get("owner_name"),
+            captain_id=team.captain_id,
+            max_members=extra_info.get("max_members"),
             members_count=extra_info.get("members_count", 0),
             donations_confirmed=extra_info.get("donations_confirmed", 0),
             donations_total=extra_info.get("donations_total", 0),

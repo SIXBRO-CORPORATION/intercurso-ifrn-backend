@@ -75,7 +75,7 @@ router = APIRouter(prefix="/api/team", tags=["team"])
 )
 async def create_team(
     name: Annotated[
-        str, Form(), StringConstraints(strip_whitespace=True, min_length=3, max_length=255)
+        str, Form(), StringConstraints(strip_whitespace=True, min_length=3, max_length=60)
     ],
     modality_id: Annotated[UUID, Form()],
     create_team_port: Annotated[CreateTeamPort, Depends(get_create_team_port)],
