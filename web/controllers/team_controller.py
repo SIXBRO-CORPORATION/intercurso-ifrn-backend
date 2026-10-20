@@ -21,6 +21,7 @@ from core.business.team.select_captain_port import SelectCaptainPort
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.context import Context
 from domain.enums.team_status import TeamStatus
+from domain.match.match import Match
 from domain.modality.modality import Modality
 from domain.team.team import Team
 from domain.enums.user_role import UserRole
@@ -152,6 +153,12 @@ async def get_team_details(
     member_users_by_id = context.get_property("member_users_by_id", dict) or {}
     owner_user = context.get_property("owner_user", User)
     captain_user = context.get_property("captain_user", User)
+    can_submit = context.get_property("can_submit", bool) or False
+    submit_blocked_reason = context.get_property("submit_blocked_reason", str)
+    next_match = context.get_property("next_match", Match)
+    next_match_group_name = context.get_property("next_match_group_name", str)
+    next_match_team1 = context.get_property("next_match_team1", Team)
+    next_match_team2 = context.get_property("next_match_team2", Team)
 
     can_see_invite = current_user.id == team.owner_id or current_user.role in (
         UserRole.MONITOR,
@@ -166,6 +173,12 @@ async def get_team_details(
         owner_user,
         captain_user,
         invite_token=team.invite_token if can_see_invite else None,
+        can_submit=can_submit,
+        submit_blocked_reason=submit_blocked_reason,
+        next_match=next_match,
+        next_match_group_name=next_match_group_name,
+        next_match_team1=next_match_team1,
+        next_match_team2=next_match_team2,
     )
 
     return ApiResponse(data=response_data)

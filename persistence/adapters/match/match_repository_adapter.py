@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 from uuid import UUID
 
-from sqlalchemy import func, select, update, or_
+from sqlalchemy import case, func, select, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -98,6 +98,29 @@ class MatchRepositoryAdapter(MatchRepositoryPort):
         result = await self.session.execute(query)
         entities = result.scalars().all()
         return [self.mapper.to_domain(entity) for entity in entities]
+
+    async def find_next_match_by_team(self, team_id: UUID) -> Optional[Match]:
+        status_priority = case(
+            (MatchEntity.status == MatchStatus.IN_PROGRESS.value, 0),
+            else_=1,
+        )
+        query = (
+            select(MatchEntity)
+            .where(
+                or_(
+                    MatchEntity.team1_id == team_id,
+                    MatchEntity.team2_id == team_id,
+                ),
+                MatchEntity.status != MatchStatus.FINISHED.value,
+                MatchEntity.is_bye.is_(False),
+                MatchEntity.deleted_at.is_(None),
+            )
+            .order_by(status_priority, MatchEntity.scheduled_date.asc().nulls_last())
+            .limit(1)
+        )
+        result = await self.session.execute(query)
+        entity = result.scalar_one_or_none()
+        return self.mapper.to_domain(entity) if entity else None
 
     async def find_by_status(self, status: MatchStatus) -> List[Match]:
         query = (

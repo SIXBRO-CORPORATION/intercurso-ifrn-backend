@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -11,3 +12,6 @@ class TeamMemberResponse(BaseModel):
     role: str = Field()
     donation_status: str = Field()
     gender: Optional[str] = Field(default=None, description="M ou F (SUAP)")
+    joined_at: Optional[datetime] = Field(
+        default=None, description="Data em que o membro entrou no time"
+    )

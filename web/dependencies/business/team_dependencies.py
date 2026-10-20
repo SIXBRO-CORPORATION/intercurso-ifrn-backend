@@ -24,6 +24,10 @@ from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.bracket.bracket_group_repository_port import (
+    BracketGroupRepositoryPort,
+)
 from business.team.create_team_adapter import CreateTeamAdapter
 from business.team.approve_team_adapter import ApproveTeamAdapter
 from business.team.confirm_donation_adapter import ConfirmDonationAdapter
@@ -48,6 +52,8 @@ from web.dependencies.persistence_dependencies import (
     get_season_repository,
     get_season_modality_repository,
     get_modality_repository,
+    get_match_repository,
+    get_bracket_group_repository,
 )
 
 
@@ -235,12 +241,20 @@ def get_team_details_port(
     modality_repository: Annotated[
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
+    season_repository: Annotated[SeasonRepositoryPort, Depends(get_season_repository)],
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    bracket_group_repository: Annotated[
+        BracketGroupRepositoryPort, Depends(get_bracket_group_repository)
+    ],
 ) -> GetTeamDetailsPort:
     return GetTeamDetailsAdapter(
         team_repository,
         team_member_repository,
         user_repository,
         modality_repository,
+        season_repository,
+        match_repository,
+        bracket_group_repository,
     )
 
 
