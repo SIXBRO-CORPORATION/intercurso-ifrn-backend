@@ -8,6 +8,7 @@ from business.team.delete_team_adapter import DeleteTeamAdapter
 from business.team.list_teams_adapter import ListTeamsAdapter
 from business.team.regenerate_invite_adapter import RegenerateInviteAdapter
 from business.team.reject_team_adapter import RejectTeamAdapter
+from business.team.return_team_to_draft_adapter import ReturnTeamToDraftAdapter
 from core.context import Context
 from domain.enums.audit_action import AuditAction
 from domain.enums.team_status import TeamStatus
@@ -91,7 +92,7 @@ class TestDeleteTeamAdapter:
 
 @pytest.mark.unit
 class TestRejectTeamAdapter:
-    async def test_reject_returns_team_to_draft_with_reason(self):
+    async def test_reject_sets_status_to_rejected_with_reason(self):
         team_repository, audit = AsyncMock(), AsyncMock()
         monitor_id = uuid4()
         team = Team(
@@ -107,12 +108,14 @@ class TestRejectTeamAdapter:
             team_id=team.id, rejection_reason="  Falta foto  ", rejected_by_user_id=monitor_id,
         ))
 
-        assert result.status == TeamStatus.DRAFT
+        assert result.status == TeamStatus.REJECTED
         assert result.rejection_reason == "Falta foto"
         assert result.rejected_by == monitor_id
         assert result.rejected_at is not None
-        assert result.token_active is True
-        assert result.submmited_at is None
+        # Rejeição não deve mais alterar convite/submissão: isso é responsabilidade
+        # do fluxo explícito de "voltar para rascunho".
+        assert result.token_active is False
+        assert result.submmited_at is not None
         assert audit.log.await_args.kwargs["action"] == AuditAction.TEAM_REJECTED
 
     async def test_blocks_empty_reason(self):
@@ -132,6 +135,50 @@ class TestRejectTeamAdapter:
             await adapter.execute(make_context(
                 team_id=team.id, rejection_reason="motivo", rejected_by_user_id=uuid4(),
             ))
+
+        team_repository.save.assert_not_awaited()
+
+
+@pytest.mark.unit
+class TestReturnTeamToDraftAdapter:
+    async def test_owner_returns_rejected_team_to_draft(self):
+        team_repository, audit = AsyncMock(), AsyncMock()
+        owner_id = uuid4()
+        team = Team(
+            id=uuid4(), name="Turma A", owner_id=owner_id,
+            status=TeamStatus.REJECTED, token_active=False,
+            rejection_reason="Falta foto", rejected_by=uuid4(), rejected_at=datetime.now(),
+        )
+        team_repository.get.return_value = team
+        team_repository.save.side_effect = lambda t: t
+
+        adapter = ReturnTeamToDraftAdapter(team_repository, audit)
+        result = await adapter.execute(make_context(team_id=team.id, requesting_user_id=owner_id))
+
+        assert result.status == TeamStatus.DRAFT
+        assert result.token_active is True
+        assert audit.log.await_args.kwargs["action"] == AuditAction.TEAM_RETURNED_TO_DRAFT
+
+    async def test_blocks_non_owner(self):
+        team_repository = AsyncMock()
+        team = Team(id=uuid4(), owner_id=uuid4(), status=TeamStatus.REJECTED)
+        team_repository.get.return_value = team
+
+        adapter = ReturnTeamToDraftAdapter(team_repository, AsyncMock())
+        with pytest.raises(BusinessException):
+            await adapter.execute(make_context(team_id=team.id, requesting_user_id=uuid4()))
+
+        team_repository.save.assert_not_awaited()
+
+    async def test_blocks_when_not_rejected(self):
+        team_repository = AsyncMock()
+        owner_id = uuid4()
+        team = Team(id=uuid4(), owner_id=owner_id, status=TeamStatus.DRAFT)
+        team_repository.get.return_value = team
+
+        adapter = ReturnTeamToDraftAdapter(team_repository, AsyncMock())
+        with pytest.raises(BusinessException):
+            await adapter.execute(make_context(team_id=team.id, requesting_user_id=owner_id))
 
         team_repository.save.assert_not_awaited()
 

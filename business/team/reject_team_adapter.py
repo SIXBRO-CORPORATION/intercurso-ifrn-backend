@@ -38,18 +38,16 @@ class RejectTeamAdapter(RejectTeamPort):
                 "Somente times submetidos para aprovação podem ser rejeitados"
             )
 
-        team.status = TeamStatus.DRAFT
+        team.status = TeamStatus.REJECTED
         team.rejected_at = datetime.now()
         team.rejected_by = rejected_by_user_id
         team.rejection_reason = reason
-        team.token_active = True
-        team.submmited_at = None
 
         saved_team = await self.team_repository.save(team)
 
         await self.audit_logger.log(
             action=AuditAction.TEAM_REJECTED,
-            description=f"Time '{saved_team.name}' rejeitado e devolvido para rascunho",
+            description=f"Time '{saved_team.name}' rejeitado",
             actor_id=rejected_by_user_id,
         )
 

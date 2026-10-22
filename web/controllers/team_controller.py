@@ -10,6 +10,7 @@ from core.business.team.confirm_donation_port import ConfirmDonationPort
 from core.business.team.delete_team_port import DeleteTeamPort
 from core.business.team.regenerate_invite_port import RegenerateInvitePort
 from core.business.team.reject_team_port import RejectTeamPort
+from core.business.team.return_team_to_draft_port import ReturnTeamToDraftPort
 from core.business.team.create_team_port import CreateTeamPort
 from core.business.team.get_team_details_port import GetTeamDetailsPort
 from core.business.team.get_team_invite_info_port import GetTeamInviteInfoPort
@@ -41,6 +42,7 @@ from web.models.response.team.team_summary_response import TeamSummaryResponse
 from web.dependencies.business.team_dependencies import (
     get_delete_team_port,
     get_reject_team_port,
+    get_return_team_to_draft_port,
     get_regenerate_invite_port,
 )
 from web.dependencies import (
@@ -476,7 +478,36 @@ async def reject_team(
                 else None
             ),
         },
-        message="Time rejeitado e devolvido para rascunho.",
+        message="Time rejeitado.",
+    )
+
+
+@router.patch(
+    "/{team_id}/return-to-draft",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def return_team_to_draft(
+    team_id: UUID,
+    return_team_to_draft_port: Annotated[
+        ReturnTeamToDraftPort, Depends(get_return_team_to_draft_port)
+    ],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("requesting_user_id", current_user.id)
+
+    team = await return_team_to_draft_port.execute(context)
+
+    return ApiResponse.success(
+        data={
+            "team_id": str(team.id),
+            "name": team.name,
+            "status": team.status.value,
+            "token_active": team.token_active,
+        },
+        message="Time devolvido para rascunho. Faça os ajustes necessários e submeta novamente.",
     )
 
 

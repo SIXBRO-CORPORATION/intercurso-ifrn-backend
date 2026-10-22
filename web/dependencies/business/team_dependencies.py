@@ -15,6 +15,7 @@ from core.business.team.leave_team_port import LeaveTeamPort
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.business.team.delete_team_port import DeleteTeamPort
 from core.business.team.reject_team_port import RejectTeamPort
+from core.business.team.return_team_to_draft_port import ReturnTeamToDraftPort
 from core.business.team.regenerate_invite_port import RegenerateInvitePort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
@@ -41,6 +42,7 @@ from business.team.leave_team_adapter import LeaveTeamAdapter
 from business.team.submit_team_adapter import SubmitTeamAdapter
 from business.team.delete_team_adapter import DeleteTeamAdapter
 from business.team.reject_team_adapter import RejectTeamAdapter
+from business.team.return_team_to_draft_adapter import ReturnTeamToDraftAdapter
 from business.team.regenerate_invite_adapter import RegenerateInviteAdapter
 from core.storage.file_storage_port import FileStoragePort
 from web.dependencies.business.storage_dependencies import get_file_storage
@@ -276,6 +278,13 @@ def get_reject_team_port(
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> RejectTeamPort:
     return RejectTeamAdapter(team_repository, audit_logger)
+
+
+def get_return_team_to_draft_port(
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> ReturnTeamToDraftPort:
+    return ReturnTeamToDraftAdapter(team_repository, audit_logger)
 
 
 def get_regenerate_invite_port(
