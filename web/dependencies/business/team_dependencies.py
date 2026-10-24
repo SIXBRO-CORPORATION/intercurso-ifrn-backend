@@ -93,10 +93,17 @@ def get_approve_team_port(
         TeamMemberRepositoryPort, Depends(get_team_member_repository)
     ],
     user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> ApproveTeamPort:
     return ApproveTeamAdapter(
-        team_repository, team_member_repository, user_repository, audit_logger
+        team_repository,
+        team_member_repository,
+        user_repository,
+        modality_repository,
+        audit_logger,
     )
 
 

@@ -57,18 +57,21 @@ class ListTeamsAdapter(ListTeamsPort):
     async def _find_teams_for_monitor(
         self, status_filter, season_id_filter
     ) -> List[Team]:
+        if status_filter == TeamStatus.DRAFT:
+            return []
+
         if status_filter is not None and season_id_filter is not None:
-            return await self.team_repository.find_by_status_and_season_id(
+            teams = await self.team_repository.find_by_status_and_season_id(
                 status_filter, season_id_filter
             )
+        elif status_filter is not None:
+            teams = await self.team_repository.find_teams_by_status(status_filter)
+        elif season_id_filter is not None:
+            teams = await self.team_repository.find_by_season_id(season_id_filter)
+        else:
+            teams = await self.team_repository.find_all()
 
-        if status_filter is not None:
-            return await self.team_repository.find_teams_by_status(status_filter)
-
-        if season_id_filter is not None:
-            return await self.team_repository.find_by_season_id(season_id_filter)
-
-        return await self.team_repository.find_all()
+        return [t for t in teams if t.status != TeamStatus.DRAFT]
 
     async def _build_extra_info_by_team(self, teams: List[Team]) -> Dict[UUID, dict]:
         if not teams:

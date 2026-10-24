@@ -158,6 +158,8 @@ class TeamModelMapper:
         invite_token: Optional[str] = None,
         can_submit: bool = False,
         submit_blocked_reason: Optional[str] = None,
+        can_approve: bool = False,
+        approve_blocked_reason: Optional[str] = None,
         next_match: Optional[Match] = None,
         next_match_group_name: Optional[str] = None,
         next_match_team1: Optional[Team] = None,
@@ -198,6 +200,8 @@ class TeamModelMapper:
             donations_total=donations_total,
             can_submit=can_submit,
             submit_blocked_reason=submit_blocked_reason,
+            can_approve=can_approve,
+            approve_blocked_reason=approve_blocked_reason,
             next_match=self._to_next_match_response(
                 next_match, next_match_group_name, next_match_team1, next_match_team2
             ),

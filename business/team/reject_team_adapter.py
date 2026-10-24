@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from core.business.audit.audit_logger import AuditLogger
@@ -39,7 +39,7 @@ class RejectTeamAdapter(RejectTeamPort):
             )
 
         team.status = TeamStatus.REJECTED
-        team.rejected_at = datetime.now()
+        team.rejected_at = datetime.now(timezone.utc)
         team.rejected_by = rejected_by_user_id
         team.rejection_reason = reason
 

@@ -50,4 +50,16 @@ class TeamDetailsResponse(BaseModel):
         default=None,
         description="Motivo pelo qual can_submit é falso, só quando o time está em DRAFT",
     )
+    can_approve: bool = Field(
+        default=False,
+        description=(
+            "Reflete a mesma regra de elegibilidade usada em PATCH /team/{id}/approve "
+            "(membros, doações confirmadas, frequência mínima e cota de gênero), para o "
+            "front não precisar replicá-la nem ficar desatualizado em relação a ela."
+        ),
+    )
+    approve_blocked_reason: Optional[str] = Field(
+        default=None,
+        description="Motivo pelo qual can_approve é falso, só quando o time está em SUBMITTED",
+    )
     next_match: Optional[TeamNextMatchResponse] = Field(default=None)

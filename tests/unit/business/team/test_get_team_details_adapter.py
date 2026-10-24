@@ -92,7 +92,13 @@ class TestGetTeamDetailsAdapter:
             *_rest,
         ) = make_adapter()
         owner_id = uuid4()
-        team = Team(id=uuid4(), name="Time A", modality_id=uuid4(), owner_id=owner_id)
+        team = Team(
+            id=uuid4(),
+            name="Time A",
+            modality_id=uuid4(),
+            owner_id=owner_id,
+            status=TeamStatus.SUBMITTED,
+        )
         team_repository.get.return_value = team
         team_member_repository.find_members_by_team_id.return_value = []
         user_repository.find_by_ids.return_value = []
@@ -106,6 +112,20 @@ class TestGetTeamDetailsAdapter:
 
         assert result is team
         team_member_repository.exists_by_team_and_user.assert_not_called()
+
+    async def test_monitor_cannot_view_draft_team(self):
+        (
+            adapter,
+            team_repository,
+            *_rest,
+        ) = make_adapter()
+        team = Team(id=uuid4(), name="Time A", status=TeamStatus.DRAFT)
+        team_repository.get.return_value = team
+
+        context = make_context(team.id, requesting_user_role=UserRole.MONITOR)
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
 
     async def test_member_can_view_own_team(self):
         (

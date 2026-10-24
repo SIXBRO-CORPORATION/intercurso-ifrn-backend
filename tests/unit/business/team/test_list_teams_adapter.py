@@ -150,7 +150,13 @@ class TestListTeamsAdapter:
             modality_repository,
         ) = make_adapter()
         season_id = uuid4()
-        team = Team(id=uuid4(), name="Time A", modality_id=uuid4(), season_id=season_id)
+        team = Team(
+            id=uuid4(),
+            name="Time A",
+            modality_id=uuid4(),
+            season_id=season_id,
+            status=TeamStatus.SUBMITTED,
+        )
         team_repository.find_by_status_and_season_id.return_value = [team]
         setup_extra_info_mocks(
             modality_repository, user_repository, team_member_repository, teams=[team]
@@ -170,6 +176,42 @@ class TestListTeamsAdapter:
         team_repository.find_by_season_id.assert_not_called()
         team_repository.find_all.assert_not_called()
 
+    async def test_monitor_never_sees_draft_teams(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            modality_repository,
+        ) = make_adapter()
+        draft = Team(id=uuid4(), name="Rascunho", status=TeamStatus.DRAFT)
+        submitted = Team(id=uuid4(), name="Pendente", status=TeamStatus.SUBMITTED)
+        team_repository.find_all.return_value = [draft, submitted]
+        setup_extra_info_mocks(
+            modality_repository, user_repository, team_member_repository, teams=[submitted]
+        )
+
+        context = make_context(requesting_user_role=UserRole.MONITOR)
+        result = await adapter.execute(context)
+
+        assert result == [submitted]
+
+    async def test_monitor_requesting_draft_status_gets_empty_list(self):
+        (
+            adapter,
+            team_repository,
+            *_rest,
+        ) = make_adapter()
+
+        context = make_context(requesting_user_role=UserRole.MONITOR)
+        context.put_property("status", TeamStatus.DRAFT)
+
+        result = await adapter.execute(context)
+
+        assert result == []
+        team_repository.find_teams_by_status.assert_not_called()
+        team_repository.find_all.assert_not_called()
+
     async def test_extra_info_is_loaded_in_batch_for_all_teams(self):
         (
             adapter,
@@ -180,9 +222,18 @@ class TestListTeamsAdapter:
         ) = make_adapter()
         modality_id = uuid4()
         owner_id = uuid4()
-        team_a = Team(id=uuid4(), name="A", modality_id=modality_id, owner_id=owner_id)
-        team_b = Team(id=uuid4(), name="B", modality_id=modality_id, owner_id=owner_id)
-        team_c = Team(id=uuid4(), name="C", modality_id=uuid4(), owner_id=None)
+        team_a = Team(
+            id=uuid4(), name="A", modality_id=modality_id, owner_id=owner_id,
+            status=TeamStatus.SUBMITTED,
+        )
+        team_b = Team(
+            id=uuid4(), name="B", modality_id=modality_id, owner_id=owner_id,
+            status=TeamStatus.APPROVED,
+        )
+        team_c = Team(
+            id=uuid4(), name="C", modality_id=uuid4(), owner_id=None,
+            status=TeamStatus.REJECTED,
+        )
         team_repository.find_all.return_value = [team_a, team_b, team_c]
         modality_repository.find_by_ids.return_value = [
             Modality(id=modality_id, name="Futsal", min_members=5, max_members=10)

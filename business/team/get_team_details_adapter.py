@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from business.team._shared import evaluate_submit_eligibility
+from business.team._shared import evaluate_approve_eligibility, evaluate_submit_eligibility
 from core.business.team.get_team_details_port import GetTeamDetailsPort
 from core.context import Context
 from core.persistence.bracket.bracket_group_repository_port import (
@@ -55,6 +55,9 @@ class GetTeamDetailsAdapter(GetTeamDetailsPort):
         requesting_role = context.get_property("requesting_user_role", UserRole)
         is_monitor_operation = requesting_role in (UserRole.MONITOR, UserRole.ADMIN)
 
+        if is_monitor_operation and team.status == TeamStatus.DRAFT:
+            raise BusinessException("Você não tem permissão para visualizar este time")
+
         if not is_monitor_operation:
             is_member = await self.team_member_repository.exists_by_team_and_user(
                 team_id, requesting_user_id
@@ -98,6 +101,13 @@ class GetTeamDetailsAdapter(GetTeamDetailsPort):
                 datetime.now(timezone.utc),
             )
 
+        can_approve = False
+        approve_blocked_reason = None
+        if team.status == TeamStatus.SUBMITTED:
+            can_approve, approve_blocked_reason = evaluate_approve_eligibility(
+                team, members, modality, member_users
+            )
+
         next_match = None
         next_match_group_name = None
         next_match_team1 = None
@@ -133,6 +143,8 @@ class GetTeamDetailsAdapter(GetTeamDetailsPort):
         context.put_property("captain_user", captain_user)
         context.put_property("can_submit", can_submit)
         context.put_property("submit_blocked_reason", submit_blocked_reason)
+        context.put_property("can_approve", can_approve)
+        context.put_property("approve_blocked_reason", approve_blocked_reason)
         context.put_property("next_match", next_match)
         context.put_property("next_match_group_name", next_match_group_name)
         context.put_property("next_match_team1", next_match_team1)

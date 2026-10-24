@@ -157,6 +157,8 @@ async def get_team_details(
     captain_user = context.get_property("captain_user", User)
     can_submit = context.get_property("can_submit", bool) or False
     submit_blocked_reason = context.get_property("submit_blocked_reason", str)
+    can_approve = context.get_property("can_approve", bool) or False
+    approve_blocked_reason = context.get_property("approve_blocked_reason", str)
     next_match = context.get_property("next_match", Match)
     next_match_group_name = context.get_property("next_match_group_name", str)
     next_match_team1 = context.get_property("next_match_team1", Team)
@@ -177,6 +179,8 @@ async def get_team_details(
         invite_token=team.invite_token if can_see_invite else None,
         can_submit=can_submit,
         submit_blocked_reason=submit_blocked_reason,
+        can_approve=can_approve,
+        approve_blocked_reason=approve_blocked_reason,
         next_match=next_match,
         next_match_group_name=next_match_group_name,
         next_match_team1=next_match_team1,
