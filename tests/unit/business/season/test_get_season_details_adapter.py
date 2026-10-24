@@ -15,10 +15,21 @@ def make_adapter():
     season_repository = AsyncMock()
     season_modality_repository = AsyncMock()
     team_repository = AsyncMock()
+    match_repository = AsyncMock()
+    match_repository.find_unfinished_by_season.return_value = []
     adapter = GetSeasonDetailsAdapter(
-        season_repository, season_modality_repository, team_repository
+        season_repository,
+        season_modality_repository,
+        team_repository,
+        match_repository,
     )
-    return adapter, season_repository, season_modality_repository, team_repository
+    return (
+        adapter,
+        season_repository,
+        season_modality_repository,
+        team_repository,
+        match_repository,
+    )
 
 
 def make_context(season_id=None):
@@ -30,9 +41,13 @@ def make_context(season_id=None):
 @pytest.mark.unit
 class TestGetSeasonDetailsAdapter:
     async def test_returns_season_with_modalities_and_stats(self):
-        adapter, season_repository, season_modality_repository, team_repository = (
-            make_adapter()
-        )
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            team_repository,
+            _match_repository,
+        ) = make_adapter()
         season = Season(id=uuid4(), name="Intercurso 2026", status=SeasonStatus.DRAFT)
         season_repository.get.return_value = season
         season_modality_repository.find_by_season.return_value = [
@@ -56,6 +71,82 @@ class TestGetSeasonDetailsAdapter:
             "edit_registration_dates",
             "postpone_opening",
         ]
+
+    async def test_includes_finish_season_when_in_progress_without_pending_matches(
+        self,
+    ):
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            team_repository,
+            match_repository,
+        ) = make_adapter()
+        season = Season(
+            id=uuid4(), name="Intercurso 2026", status=SeasonStatus.IN_PROGRESS
+        )
+        season_repository.get.return_value = season
+        season_modality_repository.find_by_season.return_value = []
+        team_repository.count_teams_summary_by_season.return_value = {
+            "total_teams_created": 0,
+            "total_teams_submitted": 0,
+            "total_teams_approved": 0,
+        }
+        match_repository.find_unfinished_by_season.return_value = []
+
+        context = make_context(season.id)
+        await adapter.execute(context)
+
+        match_repository.find_unfinished_by_season.assert_awaited_once_with(
+            season.id
+        )
+        assert context.get_property("available_actions", list) == ["finish_season"]
+
+    async def test_excludes_finish_season_when_in_progress_with_pending_matches(self):
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            team_repository,
+            match_repository,
+        ) = make_adapter()
+        season = Season(
+            id=uuid4(), name="Intercurso 2026", status=SeasonStatus.IN_PROGRESS
+        )
+        season_repository.get.return_value = season
+        season_modality_repository.find_by_season.return_value = []
+        team_repository.count_teams_summary_by_season.return_value = {
+            "total_teams_created": 0,
+            "total_teams_submitted": 0,
+            "total_teams_approved": 0,
+        }
+        match_repository.find_unfinished_by_season.return_value = [object()]
+
+        context = make_context(season.id)
+        await adapter.execute(context)
+
+        assert context.get_property("available_actions", list) == []
+
+    async def test_does_not_query_matches_outside_in_progress_status(self):
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            team_repository,
+            match_repository,
+        ) = make_adapter()
+        season = Season(id=uuid4(), name="Intercurso 2026", status=SeasonStatus.DRAFT)
+        season_repository.get.return_value = season
+        season_modality_repository.find_by_season.return_value = []
+        team_repository.count_teams_summary_by_season.return_value = {
+            "total_teams_created": 0,
+            "total_teams_submitted": 0,
+            "total_teams_approved": 0,
+        }
+
+        await adapter.execute(make_context(season.id))
+
+        match_repository.find_unfinished_by_season.assert_not_awaited()
 
     async def test_blocks_when_season_not_found(self):
         adapter, season_repository, *_ = make_adapter()
