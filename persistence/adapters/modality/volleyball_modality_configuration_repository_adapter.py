@@ -66,3 +66,18 @@ class VolleyballModalityConfigurationRepositoryAdapter(
         result = await self.session.execute(query)
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
+
+    async def find_by_modality_configuration_ids(
+        self, modality_configuration_ids: List[UUID]
+    ) -> List[VolleyballModalityConfiguration]:
+        if not modality_configuration_ids:
+            return []
+        query = select(VolleyballModalityConfigurationEntity).where(
+            VolleyballModalityConfigurationEntity.modality_configuration_id.in_(
+                modality_configuration_ids
+            ),
+            VolleyballModalityConfigurationEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(query)
+        entities = result.scalars().all()
+        return [self.mapper.to_domain(entity) for entity in entities]

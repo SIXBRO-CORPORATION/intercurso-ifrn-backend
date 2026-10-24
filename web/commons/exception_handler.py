@@ -36,6 +36,8 @@ def register_exception_handler(app: FastAPI) -> None:
         request: Request, exc: BusinessException
     ) -> JSONResponse:
         response = ApiResponse.failure(error=str(exc), code="BUSINESS_ERROR")
+        if exc.field:
+            response.data = {exc.field: str(exc)}
 
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,

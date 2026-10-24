@@ -75,7 +75,8 @@ class CreateModalityAdapter(CreateModalityPort):
             ):
                 raise BusinessException(
                     "A soma de min_male_members e min_female_members não "
-                    "pode ser maior que max_members"
+                    "pode ser maior que max_members",
+                    field="max_members",
                 )
             if (
                 modality.min_male_members + modality.min_female_members
@@ -84,7 +85,8 @@ class CreateModalityAdapter(CreateModalityPort):
                 raise BusinessException(
                     "min_members deve ser suficiente para cobrir a cota "
                     "mínima de cada gênero (min_male_members + "
-                    "min_female_members)"
+                    "min_female_members)",
+                    field="min_members",
                 )
         else:
             if modality.min_male_members is not None or modality.min_female_members is not None:
@@ -150,7 +152,7 @@ class CreateModalityAdapter(CreateModalityPort):
         )
         if existing_modality is not None:
             raise BusinessException(
-                "Já existe uma modalidade cadastrada com esse nome"
+                "Já existe uma modalidade cadastrada com esse nome", field="name"
             )
 
         new_modality = Modality(
