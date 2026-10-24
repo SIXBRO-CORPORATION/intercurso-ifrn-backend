@@ -157,6 +157,81 @@ uv run task run
 A API sobe em `http://localhost:8000`, com documentação interativa em `/docs` (Swagger) e
 `/redoc`.
 
+### Alternativa: rodar tudo via Docker (`docker-compose.dev.yml`)
+
+O `docker-compose.dev.yml` sobe o PostgreSQL e a API em containers, sem precisar instalar Python ou `uv`
+na máquina. As migrations rodam automaticamente na subida da API.
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.dev.yml logs -f api
+```
+
+A API sobe em `http://localhost:8000`. Para parar:
+
+```bash
+docker compose -f docker-compose.dev.yml down
+```
+
+Para parar e apagar também os dados do banco, use `down -v`.
+
+## Popular o banco com dados de teste (seed)
+
+A seed cria dados fictícios para testes locais: 2 temporadas (2026 ativa e 2025 finalizada), as
+modalidades Futsal, Vôlei, Basquete e Handebol, 4 times por modalidade na temporada ativa, jogadores fictícios, chaveamentos e partidas em vários estados
+(finalizadas, em andamento e agendadas). Ela roda separada da subida do ambiente e é segura para
+repetir: se os dados já existirem, nada é alterado.
+
+### Via Docker
+
+Com o ambiente de pé (`docker-compose.dev.yml`, ou o `docker-compose.yml` apenas com o banco):
+
+```bash
+docker compose -f docker-compose.dev.yml run --rm --build seed
+```
+
+Com o `docker-compose.yml`:
+
+```bash
+docker compose up -d
+docker compose run --rm --build seed
+```
+
+O serviço `seed` só roda quando chamado, não sobe com o `up`. O `--build` garante que a imagem
+contenha o código da seed. Ele também aplica as migrations antes de popular; na primeira subida,
+aguarde a API terminar de iniciar para evitar que as duas rodem as migrations ao mesmo tempo.
+
+### Sem Docker para a seed
+
+Com o PostgreSQL de pé e o `.env` apontando para ele:
+
+```bash
+uv run alembic upgrade head
+uv run python -m seeds.dev_seed
+```
+
+### Operar partidas com o seu usuário
+
+O login é feito apenas via SUAP, então os usuários fictícios não conseguem entrar. Para gerenciar
+partidas com a sua conta, faça login uma vez e rode a seed informando a sua matrícula:
+
+```bash
+SEED_ADMIN_MATRICULA=<sua matrícula> docker compose -f docker-compose.dev.yml run --rm seed
+```
+
+Isso promove o seu usuário a `ADMIN` e passa para ele a partida em andamento do futsal.
+
+### Recriar os dados do zero
+
+```bash
+docker compose -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml run --rm seed
+```
+
+O `-v` apaga o volume do PostgreSQL. A seed exige que não exista outra temporada ativa no banco.
+
 ## Tasks disponíveis (taskipy)
 
 ```bash
