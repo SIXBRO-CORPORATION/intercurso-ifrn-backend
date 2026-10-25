@@ -30,7 +30,6 @@ from web.dependencies import (
 )
 from web.mappers.user_model_mapper import UserModelMapper
 from web.models.request.auth.refresh_token_request import RefreshTokenRequest
-from web.models.request.auth.suap_exchange_request import SuapExchangeRequest
 from web.models.response.user.user_response import UserResponse
 
 logger = logging.getLogger(__name__)
@@ -101,82 +100,48 @@ async def auth_callback(
     oauth_state_cookie: Optional[str] = Cookie(None, alias=OAUTH_STATE_COOKIE_NAME),
     login_with_suap_port: LoginWithSuapPort = Depends(get_login_with_suap_port),
 ):
-    """Callback do SUAP para o MOBILE (redirect_uri aponta para o back)."""
-    if (
-        not is_valid_oauth_state(state, oauth_state_cookie)
-        or get_platform_from_state(state) != "mobile"
-    ):
+    if not is_valid_oauth_state(state, oauth_state_cookie):
         return _login_error_redirect("state_invalido")
+
+    platform = get_platform_from_state(state)
 
     context = Context()
     context.put_property("authorization_code", code)
-    context.put_property("redirect_uri", _redirect_uri("mobile"))
+    context.put_property("redirect_uri", _redirect_uri(platform))
 
     try:
         access_token = await login_with_suap_port.execute(context)
     except BusinessException as e:
         logger.warning("Falha no login via SUAP: %s", e)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        if platform == "mobile":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        return _login_error_redirect("login_falhou")
 
     refresh_token = context.get_property("refresh_token", str)
 
-    params = {"token": access_token.access_token}
-    if refresh_token:
-        params["refresh_token"] = refresh_token
+    if platform == "mobile":
+        params = {"token": access_token.access_token}
+        if refresh_token:
+            params["refresh_token"] = refresh_token
 
-    deep_link = (
-        f"{settings.mobile_deep_link_scheme}://{settings.mobile_deep_link_path}"
-        f"?{urlencode(params)}"
-    )
+        deep_link = (
+            f"{settings.mobile_deep_link_scheme}://{settings.mobile_deep_link_path}"
+            f"?{urlencode(params)}"
+        )
 
-    response = RedirectResponse(url=deep_link)
+        response = RedirectResponse(url=deep_link)
+        response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/auth")
+        return response
+
+    # Web: o access token NUNCA vai na URL (histórico, logs, Referer). O front
+    # recupera a sessão chamando POST /refresh, que usa o cookie definido abaixo.
+    response = RedirectResponse(url=f"{settings.frontend_url}/auth/callback")
     response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/auth")
-    return response
 
-
-@router.post("/suap/exchange")
-async def suap_exchange(
-    body: SuapExchangeRequest,
-    response: Response,
-    login_with_suap_port: LoginWithSuapPort = Depends(get_login_with_suap_port),
-):
-    """Login do WEB: o SUAP redireciona para o front, que repassa code+state para cá.
-
-    O cookie de state fica no domínio do back (Render) e não chega aqui via fetch
-    cross-site, então validamos só a assinatura/expiração do state.
-    """
-    if (
-        not is_valid_oauth_state(body.state, body.state)
-        or get_platform_from_state(body.state) != "web"
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="state_invalido"
-        )
-
-    context = Context()
-    context.put_property("authorization_code", body.code)
-    context.put_property("redirect_uri", _redirect_uri("web"))
-
-    try:
-        access_token = await login_with_suap_port.execute(context)
-    except BusinessException as e:
-        logger.warning("Falha no login via SUAP: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="login_falhou"
-        )
-
-    refresh_token = context.get_property("refresh_token", str)
     if refresh_token:
         _set_refresh_token_cookie(response, refresh_token)
 
-    return ApiResponse.success(
-        data={
-            "access_token": access_token.access_token,
-            "token_type": access_token.token_type,
-            "expires_at": access_token.expires_at,
-        },
-        message="Login realizado com sucesso",
-    )
+    return response
 
 
 @router.get("/me", response_model=ApiResponse[UserResponse])
