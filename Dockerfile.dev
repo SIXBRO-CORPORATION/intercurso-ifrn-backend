@@ -14,4 +14,4 @@ COPY --from=builder --chown=app:app /app /app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 WATCHFILES_FORCE_POLLING=true
 USER app
 EXPOSE 8000
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn web.main:app --host 0.0.0.0 --port 8000 --reload"]
+CMD ["sh", "-c", "uv run alembic upgrade head && uv run uvicorn web.main:app --host 0.0.0.0 --port 8000"]
