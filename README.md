@@ -220,11 +220,11 @@ Dois ambientes independentes, cada um com seu Compose, seu volume do PostgreSQL 
 | Dockerfile | `Dockerfile.dev` | `Dockerfile` (multi-stage) |
 | Variáveis | `.env.dev` | `.env.prod` |
 | Código | bind mount + `uvicorn --reload` | copiado para a imagem, sem reload |
-| Usuário | root | não-root (uid 1000) |
-| PostgreSQL | porta `127.0.0.1:5432` | sem porta publicada |
+| Usuário | não-root (uid 1000) | não-root (uid 1000) |
+| PostgreSQL | porta `127.0.0.1:5433` | sem porta publicada |
 | API | `http://localhost:8000` | interna; acesso via Nginx em HTTPS (`443`) |
 
-Serviços: `nginx` (apenas em produção), `postgres` (17, com healthcheck e volume nomeado), `migrate` (executa `alembic upgrade head` uma única vez e encerra) e `api` (só inicia após o banco saudável e a migration concluída). A API acessa o banco por `postgres:5432` na rede padrão do Compose.
+Serviços: `nginx` (apenas em produção), `postgres` (17, com healthcheck e volume nomeado) e `api` (só inicia após o banco saudável e aplica `alembic upgrade head` antes de subir o Uvicorn). A API acessa o banco por `postgres:5432` na rede padrão do Compose.
 
 ### Variáveis de ambiente
 
@@ -245,7 +245,7 @@ docker compose -f compose.dev.yml logs -f api
 docker compose -f compose.dev.yml down
 ```
 
-O código de `alembic`, `business`, `core`, `domain`, `persistence`, `scheduling`, `security` e `web` é montado no container e o Uvicorn reinicia ao salvar arquivos (polling ativado para funcionar em bind mounts no Windows). Alterou `pyproject.toml` ou `uv.lock`? Rode com `--build`.
+O código de `alembic`, `business`, `core`, `domain`, `persistence`, `scheduling`, `security`, `storage` e `web` é montado no container e o Uvicorn reinicia ao salvar arquivos (polling ativado para funcionar em bind mounts no Windows). Alterou `pyproject.toml` ou `uv.lock`? Rode com `--build`.
 
 ### Production
 
@@ -268,5 +268,5 @@ Em servidor real, gere um certificado válido (ex.: Let's Encrypt com `certbot c
 ### Persistência e migrations
 
 - Os dados ficam nos volumes nomeados `postgres_data_dev` e `postgres_data_prod`. `down` preserva os dados; `down -v` apaga.
-- As migrations existentes são aplicadas pelo serviço `migrate` (`alembic upgrade head`). Nenhuma migration é gerada automaticamente. Para criar uma nova: `docker compose -f compose.dev.yml run --rm api alembic revision --autogenerate -m "descricao"`.
+- As migrations existentes são aplicadas pela própria API ao iniciar (`alembic upgrade head` no `CMD` do `Dockerfile` e do `Dockerfile.dev`), e não há serviço separado para isso. Nenhuma migration é gerada automaticamente. Para criar uma nova: `docker compose -f compose.dev.yml run --rm api alembic revision --autogenerate -m "descricao"`.
 - Atalhos: `task docker_dev`, `task docker_dev_down`, `task docker_prod`, `task docker_prod_down`.

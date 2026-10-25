@@ -18,20 +18,6 @@ services:
       retries: 10
       start_period: 15s
 
-  migrate:
-    build: *api-build
-    image: intercurso-api:prod
-    env_file: .env.prod
-    command: ["alembic", "upgrade", "head"]
-    restart: "no"
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   api:
     build: *api-build
     image: intercurso-api:prod
@@ -48,12 +34,10 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 40s
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
   nginx:
     image: nginx:1.27-alpine

@@ -51,8 +51,8 @@ jobs:
       - name: Push Docker image
         run: docker push $IMAGE:$TAG
 
-      - name: Trigger Render Deploy
+      - name: Trigger Render Deploy (prod)
         env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_PROD }}
         run: |
           curl -fsS -X POST "$RENDER_DEPLOY_HOOK&imgURL=${IMAGE//\//%2F}%3A${TAG}"

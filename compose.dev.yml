@@ -13,6 +13,7 @@ x-code-volumes: &code-volumes
   - ./persistence:/app/persistence
   - ./scheduling:/app/scheduling
   - ./security:/app/security
+  - ./storage:/app/storage
   - ./web:/app/web
 
 services:
@@ -31,17 +32,6 @@ services:
       retries: 10
       start_period: 10s
 
-  migrate:
-    build: *api-build
-    image: intercurso-api:dev
-    env_file: .env.dev
-    command: ["alembic", "upgrade", "head"]
-    restart: "no"
-    volumes: *code-volumes
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   api:
     build: *api-build
     image: intercurso-api:dev
@@ -52,8 +42,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
 volumes:
   postgres_data_dev:
