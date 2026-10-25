@@ -55,4 +55,8 @@ jobs:
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_PROD }}
         run: |
-          curl -fsS -X POST "$RENDER_DEPLOY_HOOK&imgURL=${IMAGE//\//%2F}%3A${TAG}"
+          echo "Imagem enviada ao Render: ${IMAGE}:${TAG}"
+          status=$(curl -sS -o response.txt -w "%{http_code}" -X POST "${RENDER_DEPLOY_HOOK}&imgURL=${IMAGE//\//%2F}%3A${TAG}")
+          echo "Render respondeu HTTP $status"
+          cat response.txt; echo
+          [ "$status" -lt 300 ]
