@@ -1,3 +1,4 @@
+
 services:
   postgres:
     image: postgres:17
@@ -8,7 +9,7 @@ services:
       POSTGRES_USER: intercurso
       POSTGRES_PASSWORD: intercurso
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -25,8 +26,8 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://intercurso:intercurso@postgres:5432/intercurso_db
-      DATABASE_URL_SYNC: postgresql://intercurso:intercurso@postgres:5432/intercurso_db
+      DATABASE_URL: postgresql+asyncpg://intercurso:intercurso@postgres:5433/intercurso_db
+      DATABASE_URL_SYNC: postgresql://intercurso:intercurso@postgres:5433/intercurso_db
       SEED_ADMIN_MATRICULA: ${SEED_ADMIN_MATRICULA:-}
     depends_on:
       postgres:
