@@ -12,16 +12,15 @@ class SUAPOAuthAdapter(OAuthProviderPort):
     def __init__(self):
         self.client_id = settings.suap_client_id
         self.client_secret = settings.suap_client_secret
-        self.redirect_uri = settings.suap_redirect_uri
         self.authorization_url = settings.suap_authorization_url
         self.token_url = settings.suap_token_url
         self.user_info_url = settings.suap_user_info_url
         self.identification_url = settings.suap_identification_url
 
-    def get_authorization_url(self, state: Optional[str] = None) -> str:
+    def get_authorization_url(self, redirect_uri: str, state: Optional[str] = None) -> str:
         params = {
             "client_id": self.client_id,
-            "redirect_uri": self.redirect_uri,
+            "redirect_uri": redirect_uri,
             "response_type": "code",
             "scope": "email identificacao",
         }
@@ -31,7 +30,7 @@ class SUAPOAuthAdapter(OAuthProviderPort):
 
         return f"{self.authorization_url}?{urlencode(params)}"
 
-    async def exchange_code_for_token(self, code: str) -> str:
+    async def exchange_code_for_token(self, code: str, redirect_uri: str) -> str:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
@@ -39,7 +38,7 @@ class SUAPOAuthAdapter(OAuthProviderPort):
                     data={
                         "grant_type": "authorization_code",
                         "code": code,
-                        "redirect_uri": self.redirect_uri,
+                        "redirect_uri": redirect_uri,
                         "client_id": self.client_id,
                         "client_secret": self.client_secret,
                     },
@@ -107,8 +106,8 @@ class SUAPOAuthAdapter(OAuthProviderPort):
             except httpx.HTTPError as e:
                 raise BusinessException(f"Erro de conexão com SUAP: {str(e)}")
 
-    async def authenticate_with_code(self, code: str) -> User:
-        access_token = await self.exchange_code_for_token(code)
+    async def authenticate_with_code(self, code: str, redirect_uri: str) -> User:
+        access_token = await self.exchange_code_for_token(code, redirect_uri)
 
         user_data = await self.get_user_info(access_token)
 

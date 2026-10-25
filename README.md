@@ -113,7 +113,8 @@ DATABASE_URL=postgresql+asyncpg://username:password@localhost:5432/db_name
 DATABASE_URL_SYNC=postgresql://username:password@localhost:5432/db_name
 SUAP_CLIENT_ID=suap_client_id
 SUAP_CLIENT_SECRET=suap_client_secret
-SUAP_REDIRECT_URI=http://localhost:8000/api/auth/callback
+SUAP_REDIRECT_URI_WEB=http://localhost:5173/auth/callback
+SUAP_REDIRECT_URI_MOBILE=http://localhost:8000/api/auth/callback
 JWT_SECRET_KEY=strong_key
 LIVE_TICKET_SECRET_KEY=outro_valor_diferente_do_jwt
 FRONTEND_URL=http://localhost:5173
@@ -263,7 +264,7 @@ Certificado para teste local (PowerShell):
 docker run --rm -v "${PWD}/nginx/certs:/certs" alpine/openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /certs/privkey.pem -out /certs/fullchain.pem -subj "/CN=localhost"
 ```
 
-Em servidor real, gere um certificado válido (ex.: Let's Encrypt com `certbot certonly --standalone -d seu-dominio`) e copie `fullchain.pem` e `privkey.pem` para `nginx/certs/`. Ajuste `SUAP_REDIRECT_URI` em `.env.prod` para a URL `https://`.
+Em servidor real, gere um certificado válido (ex.: Let's Encrypt com `certbot certonly --standalone -d seu-dominio`) e copie `fullchain.pem` e `privkey.pem` para `nginx/certs/`. Ajuste `SUAP_REDIRECT_URI_WEB` e `SUAP_REDIRECT_URI_MOBILE` em `.env.prod` para a URL `https://`.
 
 ### Persistência e migrations
 
