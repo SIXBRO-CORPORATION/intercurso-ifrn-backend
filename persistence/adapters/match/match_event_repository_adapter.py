@@ -48,7 +48,7 @@ class MatchEventRepositoryAdapter(MatchEventRepositoryPort):
                 MatchEventEntity.match_id == match_id,
                 MatchEventEntity.deleted_at.is_(None),
             )
-            .order_by(MatchEventEntity.clock_seconds.asc(), MatchEventEntity.created_at.asc())
+            .order_by(MatchEventEntity.clock_seconds.desc(), MatchEventEntity.created_at.desc())
         )
         result = await self.session.execute(query)
         entities = result.scalars().all()

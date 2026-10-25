@@ -108,9 +108,11 @@ def get_season_details_port(
         SeasonModalityRepositoryPort, Depends(get_season_modality_repository)
     ],
     team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
 ) -> GetSeasonDetailsPort:
     return GetSeasonDetailsAdapter(
-        season_repository, season_modality_repository, team_repository
+        season_repository, season_modality_repository, team_repository,
+        match_repository,
     )
 
 

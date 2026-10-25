@@ -27,6 +27,11 @@ def make_adapter():
     file_storage = AsyncMock()
     file_storage.upload.side_effect = lambda **kw: kw["object_key"]
 
+    # Default "feliz" para a checagem de nome único por modalidade+temporada
+    # (ver CreateTeamAdapter) — os testes que querem exercitar o bloqueio
+    # sobrescrevem este valor para True.
+    team_repository.exists_by_name_season_and_modality.return_value = False
+
     adapter = CreateTeamAdapter(
         team_repository,
         team_member_repository,
@@ -377,6 +382,38 @@ class TestCreateTeamAdapter:
             await adapter.execute(context)
 
         team_repository.save.assert_not_awaited()
+
+    async def test_blocks_when_name_already_used_in_same_modality_and_season(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            audit_logger
+        ) = make_adapter()
+
+        active_season = make_open_season()
+        creator_user_id = uuid4()
+        context, team = make_context(
+            name="Lobos", creator_user_id=creator_user_id
+        )
+
+        season_repository.find_active_season.return_value = active_season
+        modality_repository.exists_by_id.return_value = True
+        season_modality_repository.exists_by_season_and_modality.return_value = True
+        team_repository.exists_by_user_season_and_modality.return_value = False
+        team_repository.exists_by_name_season_and_modality.return_value = True
+
+        with pytest.raises(BusinessException):
+            await adapter.execute(context)
+
+        team_repository.save.assert_not_awaited()
+        team_repository.exists_by_name_season_and_modality.assert_awaited_once_with(
+            "Lobos", active_season.id, team.modality_id
+        )
 
     async def test_blocks_when_team_data_is_missing(self):
         (

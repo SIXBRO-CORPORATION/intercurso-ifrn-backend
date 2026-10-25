@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import time
 from collections import defaultdict, deque
 from typing import Deque, Dict
@@ -27,6 +28,13 @@ class IpRateLimiter:
             return False
         hits.append(now)
         return True
+
+    def retry_after(self, key: str) -> int:
+        hits = self._hits.get(key)
+        if not hits:
+            return 1
+        elapsed = time.monotonic() - hits[0]
+        return max(1, math.ceil(self._window_seconds - elapsed))
 
 
 _anonymous_ticket_rate_limiter: IpRateLimiter | None = None

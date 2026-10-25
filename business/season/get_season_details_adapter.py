@@ -2,6 +2,7 @@ from uuid import UUID
 
 from core.business.season.get_season_details_port import GetSeasonDetailsPort
 from core.context import Context
+from core.persistence.match.match_repository_port import MatchRepositoryPort
 from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
@@ -29,10 +30,12 @@ class GetSeasonDetailsAdapter(GetSeasonDetailsPort):
         season_repository: SeasonRepositoryPort,
         season_modality_repository: SeasonModalityRepositoryPort,
         team_repository: TeamRepositoryPort,
+        match_repository: MatchRepositoryPort,
     ):
         self.season_repository = season_repository
         self.season_modality_repository = season_modality_repository
         self.team_repository = team_repository
+        self.match_repository = match_repository
 
     async def execute(self, context: Context) -> Season:
         season_id = context.get_property("season_id", UUID)
@@ -61,9 +64,15 @@ class GetSeasonDetailsAdapter(GetSeasonDetailsPort):
         context.put_property(
             "total_teams_approved", teams_summary["total_teams_approved"]
         )
-        context.put_property(
-            "available_actions",
-            _AVAILABLE_ACTIONS_BY_STATUS.get(season.status, []),
-        )
+
+        available_actions = list(_AVAILABLE_ACTIONS_BY_STATUS.get(season.status, []))
+        if season.status == SeasonStatus.IN_PROGRESS:
+            unfinished_matches = await self.match_repository.find_unfinished_by_season(
+                season_id
+            )
+            if not unfinished_matches:
+                available_actions.append("finish_season")
+
+        context.put_property("available_actions", available_actions)
 
         return season

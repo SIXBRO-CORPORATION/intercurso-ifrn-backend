@@ -151,6 +151,18 @@ class TeamRepositoryAdapter(TeamRepositoryPort):
         result = await self.session.execute(selecionar)
         return result.scalar_one_or_none() is not None
 
+    async def exists_by_name_season_and_modality(
+        self, name: str, season_id: UUID, modality_id: UUID
+    ) -> bool:
+        selecionar = select(TeamEntity.id).where(
+            TeamEntity.name == name,
+            TeamEntity.season_id == season_id,
+            TeamEntity.modality_id == modality_id,
+            TeamEntity.deleted_at.is_(None),
+        )
+        result = await self.session.execute(selecionar)
+        return result.scalar_one_or_none() is not None
+
     async def find_teams_by_status(self, status: TeamStatus) -> List[Team]:
         selecionar = (
             select(TeamEntity)

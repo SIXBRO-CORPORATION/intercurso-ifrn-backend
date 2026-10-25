@@ -125,7 +125,7 @@ MOBILE_DEEP_LINK_PATH=callback
 ### 2. Subir o banco de dados
 
 ```bash
-docker compose -f compose.dev.yml up -d postgres
+docker compose up -d
 ```
 
 ### 3. Instalar dependências
@@ -156,6 +156,81 @@ uv run task run
 
 A API sobe em `http://localhost:8000`, com documentação interativa em `/docs` (Swagger) e
 `/redoc`.
+
+### Alternativa: rodar tudo via Docker (`docker-compose.dev.yml`)
+
+O `docker-compose.dev.yml` sobe o PostgreSQL e a API em containers, sem precisar instalar Python ou `uv`
+na máquina. As migrations rodam automaticamente na subida da API.
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.dev.yml logs -f api
+```
+
+A API sobe em `http://localhost:8000`. Para parar:
+
+```bash
+docker compose -f docker-compose.dev.yml down
+```
+
+Para parar e apagar também os dados do banco, use `down -v`.
+
+## Popular o banco com dados de teste (seed)
+
+A seed cria dados fictícios para testes locais: 2 temporadas (2026 ativa e 2025 finalizada), as
+modalidades Futsal, Vôlei, Basquete e Handebol, 4 times por modalidade na temporada ativa, jogadores fictícios, chaveamentos e partidas em vários estados
+(finalizadas, em andamento e agendadas). Ela roda separada da subida do ambiente e é segura para
+repetir: se os dados já existirem, nada é alterado.
+
+### Via Docker
+
+Com o ambiente de pé (`docker-compose.dev.yml`, ou o `docker-compose.yml` apenas com o banco):
+
+```bash
+docker compose -f docker-compose.dev.yml run --rm --build seed
+```
+
+Com o `docker-compose.yml`:
+
+```bash
+docker compose up -d
+docker compose run --rm --build seed
+```
+
+O serviço `seed` só roda quando chamado, não sobe com o `up`. O `--build` garante que a imagem
+contenha o código da seed. Ele também aplica as migrations antes de popular; na primeira subida,
+aguarde a API terminar de iniciar para evitar que as duas rodem as migrations ao mesmo tempo.
+
+### Sem Docker para a seed
+
+Com o PostgreSQL de pé e o `.env` apontando para ele:
+
+```bash
+uv run alembic upgrade head
+uv run python -m seeds.dev_seed
+```
+
+### Operar partidas com o seu usuário
+
+O login é feito apenas via SUAP, então os usuários fictícios não conseguem entrar. Para gerenciar
+partidas com a sua conta, faça login uma vez e rode a seed informando a sua matrícula:
+
+```bash
+SEED_ADMIN_MATRICULA=<sua matrícula> docker compose -f docker-compose.dev.yml run --rm seed
+```
+
+Isso promove o seu usuário a `ADMIN` e passa para ele a partida em andamento do futsal.
+
+### Recriar os dados do zero
+
+```bash
+docker compose -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml run --rm seed
+```
+
+O `-v` apaga o volume do PostgreSQL. A seed exige que não exista outra temporada ativa no banco.
 
 ## Tasks disponíveis (taskipy)
 
@@ -212,61 +287,10 @@ uv run task coverage           # com cobertura (core, domain, business, auth, pe
 
 ## Docker
 
-Dois ambientes independentes, cada um com seu Compose, seu volume do PostgreSQL e seu arquivo de variáveis.
-
-| | Development | Production |
-|---|---|---|
-| Compose | `compose.dev.yml` | `compose.prod.yml` |
-| Dockerfile | `Dockerfile.dev` | `Dockerfile` (multi-stage) |
-| Variáveis | `.env.dev` | `.env.prod` |
-| Código | bind mount + `uvicorn --reload` | copiado para a imagem, sem reload |
-| Usuário | root | não-root (uid 1000) |
-| PostgreSQL | porta `127.0.0.1:5432` | sem porta publicada |
-| API | `http://localhost:8000` | interna; acesso via Nginx em HTTPS (`443`) |
-
-Serviços: `nginx` (apenas em produção), `postgres` (17, com healthcheck e volume nomeado), `migrate` (executa `alembic upgrade head` uma única vez e encerra) e `api` (só inicia após o banco saudável e a migration concluída). A API acessa o banco por `postgres:5432` na rede padrão do Compose.
-
-### Variáveis de ambiente
-
-Copie os exemplos (PowerShell) e ajuste os valores. Os arquivos `.env.dev` e `.env.prod` estão no `.gitignore`; nunca versione segredos.
-
-```powershell
-Copy-Item .env.dev.example .env.dev
-Copy-Item .env.prod.example .env.prod
-```
-
-`DATABASE_URL` (asyncpg) e `DATABASE_URL_SYNC` (psycopg2, usada pelo Alembic) devem apontar para o host `postgres` e usar as mesmas credenciais de `POSTGRES_USER` e `POSTGRES_PASSWORD`.
-
-### Development
+Uma imagem de produção pode ser construída a partir do `Dockerfile` incluso, que instala as
+dependências com `uv`, aplica as migrations e sobe a aplicação com `uvicorn`:
 
 ```bash
-docker compose -f compose.dev.yml up --build
-docker compose -f compose.dev.yml logs -f api
-docker compose -f compose.dev.yml down
+docker build -t intercurso-ifrn-backend .
+docker run --env-file .env -p 8000:8000 intercurso-ifrn-backend
 ```
-
-O código de `alembic`, `business`, `core`, `domain`, `persistence`, `scheduling`, `security` e `web` é montado no container e o Uvicorn reinicia ao salvar arquivos (polling ativado para funcionar em bind mounts no Windows). Alterou `pyproject.toml` ou `uv.lock`? Rode com `--build`.
-
-### Production
-
-```bash
-docker compose -f compose.prod.yml up --build -d
-docker compose -f compose.prod.yml logs -f api
-docker compose -f compose.prod.yml down
-```
-
-Em produção o Nginx é o único ponto de entrada: `80` redireciona para `443` (HTTPS) e repassa para a API pela rede interna. Ele espera os certificados em `nginx/certs/fullchain.pem` e `nginx/certs/privkey.pem` (ignorados pelo Git). Sem eles, o Nginx não inicia.
-
-Certificado para teste local (PowerShell):
-
-```powershell
-docker run --rm -v "${PWD}/nginx/certs:/certs" alpine/openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /certs/privkey.pem -out /certs/fullchain.pem -subj "/CN=localhost"
-```
-
-Em servidor real, gere um certificado válido (ex.: Let's Encrypt com `certbot certonly --standalone -d seu-dominio`) e copie `fullchain.pem` e `privkey.pem` para `nginx/certs/`. Ajuste `SUAP_REDIRECT_URI` em `.env.prod` para a URL `https://`.
-
-### Persistência e migrations
-
-- Os dados ficam nos volumes nomeados `postgres_data_dev` e `postgres_data_prod`. `down` preserva os dados; `down -v` apaga.
-- As migrations existentes são aplicadas pelo serviço `migrate` (`alembic upgrade head`). Nenhuma migration é gerada automaticamente. Para criar uma nova: `docker compose -f compose.dev.yml run --rm api alembic revision --autogenerate -m "descricao"`.
-- Atalhos: `task docker_dev`, `task docker_dev_down`, `task docker_prod`, `task docker_prod_down`.

@@ -27,3 +27,12 @@ class ModalitySummaryResponse(BaseModel):
     score_type: Optional[str] = Field(
         default=None, description="Sistema de pontuação: GOALS, POINTS ou SETS"
     )
+    points_per_set: Optional[int] = Field(
+        default=None, description="Pontos por set (apenas score_type=SETS)"
+    )
+    final_set_points: Optional[int] = Field(
+        default=None, description="Pontos do set final (apenas score_type=SETS)"
+    )
+    sets_to_win: Optional[int] = Field(
+        default=None, description="Sets necessários para vencer (apenas score_type=SETS)"
+    )

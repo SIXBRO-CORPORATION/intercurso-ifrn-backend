@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 from uuid import UUID
 
 from business.bracket._read_shared import build_bracket_stats, load_team_names
+from business.bracket._round_naming import build_round_info
 from business.bracket._standings import order_group_standings
 from core.business.bracket.get_bracket_details_port import GetBracketDetailsPort
 from core.context import Context
@@ -86,5 +87,6 @@ class GetBracketDetailsAdapter(GetBracketDetailsPort):
         context.put_property("bracket_groups", groups_with_teams)
         context.put_property("bracket_matches", matches)
         context.put_property("team_names", team_names)
+        context.put_property("round_info", build_round_info(matches))
 
         return bracket

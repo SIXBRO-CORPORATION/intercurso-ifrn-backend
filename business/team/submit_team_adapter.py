@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from business.team._shared import evaluate_submit_eligibility
 from core.business.audit.audit_logger import AuditLogger
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.context import Context
@@ -11,9 +12,7 @@ from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from domain.enums.audit_action import AuditAction
 from domain.enums.donation_status import DonationStatus
-from domain.enums.gender import Gender
 from domain.enums.modality_gender_mode import ModalityGenderMode
-from domain.enums.season_status import SeasonStatus
 from domain.enums.team_status import TeamStatus
 from domain.exceptions.business_exception import BusinessException
 from domain.team.team import Team
@@ -53,69 +52,26 @@ class SubmitTeamAdapter(SubmitTeamPort):
         if team.owner_id != requesting_user_id:
             raise BusinessException("Apenas o dono do time pode submeter o time")
 
-        if team.status != TeamStatus.DRAFT:
-            raise BusinessException(
-                "Este time já foi submetido ou não está mais em rascunho"
-            )
-
-        active_season = await self.season_repository.find_active_season()
-        if active_season is None or active_season.id != team.season_id:
-            raise BusinessException(
-                "A temporada deste time não é a temporada ativa no momento"
-            )
-
-        if active_season.status != SeasonStatus.REGISTRATION_OPEN:
-            raise BusinessException(
-                "Período de inscrições encerrado. Não é mais possível submeter times."
-            )
-
         now = datetime.now(timezone.utc)
-        if (
-            active_season.registration_start_date
-            and now < active_season.registration_start_date
-        ):
-            raise BusinessException("O período de inscrição ainda não foi iniciado")
-        if (
-            active_season.registration_end_date
-            and now > active_season.registration_end_date
-        ):
-            raise BusinessException("O período de inscrição já foi encerrado")
-
+        active_season = await self.season_repository.find_active_season()
         members = await self.team_member_repository.find_members_by_team_id(team_id)
-
         modality = await self.modality_repository.get(team.modality_id)
-        if modality is not None and len(members) < modality.min_members:
-            faltantes = modality.min_members - len(members)
-            raise BusinessException(
-                f"O time precisa de pelo menos {modality.min_members} membros para "
-                f"ser submetido. Faltam {faltantes} membro(s)."
-            )
 
-        if modality is not None and modality.gender_mode == ModalityGenderMode.MIXED:
+        member_users = None
+        if (
+            modality is not None
+            and modality.gender_mode == ModalityGenderMode.MIXED
+            and len(members) >= modality.min_members
+        ):
             member_users = await self.user_repository.find_by_ids(
                 [m.user_id for m in members]
             )
-            male_count = sum(1 for u in member_users if u.gender == Gender.MALE)
-            female_count = sum(1 for u in member_users if u.gender == Gender.FEMALE)
 
-            if (
-                modality.min_male_members is not None
-                and male_count < modality.min_male_members
-            ):
-                raise BusinessException(
-                    f"Modalidade mista: o time precisa de pelo menos "
-                    f"{modality.min_male_members} integrante(s) do gênero "
-                    f"masculino. Atualmente tem {male_count}."
-                )
-            if (
-                modality.min_female_members is not None
-                and female_count < modality.min_female_members
-            ):
-                raise BusinessException(
-                    f"Modalidade mista: o time precisa de pelo menos "
-                    f"{modality.min_female_members} integrante(s) do gênero "
-                    f"feminino. Atualmente tem {female_count}."
-                )
+        can_submit, blocked_reason = evaluate_submit_eligibility(
+            team, members, modality, active_season, member_users, now
+        )
+        if not can_submit:
+            raise BusinessException(blocked_reason)
 
         team.status = TeamStatus.SUBMITTED
         team.token_active = False

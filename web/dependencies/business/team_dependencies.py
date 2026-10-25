@@ -15,6 +15,7 @@ from core.business.team.leave_team_port import LeaveTeamPort
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.business.team.delete_team_port import DeleteTeamPort
 from core.business.team.reject_team_port import RejectTeamPort
+from core.business.team.return_team_to_draft_port import ReturnTeamToDraftPort
 from core.business.team.regenerate_invite_port import RegenerateInvitePort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
@@ -24,6 +25,10 @@ from core.persistence.season.season_modality_repository_port import (
     SeasonModalityRepositoryPort,
 )
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
+from core.persistence.match.match_repository_port import MatchRepositoryPort
+from core.persistence.bracket.bracket_group_repository_port import (
+    BracketGroupRepositoryPort,
+)
 from business.team.create_team_adapter import CreateTeamAdapter
 from business.team.approve_team_adapter import ApproveTeamAdapter
 from business.team.confirm_donation_adapter import ConfirmDonationAdapter
@@ -37,6 +42,7 @@ from business.team.leave_team_adapter import LeaveTeamAdapter
 from business.team.submit_team_adapter import SubmitTeamAdapter
 from business.team.delete_team_adapter import DeleteTeamAdapter
 from business.team.reject_team_adapter import RejectTeamAdapter
+from business.team.return_team_to_draft_adapter import ReturnTeamToDraftAdapter
 from business.team.regenerate_invite_adapter import RegenerateInviteAdapter
 from core.storage.file_storage_port import FileStoragePort
 from web.dependencies.business.storage_dependencies import get_file_storage
@@ -48,6 +54,8 @@ from web.dependencies.persistence_dependencies import (
     get_season_repository,
     get_season_modality_repository,
     get_modality_repository,
+    get_match_repository,
+    get_bracket_group_repository,
 )
 
 
@@ -85,10 +93,17 @@ def get_approve_team_port(
         TeamMemberRepositoryPort, Depends(get_team_member_repository)
     ],
     user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
+    modality_repository: Annotated[
+        ModalityRepositoryPort, Depends(get_modality_repository)
+    ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> ApproveTeamPort:
     return ApproveTeamAdapter(
-        team_repository, team_member_repository, user_repository, audit_logger
+        team_repository,
+        team_member_repository,
+        user_repository,
+        modality_repository,
+        audit_logger,
     )
 
 
@@ -235,12 +250,20 @@ def get_team_details_port(
     modality_repository: Annotated[
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
+    season_repository: Annotated[SeasonRepositoryPort, Depends(get_season_repository)],
+    match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
+    bracket_group_repository: Annotated[
+        BracketGroupRepositoryPort, Depends(get_bracket_group_repository)
+    ],
 ) -> GetTeamDetailsPort:
     return GetTeamDetailsAdapter(
         team_repository,
         team_member_repository,
         user_repository,
         modality_repository,
+        season_repository,
+        match_repository,
+        bracket_group_repository,
     )
 
 
@@ -262,6 +285,13 @@ def get_reject_team_port(
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
 ) -> RejectTeamPort:
     return RejectTeamAdapter(team_repository, audit_logger)
+
+
+def get_return_team_to_draft_port(
+    team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+) -> ReturnTeamToDraftPort:
+    return ReturnTeamToDraftAdapter(team_repository, audit_logger)
 
 
 def get_regenerate_invite_port(

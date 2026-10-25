@@ -49,7 +49,6 @@ class MatchModalityConfigurationResponse(BaseModel):
     num_periods: Optional[int] = Field(default=None)
     period_duration_minutes: Optional[int] = Field(default=None)
     score_type: Optional[str] = Field(default=None)
-    has_third_place_match: Optional[bool] = Field(default=None)
     points_per_set: Optional[int] = Field(
         default=None, description="Vôlei (ADR002): pontos necessários para vencer um set normal"
     )
@@ -59,6 +58,38 @@ class MatchModalityConfigurationResponse(BaseModel):
     sets_to_win: Optional[int] = Field(
         default=None, description="Vôlei (ADR002): sets necessários para vencer a partida"
     )
+
+
+class MatchTopScorerResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    player_id: UUID = Field()
+    name: str = Field()
+    team_id: Optional[UUID] = Field(default=None)
+    goals: int = Field(
+        description="Quantidade de eventos GOAL do jogador nesta partida"
+    )
+
+
+class MatchCardSummaryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    yellow: int = Field(default=0, description="Total de eventos CARD_YELLOW na partida")
+    red: int = Field(default=0, description="Total de eventos CARD_RED na partida")
+
+
+class MatchPenaltyShootoutKickResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    player_id: Optional[UUID] = Field(default=None)
+    result: str = Field(description='"GOAL" ou "MISS"')
+
+
+class MatchPenaltyShootoutResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    team1: List[MatchPenaltyShootoutKickResponse] = Field(default_factory=list)
+    team2: List[MatchPenaltyShootoutKickResponse] = Field(default_factory=list)
 
 
 class MatchTimelineEventResponse(BaseModel):
@@ -136,6 +167,34 @@ class MatchManagementResponse(BaseModel):
     )
 
     timeline: List[MatchTimelineEventResponse] = Field(default_factory=list)
+
+    top_scorers: List[MatchTopScorerResponse] = Field(
+        default_factory=list,
+        description=(
+            "Artilheiros da partida (eventos GOAL agrupados por jogador), "
+            "ordenados por gols decrescente e, em caso de empate, pela "
+            "ordem do primeiro gol marcado na partida. Calculado no "
+            "backend para que o front (A2/M7) não precise reimplementar "
+            "essa regra a partir do `timeline`."
+        ),
+    )
+    card_summary: MatchCardSummaryResponse = Field(
+        default_factory=MatchCardSummaryResponse,
+        description=(
+            "Contagem de cartões amarelos/vermelhos aplicados na partida "
+            "(cada evento CARD_YELLOW/CARD_RED do `timeline` conta uma "
+            "vez, inclusive o CARD_YELLOW gerado pelo segundo amarelo)."
+        ),
+    )
+    penalty_shootout: Optional[MatchPenaltyShootoutResponse] = Field(
+        default=None,
+        description=(
+            "Sequência de cobranças da disputa de pênaltis, por time, na "
+            "ordem em que ocorreram (PENALTY_GOAL/PENALTY_MISS do "
+            "`timeline` já agrupados por time). Nulo quando a partida não "
+            "teve disputa de pênaltis."
+        ),
+    )
 
     sets: List[MatchSetResponse] = Field(
         default_factory=list,

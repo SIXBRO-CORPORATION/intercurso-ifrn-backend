@@ -21,8 +21,12 @@ class ModalityModelMapper:
         self,
         modalities: List[Modality],
         configurations: Optional[Dict[UUID, ModalityConfiguration]] = None,
+        volleyball_configurations: Optional[
+            Dict[UUID, VolleyballModalityConfiguration]
+        ] = None,
     ) -> List[ModalitySummaryResponse]:
         configurations = configurations or {}
+        volleyball_configurations = volleyball_configurations or {}
         return [
             ModalitySummaryResponse(
                 modality_id=m.id,
@@ -41,6 +45,15 @@ class ModalityModelMapper:
                     configurations[m.id].score_type.value
                     if m.id in configurations and configurations[m.id].score_type
                     else None
+                ),
+                points_per_set=self._configuration_field(
+                    volleyball_configurations, m.id, "points_per_set"
+                ),
+                final_set_points=self._configuration_field(
+                    volleyball_configurations, m.id, "final_set_points"
+                ),
+                sets_to_win=self._configuration_field(
+                    volleyball_configurations, m.id, "sets_to_win"
                 ),
             )
             for m in modalities
@@ -91,7 +104,6 @@ class ModalityModelMapper:
             score_type=(
                 configuration.score_type.value if configuration.score_type else None
             ),
-            has_third_place_match=configuration.has_third_place_match,
             metadata=configuration.metadata,
             points_per_set=(
                 volleyball_configuration.points_per_set

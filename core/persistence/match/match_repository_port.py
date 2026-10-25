@@ -23,6 +23,10 @@ class MatchRepositoryPort(BaseRepositoryPort[Match]):
         pass
 
     @abstractmethod
+    async def find_next_match_by_team(self, team_id: UUID) -> Optional[Match]:
+        pass
+
+    @abstractmethod
     async def find_by_status(self, status: MatchStatus) -> List[Match]:
         pass
 

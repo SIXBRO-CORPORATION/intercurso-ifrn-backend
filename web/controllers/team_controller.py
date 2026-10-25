@@ -10,6 +10,7 @@ from core.business.team.confirm_donation_port import ConfirmDonationPort
 from core.business.team.delete_team_port import DeleteTeamPort
 from core.business.team.regenerate_invite_port import RegenerateInvitePort
 from core.business.team.reject_team_port import RejectTeamPort
+from core.business.team.return_team_to_draft_port import ReturnTeamToDraftPort
 from core.business.team.create_team_port import CreateTeamPort
 from core.business.team.get_team_details_port import GetTeamDetailsPort
 from core.business.team.get_team_invite_info_port import GetTeamInviteInfoPort
@@ -21,6 +22,7 @@ from core.business.team.select_captain_port import SelectCaptainPort
 from core.business.team.submit_team_port import SubmitTeamPort
 from core.context import Context
 from domain.enums.team_status import TeamStatus
+from domain.match.match import Match
 from domain.modality.modality import Modality
 from domain.team.team import Team
 from domain.enums.user_role import UserRole
@@ -40,6 +42,7 @@ from web.models.response.team.team_summary_response import TeamSummaryResponse
 from web.dependencies.business.team_dependencies import (
     get_delete_team_port,
     get_reject_team_port,
+    get_return_team_to_draft_port,
     get_regenerate_invite_port,
 )
 from web.dependencies import (
@@ -74,7 +77,7 @@ router = APIRouter(prefix="/api/team", tags=["team"])
 )
 async def create_team(
     name: Annotated[
-        str, Form(), StringConstraints(strip_whitespace=True, min_length=3, max_length=255)
+        str, Form(), StringConstraints(strip_whitespace=True, min_length=3, max_length=60)
     ],
     modality_id: Annotated[UUID, Form()],
     create_team_port: Annotated[CreateTeamPort, Depends(get_create_team_port)],
@@ -109,6 +112,7 @@ async def list_teams(
     current_user: User = Depends(require_authenticated_user),
     status_filter: Optional[TeamStatus] = Query(default=None, alias="status"),
     season_id: Optional[UUID] = Query(default=None),
+    modality_id: Optional[UUID] = Query(default=None),
 ):
     context = Context()
     context.put_property("requesting_user_id", current_user.id)
@@ -117,6 +121,8 @@ async def list_teams(
         context.put_property("status", status_filter)
     if season_id is not None:
         context.put_property("season_id", season_id)
+    if modality_id is not None:
+        context.put_property("modality_id", modality_id)
 
     teams = await list_teams_port.execute(context)
     team_extra_info = context.get_property("team_extra_info", dict) or {}
@@ -152,6 +158,14 @@ async def get_team_details(
     member_users_by_id = context.get_property("member_users_by_id", dict) or {}
     owner_user = context.get_property("owner_user", User)
     captain_user = context.get_property("captain_user", User)
+    can_submit = context.get_property("can_submit", bool) or False
+    submit_blocked_reason = context.get_property("submit_blocked_reason", str)
+    can_approve = context.get_property("can_approve", bool) or False
+    approve_blocked_reason = context.get_property("approve_blocked_reason", str)
+    next_match = context.get_property("next_match", Match)
+    next_match_group_name = context.get_property("next_match_group_name", str)
+    next_match_team1 = context.get_property("next_match_team1", Team)
+    next_match_team2 = context.get_property("next_match_team2", Team)
 
     can_see_invite = current_user.id == team.owner_id or current_user.role in (
         UserRole.MONITOR,
@@ -166,6 +180,14 @@ async def get_team_details(
         owner_user,
         captain_user,
         invite_token=team.invite_token if can_see_invite else None,
+        can_submit=can_submit,
+        submit_blocked_reason=submit_blocked_reason,
+        can_approve=can_approve,
+        approve_blocked_reason=approve_blocked_reason,
+        next_match=next_match,
+        next_match_group_name=next_match_group_name,
+        next_match_team1=next_match_team1,
+        next_match_team2=next_match_team2,
     )
 
     return ApiResponse(data=response_data)
@@ -463,7 +485,36 @@ async def reject_team(
                 else None
             ),
         },
-        message="Time rejeitado e devolvido para rascunho.",
+        message="Time rejeitado.",
+    )
+
+
+@router.patch(
+    "/{team_id}/return-to-draft",
+    response_model=ApiResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def return_team_to_draft(
+    team_id: UUID,
+    return_team_to_draft_port: Annotated[
+        ReturnTeamToDraftPort, Depends(get_return_team_to_draft_port)
+    ],
+    current_user: User = Depends(require_authenticated_user),
+):
+    context = Context()
+    context.put_property("team_id", team_id)
+    context.put_property("requesting_user_id", current_user.id)
+
+    team = await return_team_to_draft_port.execute(context)
+
+    return ApiResponse.success(
+        data={
+            "team_id": str(team.id),
+            "name": team.name,
+            "status": team.status.value,
+            "token_active": team.token_active,
+        },
+        message="Time devolvido para rascunho. Faça os ajustes necessários e submeta novamente.",
     )
 
 

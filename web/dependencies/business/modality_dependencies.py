@@ -59,8 +59,16 @@ def get_list_modalities_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
 ) -> ListModalitiesPort:
-    return ListModalitiesAdapter(modality_repository, modality_configuration_repository)
+    return ListModalitiesAdapter(
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
+    )
 
 
 def get_list_all_modalities_port(
@@ -71,9 +79,15 @@ def get_list_all_modalities_port(
         ModalityConfigurationRepositoryPort,
         Depends(get_modality_configuration_repository),
     ],
+    volleyball_modality_configuration_repository: Annotated[
+        VolleyballModalityConfigurationRepositoryPort,
+        Depends(get_volleyball_modality_configuration_repository),
+    ],
 ) -> ListAllModalitiesPort:
     return ListAllModalitiesAdapter(
-        modality_repository, modality_configuration_repository
+        modality_repository,
+        modality_configuration_repository,
+        volleyball_modality_configuration_repository,
     )
 
 

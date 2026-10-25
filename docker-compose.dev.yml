@@ -33,6 +33,24 @@ services:
     networks:
       - intercurso
 
+  seed:
+    build: .
+    container_name: seed-intercurso
+    profiles:
+      - seed
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://intercurso:intercurso@postgres:5432/intercurso_db
+      DATABASE_URL_SYNC: postgresql://intercurso:intercurso@postgres:5432/intercurso_db
+      SEED_ADMIN_MATRICULA: ${SEED_ADMIN_MATRICULA:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - intercurso
+    command: sh -c "uv run alembic upgrade head && uv run python -m seeds.dev_seed"
+
 volumes:
   postgres_data:
 

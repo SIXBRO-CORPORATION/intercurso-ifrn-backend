@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from web.models.response.team.team_member_response import TeamMemberResponse
+from web.models.response.team.team_next_match_response import TeamNextMatchResponse
 
 
 class TeamDetailsResponse(BaseModel):
@@ -37,3 +38,28 @@ class TeamDetailsResponse(BaseModel):
     gender_mode: Optional[str] = Field(default=None)
     min_male_members: Optional[int] = Field(default=None)
     min_female_members: Optional[int] = Field(default=None)
+    can_submit: bool = Field(
+        default=False,
+        description=(
+            "Reflete a mesma regra de elegibilidade usada em PATCH /team/{id}/submit "
+            "(temporada ativa, janela de inscrição, cota mínima e de gênero), para o "
+            "front não precisar replicá-la."
+        ),
+    )
+    submit_blocked_reason: Optional[str] = Field(
+        default=None,
+        description="Motivo pelo qual can_submit é falso, só quando o time está em DRAFT",
+    )
+    can_approve: bool = Field(
+        default=False,
+        description=(
+            "Reflete a mesma regra de elegibilidade usada em PATCH /team/{id}/approve "
+            "(membros, doações confirmadas, frequência mínima e cota de gênero), para o "
+            "front não precisar replicá-la nem ficar desatualizado em relação a ela."
+        ),
+    )
+    approve_blocked_reason: Optional[str] = Field(
+        default=None,
+        description="Motivo pelo qual can_approve é falso, só quando o time está em SUBMITTED",
+    )
+    next_match: Optional[TeamNextMatchResponse] = Field(default=None)

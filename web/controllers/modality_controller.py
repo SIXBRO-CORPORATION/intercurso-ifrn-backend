@@ -57,7 +57,14 @@ async def list_modalities(
         context.put_property("season_id", season_id)
     modalities = await list_modalities_port.execute(context)
     configurations = context.get_property("modality_configurations", dict) or {}
-    return ApiResponse(data=mapper.to_summary_responses(modalities, configurations))
+    volleyball_configurations = (
+        context.get_property("modality_volleyball_configurations", dict) or {}
+    )
+    return ApiResponse(
+        data=mapper.to_summary_responses(
+            modalities, configurations, volleyball_configurations
+        )
+    )
 
 
 @router.get(
@@ -75,7 +82,14 @@ async def list_all_modalities(
     context = Context()
     modalities = await list_all_modalities_port.execute(context)
     configurations = context.get_property("modality_configurations", dict) or {}
-    return ApiResponse(data=mapper.to_summary_responses(modalities, configurations))
+    volleyball_configurations = (
+        context.get_property("modality_volleyball_configurations", dict) or {}
+    )
+    return ApiResponse(
+        data=mapper.to_summary_responses(
+            modalities, configurations, volleyball_configurations
+        )
+    )
 
 
 @router.post(
@@ -103,7 +117,6 @@ async def create_modality(
         num_periods=request.num_periods,
         period_durations_minutes=request.period_durations_minutes,
         score_type=request.score_type,
-        has_third_place_match=request.has_third_place_match,
         metadata=request.metadata,
     )
 

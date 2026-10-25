@@ -385,6 +385,33 @@ class TestRealtimeSSEFlow:
         finally:
             app.dependency_overrides.clear()
 
+    async def test_anonymous_ticket_over_limit_returns_429_with_retry_after(
+        self, live_server
+    ):
+        from core.realtime.ip_rate_limiter import IpRateLimiter
+        from domain.season.season import Season
+        from web.controllers.realtime_controller import get_anonymous_ticket_rate_limiter
+        from web.dependencies import get_season_repository
+
+        season_id = uuid4()
+        limiter = IpRateLimiter(max_requests=1, window_seconds=60)
+        app.dependency_overrides[get_anonymous_ticket_rate_limiter] = lambda: limiter
+        app.dependency_overrides[get_season_repository] = lambda: _FakeStateRepository(
+            {season_id: Season(id=season_id)}
+        )
+        body = {"channel_type": "season", "channel_id": str(season_id)}
+
+        try:
+            async with AsyncClient(base_url=live_server, timeout=10) as client:
+                first = await client.post("/api/realtime/ticket", json=body)
+                second = await client.post("/api/realtime/ticket", json=body)
+
+            assert first.status_code == 200
+            assert second.status_code == 429
+            assert 1 <= int(second.headers["retry-after"]) <= 60
+        finally:
+            app.dependency_overrides.clear()
+
     async def test_anonymous_visitor_gets_season_ticket_without_login(
         self, live_server
     ):

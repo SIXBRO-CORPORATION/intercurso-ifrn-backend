@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
+from business.bracket.engine.match_count_estimator import estimate_match_counts
 from domain.bracket.bracket import Bracket
 from domain.bracket.bracket_group import BracketGroup
 from domain.bracket.bracket_group_team import BracketGroupTeam
@@ -28,12 +29,15 @@ class BracketModelMapper:
         byes_estimated: int,
         suggested_configuration: dict,
     ) -> BracketConfigSuggestionResponse:
+        match_counts = estimate_match_counts(modality_format, team_count, suggested_configuration)
         return BracketConfigSuggestionResponse(
             modality_id=modality_id,
             format=modality_format.value,
             team_count=team_count,
             byes_estimated=byes_estimated,
             suggested_configuration=suggested_configuration,
+            total_matches_estimated=match_counts["total_matches"],
+            matches_by_round=match_counts["matches_by_round"],
         )
 
     def to_bracket_response(
@@ -98,18 +102,27 @@ class BracketModelMapper:
         groups: List[Tuple[BracketGroup, List[BracketGroupTeam]]],
         matches: List[Match],
         team_names: Dict[UUID, str],
+        round_info: Optional[Dict[UUID, Tuple[Optional[str], Optional[int]]]] = None,
     ) -> BracketDetailResponse:
         group_names = {group.id: group.name for group, _ in groups}
+        round_info = round_info or {}
         summary = self.to_bracket_summary_response(bracket, modality_name, stats)
+        configuration = bracket.configuration or {}
+        classified_per_group = configuration.get("classified_per_group")
         return BracketDetailResponse(
             **summary.model_dump(),
-            configuration=bracket.configuration or {},
+            configuration=configuration,
+            classified_per_group=(
+                classified_per_group if isinstance(classified_per_group, int) else None
+            ),
             groups=[
                 self._to_group_response(group, group_teams, team_names)
                 for group, group_teams in groups
             ],
             matches=[
-                self.to_bracket_match_response(match, team_names, group_names)
+                self.to_bracket_match_response(
+                    match, team_names, group_names, round_info
+                )
                 for match in matches
             ],
         )
@@ -119,7 +132,9 @@ class BracketModelMapper:
         match: Match,
         team_names: Dict[UUID, str],
         group_names: Dict[UUID, str],
+        round_info: Optional[Dict[UUID, Tuple[Optional[str], Optional[int]]]] = None,
     ) -> BracketMatchResponse:
+        round_name, round_order = (round_info or {}).get(match.id, (None, None))
         return BracketMatchResponse(
             match_id=match.id,
             bracket_id=match.bracket_id,
@@ -132,6 +147,8 @@ class BracketModelMapper:
             match_type=match.match_type.value,
             match_category=match.match_category.value,
             status=match.status.value,
+            round_name=round_name,
+            round_order=round_order,
         )
 
     def _to_group_response(

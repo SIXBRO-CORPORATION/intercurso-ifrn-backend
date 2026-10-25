@@ -81,7 +81,6 @@ def make_valid_configuration(**overrides):
         num_periods=2,
         period_durations_minutes=20,
         score_type=ScoreType.GOALS,
-        has_third_place_match=True,
     )
     defaults.update(overrides)
     return ModalityConfiguration(**defaults)
@@ -202,8 +201,9 @@ class TestCreateModalityAdapter:
             configuration=make_valid_configuration()
         )
 
-        with pytest.raises(BusinessException):
+        with pytest.raises(BusinessException) as exc_info:
             await adapter.execute(context)
+        assert exc_info.value.field == "name"
 
     async def test_blocks_missing_data(self):
         adapter, *_ = make_adapter()
@@ -284,8 +284,26 @@ class TestCreateModalityAdapter:
             configuration=make_valid_configuration(),
         )
 
-        with pytest.raises(BusinessException):
+        with pytest.raises(BusinessException) as exc_info:
             await adapter.execute(context)
+        assert exc_info.value.field == "max_members"
+
+    async def test_blocks_gender_quota_sum_above_min_members(self):
+        adapter, modality_repository, *_ = make_adapter()
+        modality_repository.find_by_name.return_value = None
+
+        context = make_context(
+            min_members=5,
+            max_members=10,
+            gender_mode=ModalityGenderMode.MIXED,
+            min_male_members=4,
+            min_female_members=4,
+            configuration=make_valid_configuration(),
+        )
+
+        with pytest.raises(BusinessException) as exc_info:
+            await adapter.execute(context)
+        assert exc_info.value.field == "min_members"
 
     async def test_blocks_male_or_female_with_gender_quotas_set(self):
         adapter, modality_repository, *_ = make_adapter()

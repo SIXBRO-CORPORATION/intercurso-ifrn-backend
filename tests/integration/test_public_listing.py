@@ -123,7 +123,13 @@ class TestSearchBySeason:
 
 
 class TestModalitiesBySeason:
-    async def test_returns_only_active_modalities_of_the_season_ordered_by_name(self, session):
+    async def test_returns_active_and_inactive_modalities_of_the_season_ordered_by_name(
+        self, session
+    ):
+        """Modalidade inativa da temporada também deve ser retornada (o
+        front usa o campo `active` para exibir o card travado, como no
+        protótipo) — só modalidades de OUTRA temporada ficam de fora. Ver
+        docs/qa/a04-minhas-equipes-criar-equipe.md, Fase 1, achado #1."""
         repo = ModalityRepositoryAdapter(session, ModalityMapper())
         season, other = uuid4(), uuid4()
         volei = ModalityEntity(id=uuid4(), name="Vôlei", min_members=6, max_members=12)
@@ -139,7 +145,11 @@ class TestModalitiesBySeason:
 
         found = await repo.find_active_by_season(season)
 
-        assert [m.name for m in found] == ["Futsal", "Vôlei"]
+        assert [m.name for m in found] == ["Futsal", "Vôlei", "Xadrez"]
+        by_name = {m.name: m for m in found}
+        assert by_name["Xadrez"].active is False
+        assert by_name["Futsal"].active is True
+        assert by_name["Vôlei"].active is True
 
 
 class TestPublicMatchListEndToEnd:

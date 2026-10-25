@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 
@@ -10,13 +10,34 @@ from web.commons.api_response import ApiResponse
 
 logger = logging.getLogger(__name__)
 
+_HTTP_EXCEPTION_CODES = {
+    status.HTTP_401_UNAUTHORIZED: "UNAUTHORIZED",
+    status.HTTP_403_FORBIDDEN: "FORBIDDEN",
+    status.HTTP_404_NOT_FOUND: "NOT_FOUND",
+}
+
 
 def register_exception_handler(app: FastAPI) -> None:
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(
+        request: Request, exc: HTTPException
+    ) -> JSONResponse:
+        code = _HTTP_EXCEPTION_CODES.get(exc.status_code, "HTTP_ERROR")
+        response = ApiResponse.failure(error=str(exc.detail), code=code)
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=response.model_dump(mode="json"),
+            headers=exc.headers,
+        )
+
     @app.exception_handler(BusinessException)
     async def business_exception_handler(
         request: Request, exc: BusinessException
     ) -> JSONResponse:
         response = ApiResponse.failure(error=str(exc), code="BUSINESS_ERROR")
+        if exc.field:
+            response.data = {exc.field: str(exc)}
 
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,

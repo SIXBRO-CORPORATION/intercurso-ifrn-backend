@@ -15,15 +15,13 @@ from core.realtime.broadcaster import (
 )
 
 HEARTBEAT_INTERVAL_SECONDS = 15
+HEARTBEAT_EVENT = "heartbeat"
+CONNECTION_LIMIT_RETRY_SECONDS = 15
 
 
 def format_sse_message(event: RealtimeEvent) -> str:
     data = json.dumps(event.payload, default=str, ensure_ascii=False)
     return f"event: {event.event_type}\ndata: {data}\n\n"
-
-
-def format_sse_comment(comment: str) -> str:
-    return f": {comment}\n\n"
 
 
 async def stream_channel(
@@ -36,7 +34,14 @@ async def stream_channel(
         queue = await broadcaster.subscribe(channel, connection_key)
     except ConnectionLimitExceededError as exc:
         yield format_sse_message(
-            RealtimeEvent(event_type="error", payload={"detail": str(exc)})
+            RealtimeEvent(
+                event_type="error",
+                payload={
+                    "code": "connection_limit",
+                    "detail": str(exc),
+                    "retry_after_seconds": CONNECTION_LIMIT_RETRY_SECONDS,
+                },
+            )
         )
         return
 
@@ -51,6 +56,6 @@ async def stream_channel(
                 )
                 yield format_sse_message(event)
             except asyncio.TimeoutError:
-                yield format_sse_comment("ping")
+                yield format_sse_message(RealtimeEvent(HEARTBEAT_EVENT, {}))
     finally:
         await broadcaster.unsubscribe(channel, connection_key, queue)

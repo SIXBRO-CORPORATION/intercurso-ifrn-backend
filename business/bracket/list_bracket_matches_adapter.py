@@ -2,6 +2,7 @@ from typing import List
 from uuid import UUID
 
 from business.bracket._read_shared import load_team_names
+from business.bracket._round_naming import build_round_info
 from core.business.bracket.list_bracket_matches_port import ListBracketMatchesPort
 from core.context import Context
 from core.persistence.bracket.bracket_group_repository_port import (
@@ -47,5 +48,6 @@ class ListBracketMatchesAdapter(ListBracketMatchesPort):
 
         context.put_property("team_names", team_names)
         context.put_property("group_names", group_names)
+        context.put_property("round_info", build_round_info(matches))
 
         return matches

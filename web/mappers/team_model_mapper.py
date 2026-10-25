@@ -3,6 +3,7 @@ from uuid import UUID
 
 from core.storage.file_storage_port import FileStoragePort
 from domain.enums.donation_status import DonationStatus
+from domain.match.match import Match
 from domain.modality.modality import Modality
 from domain.team.team import Team
 from domain.team.team_member import TeamMember
@@ -13,6 +14,10 @@ from web.models.response.team.team_invite_preview_response import (
 )
 from web.models.response.team.team_join_response import TeamJoinResponse
 from web.models.response.team.team_member_response import TeamMemberResponse
+from web.models.response.team.team_next_match_response import (
+    TeamNextMatchResponse,
+    TeamNextMatchTeamResponse,
+)
 from web.models.response.team.team_register_response import TeamRegisterResponse
 from web.models.response.team.team_summary_response import TeamSummaryResponse
 
@@ -69,6 +74,7 @@ class TeamModelMapper:
             role=member.role.value,
             donation_status=member.donation_status.value,
             gender=user.gender.value if user.gender else None,
+            joined_at=member.joined_at,
         )
 
     def to_invite_preview_response(
@@ -102,10 +108,43 @@ class TeamModelMapper:
             status=team.status.value,
             owner_id=team.owner_id,
             owner_name=extra_info.get("owner_name"),
+            captain_id=team.captain_id,
+            max_members=extra_info.get("max_members"),
             members_count=extra_info.get("members_count", 0),
             donations_confirmed=extra_info.get("donations_confirmed", 0),
             donations_total=extra_info.get("donations_total", 0),
             submmited_at=team.submmited_at,
+        )
+
+    def _to_next_match_team_response(
+        self, team: Optional[Team]
+    ) -> Optional[TeamNextMatchTeamResponse]:
+        if team is None:
+            return None
+        return TeamNextMatchTeamResponse(
+            team_id=team.id,
+            name=team.name,
+            photo=self._resolve_photo_url(team.photo),
+        )
+
+    def _to_next_match_response(
+        self,
+        next_match: Optional[Match],
+        group_name: Optional[str],
+        team1: Optional[Team],
+        team2: Optional[Team],
+    ) -> Optional[TeamNextMatchResponse]:
+        if next_match is None:
+            return None
+        return TeamNextMatchResponse(
+            match_id=next_match.id,
+            bracket_id=next_match.bracket_id,
+            group_name=group_name,
+            match_type=next_match.match_type.value,
+            status=next_match.status.value,
+            scheduled_date=next_match.scheduled_date,
+            team1=self._to_next_match_team_response(team1),
+            team2=self._to_next_match_team_response(team2),
         )
 
     def to_details_response(
@@ -117,6 +156,14 @@ class TeamModelMapper:
         owner_user: Optional[User],
         captain_user: Optional[User],
         invite_token: Optional[str] = None,
+        can_submit: bool = False,
+        submit_blocked_reason: Optional[str] = None,
+        can_approve: bool = False,
+        approve_blocked_reason: Optional[str] = None,
+        next_match: Optional[Match] = None,
+        next_match_group_name: Optional[str] = None,
+        next_match_team1: Optional[Team] = None,
+        next_match_team2: Optional[Team] = None,
     ) -> TeamDetailsResponse:
         member_responses = [
             self.to_member_response(member, member_users_by_id[member.user_id])
@@ -151,6 +198,13 @@ class TeamModelMapper:
             members=member_responses,
             donations_confirmed=donations_confirmed,
             donations_total=donations_total,
+            can_submit=can_submit,
+            submit_blocked_reason=submit_blocked_reason,
+            can_approve=can_approve,
+            approve_blocked_reason=approve_blocked_reason,
+            next_match=self._to_next_match_response(
+                next_match, next_match_group_name, next_match_team1, next_match_team2
+            ),
             **_modality_limits(modality),
         )
 

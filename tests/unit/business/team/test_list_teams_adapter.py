@@ -150,7 +150,13 @@ class TestListTeamsAdapter:
             modality_repository,
         ) = make_adapter()
         season_id = uuid4()
-        team = Team(id=uuid4(), name="Time A", modality_id=uuid4(), season_id=season_id)
+        team = Team(
+            id=uuid4(),
+            name="Time A",
+            modality_id=uuid4(),
+            season_id=season_id,
+            status=TeamStatus.SUBMITTED,
+        )
         team_repository.find_by_status_and_season_id.return_value = [team]
         setup_extra_info_mocks(
             modality_repository, user_repository, team_member_repository, teams=[team]
@@ -170,6 +176,42 @@ class TestListTeamsAdapter:
         team_repository.find_by_season_id.assert_not_called()
         team_repository.find_all.assert_not_called()
 
+    async def test_monitor_never_sees_draft_teams(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            modality_repository,
+        ) = make_adapter()
+        draft = Team(id=uuid4(), name="Rascunho", status=TeamStatus.DRAFT)
+        submitted = Team(id=uuid4(), name="Pendente", status=TeamStatus.SUBMITTED)
+        team_repository.find_all.return_value = [draft, submitted]
+        setup_extra_info_mocks(
+            modality_repository, user_repository, team_member_repository, teams=[submitted]
+        )
+
+        context = make_context(requesting_user_role=UserRole.MONITOR)
+        result = await adapter.execute(context)
+
+        assert result == [submitted]
+
+    async def test_monitor_requesting_draft_status_gets_empty_list(self):
+        (
+            adapter,
+            team_repository,
+            *_rest,
+        ) = make_adapter()
+
+        context = make_context(requesting_user_role=UserRole.MONITOR)
+        context.put_property("status", TeamStatus.DRAFT)
+
+        result = await adapter.execute(context)
+
+        assert result == []
+        team_repository.find_teams_by_status.assert_not_called()
+        team_repository.find_all.assert_not_called()
+
     async def test_extra_info_is_loaded_in_batch_for_all_teams(self):
         (
             adapter,
@@ -180,9 +222,18 @@ class TestListTeamsAdapter:
         ) = make_adapter()
         modality_id = uuid4()
         owner_id = uuid4()
-        team_a = Team(id=uuid4(), name="A", modality_id=modality_id, owner_id=owner_id)
-        team_b = Team(id=uuid4(), name="B", modality_id=modality_id, owner_id=owner_id)
-        team_c = Team(id=uuid4(), name="C", modality_id=uuid4(), owner_id=None)
+        team_a = Team(
+            id=uuid4(), name="A", modality_id=modality_id, owner_id=owner_id,
+            status=TeamStatus.SUBMITTED,
+        )
+        team_b = Team(
+            id=uuid4(), name="B", modality_id=modality_id, owner_id=owner_id,
+            status=TeamStatus.APPROVED,
+        )
+        team_c = Team(
+            id=uuid4(), name="C", modality_id=uuid4(), owner_id=None,
+            status=TeamStatus.REJECTED,
+        )
         team_repository.find_all.return_value = [team_a, team_b, team_c]
         modality_repository.find_by_ids.return_value = [
             Modality(id=modality_id, name="Futsal", min_members=5, max_members=10)
@@ -213,14 +264,17 @@ class TestListTeamsAdapter:
         assert info[team_a.id] == {
             "modality_name": "Futsal",
             "owner_name": "Dono",
+            "max_members": 10,
             "members_count": 6,
             "donations_confirmed": 5,
             "donations_total": 6,
         }
         assert info[team_b.id]["donations_confirmed"] == 5
+        assert info[team_b.id]["max_members"] == 10
         assert info[team_c.id] == {
             "modality_name": None,
             "owner_name": None,
+            "max_members": None,
             "members_count": 0,
             "donations_confirmed": 0,
             "donations_total": 0,
@@ -244,6 +298,90 @@ class TestListTeamsAdapter:
         await adapter.execute(context)
 
         team_repository.find_by_season_id.assert_awaited_once_with(season_id)
+
+    async def test_monitor_filters_by_modality_in_addition_to_status(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            modality_repository,
+        ) = make_adapter()
+
+        wanted_modality_id = uuid4()
+
+        team_in_modality = Team(
+            id=uuid4(),
+            name="A",
+            modality_id=wanted_modality_id,
+            owner_id=uuid4(),
+            status=TeamStatus.SUBMITTED,
+        )
+
+        team_other_modality = Team(
+            id=uuid4(),
+            name="B",
+            modality_id=uuid4(),
+            owner_id=uuid4(),
+            status=TeamStatus.SUBMITTED,
+        )
+
+        team_repository.find_teams_by_status.return_value = [
+            team_in_modality,
+            team_other_modality,
+        ]
+
+        setup_extra_info_mocks(
+            modality_repository,
+            user_repository,
+            team_member_repository,
+            teams=[team_in_modality],
+        )
+
+        context = make_context(requesting_user_role=UserRole.MONITOR)
+        context.put_property("status", TeamStatus.SUBMITTED)
+        context.put_property("modality_id", wanted_modality_id)
+
+        result = await adapter.execute(context)
+
+        assert result == [team_in_modality]
+
+        team_repository.find_teams_by_status.assert_awaited_once_with(
+            TeamStatus.SUBMITTED
+        )
+        team_repository.find_all.assert_not_called()
+        team_repository.find_by_season_id.assert_not_called()
+        team_repository.find_by_status_and_season_id.assert_not_called()
+
+
+    async def test_student_filters_by_modality_too(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            modality_repository,
+        ) = make_adapter()
+        wanted_modality_id = uuid4()
+        team_in_modality = Team(id=uuid4(), name="A", modality_id=wanted_modality_id)
+        team_other_modality = Team(id=uuid4(), name="B", modality_id=uuid4())
+        team_repository.find_teams_by_user_id_with_filters.return_value = [
+            team_in_modality,
+            team_other_modality,
+        ]
+        setup_extra_info_mocks(
+            modality_repository,
+            user_repository,
+            team_member_repository,
+            teams=[team_in_modality],
+        )
+
+        context = make_context(requesting_user_role=UserRole.USER)
+        context.put_property("modality_id", wanted_modality_id)
+
+        result = await adapter.execute(context)
+
+        assert result == [team_in_modality]
 
     async def test_admin_is_treated_as_monitor(self):
         (

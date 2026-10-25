@@ -21,7 +21,6 @@ class ModalityCreateRequest(BaseModel):
     num_periods: int = Field(ge=1)
     period_durations_minutes: int = Field(ge=1)
     score_type: ScoreType = Field()
-    has_third_place_match: bool = Field(default=False)
     metadata: Optional[Any] = Field(default=None)
 
     points_per_set: Optional[int] = Field(default=None, ge=1)

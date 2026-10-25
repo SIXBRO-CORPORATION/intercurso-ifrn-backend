@@ -46,7 +46,6 @@ async def test_list_modalities_without_season_id_uses_find_active_modalities():
         num_periods=2,
         period_durations_minutes=20,
         score_type=ScoreType.GOALS,
-        has_third_place_match=True,
     )
     configuration_repository.find_by_modality_ids.return_value = [configuration]
 
