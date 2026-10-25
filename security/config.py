@@ -15,7 +15,8 @@ class Settings(BaseSettings):
     # SUAP OAuth2
     suap_client_id: str
     suap_client_secret: str
-    suap_redirect_uri: str
+    suap_redirect_uri_web: str
+    suap_redirect_uri_mobile: str
     suap_authorization_url: str = "https://suap.ifrn.edu.br/o/authorize/"
     suap_token_url: str = "https://suap.ifrn.edu.br/o/token/"
     suap_user_info_url: str = "https://suap.ifrn.edu.br/api/rh/meus-dados/"

@@ -38,8 +38,12 @@ class LoginWithSuapAdapter(LoginWithSuapPort):
         if not authorization_code:
             raise BusinessException("Código de autorização não informado")
 
+        redirect_uri = context.get_property("redirect_uri", str)
+        if not redirect_uri:
+            raise BusinessException("redirect_uri não informado")
+
         suap_user_data = await self.oauth_provider.authenticate_with_code(
-            authorization_code
+            authorization_code, redirect_uri
         )
 
         self._validate_suap_data(suap_user_data)
