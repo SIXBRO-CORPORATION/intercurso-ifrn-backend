@@ -7,8 +7,10 @@ class GetActiveSeasonPort(Command[Season]):
 
     Não espera nenhuma propriedade no Context.
 
-    Retorna a Season marcada como ativa (`active = true`). Lança
-    BusinessException se não houver nenhuma temporada ativa no momento.
+    Retorna a Season marcada como ativa (`active = true`). Se não houver
+    nenhuma ativa (intervalo entre a finalização de uma temporada e a
+    criação da próxima), retorna a última temporada criada. Lança
+    NotFoundException apenas se nunca houve temporada.
     """
 
     pass

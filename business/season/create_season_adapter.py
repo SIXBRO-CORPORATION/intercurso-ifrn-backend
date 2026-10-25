@@ -16,6 +16,7 @@ from core.storage.file_storage_port import FileStoragePort
 from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
+from domain.exceptions.conflict_exception import ConflictException
 from domain.season.season import Season
 from domain.season.season_modality import SeasonModality
 from domain.season.season_rules_document import (
@@ -63,6 +64,11 @@ class CreateSeasonAdapter(CreateSeasonPort):
 
         if season is None:
             raise BusinessException("Dados da temporada são obrigatórios")
+
+        if await self.season_repository.exists_unfinished_season():
+            raise ConflictException(
+                "Finalize a temporada atual antes de criar uma nova temporada"
+            )
 
         if not season.name or not season.name.strip():
             raise BusinessException("Nome da temporada não pode estar vazio")
@@ -114,13 +120,6 @@ class CreateSeasonAdapter(CreateSeasonPort):
                     f"Modalidade '{modality.name}' está inativa e não pode ser selecionada"
                 )
 
-
-        if open_immediately:
-            currently_active = await self.season_repository.find_active_season()
-            if currently_active is not None:
-                raise BusinessException(
-                    "Finalize a temporada atual antes de abrir as inscrições de uma nova temporada"
-                )
 
         rules_document_key = None
         if rules_document_type is not None:

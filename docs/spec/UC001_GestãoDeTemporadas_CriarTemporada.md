@@ -5,7 +5,8 @@ Este caso de uso permite que o monitor crie uma nova temporada (edição anual d
 
 ## 2. Pré-condições
 - O ator deve estar autenticado com permissão de **Monitor**;
-- Devem existir modalidades previamente cadastradas e ativas no sistema.
+- Devem existir modalidades previamente cadastradas e ativas no sistema;
+- Não pode existir temporada em status diferente de FINALIZADA. Caso exista, o sistema recusa a criação com HTTP 409.
 
 ## 3. Fluxo Principal: Criar Nova Temporada
 1. O ator acessa o módulo "Gestão de Temporadas";
@@ -32,7 +33,7 @@ Este caso de uso permite que o monitor crie uma nova temporada (edição anual d
 2. O sistema desabilita campo de data de abertura;
 3. O sistema define data de abertura = agora;
 4. Ao criar, sistema muda status para REGISTRATION_OPEN automaticamente;
-5. O sistema define `is_active = true` e desativa outras temporadas;
+5. O sistema define `is_active = true`;
 6. O sistema envia notificação aos alunos: "🎉 Inscrições abertas!";
 7. O sistema exibe mensagem de sucesso.
 
