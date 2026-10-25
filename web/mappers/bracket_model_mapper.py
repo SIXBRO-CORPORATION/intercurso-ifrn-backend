@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
+from business.bracket.engine.match_count_estimator import estimate_match_counts
 from domain.bracket.bracket import Bracket
 from domain.bracket.bracket_group import BracketGroup
 from domain.bracket.bracket_group_team import BracketGroupTeam
@@ -28,12 +29,15 @@ class BracketModelMapper:
         byes_estimated: int,
         suggested_configuration: dict,
     ) -> BracketConfigSuggestionResponse:
+        match_counts = estimate_match_counts(modality_format, team_count, suggested_configuration)
         return BracketConfigSuggestionResponse(
             modality_id=modality_id,
             format=modality_format.value,
             team_count=team_count,
             byes_estimated=byes_estimated,
             suggested_configuration=suggested_configuration,
+            total_matches_estimated=match_counts["total_matches"],
+            matches_by_round=match_counts["matches_by_round"],
         )
 
     def to_bracket_response(

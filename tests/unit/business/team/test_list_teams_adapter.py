@@ -299,6 +299,69 @@ class TestListTeamsAdapter:
 
         team_repository.find_by_season_id.assert_awaited_once_with(season_id)
 
+    async def test_monitor_filters_by_modality_in_addition_to_status(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            modality_repository,
+        ) = make_adapter()
+        wanted_modality_id = uuid4()
+        team_in_modality = Team(
+            id=uuid4(), name="A", modality_id=wanted_modality_id, owner_id=uuid4()
+        )
+        team_other_modality = Team(
+            id=uuid4(), name="B", modality_id=uuid4(), owner_id=uuid4()
+        )
+        team_repository.find_teams_by_status.return_value = [
+            team_in_modality,
+            team_other_modality,
+        ]
+        setup_extra_info_mocks(
+            modality_repository,
+            user_repository,
+            team_member_repository,
+            teams=[team_in_modality],
+        )
+
+        context = make_context(requesting_user_role=UserRole.MONITOR)
+        context.put_property("status", TeamStatus.SUBMITTED)
+        context.put_property("modality_id", wanted_modality_id)
+
+        result = await adapter.execute(context)
+
+        assert result == [team_in_modality]
+
+    async def test_student_filters_by_modality_too(self):
+        (
+            adapter,
+            team_repository,
+            team_member_repository,
+            user_repository,
+            modality_repository,
+        ) = make_adapter()
+        wanted_modality_id = uuid4()
+        team_in_modality = Team(id=uuid4(), name="A", modality_id=wanted_modality_id)
+        team_other_modality = Team(id=uuid4(), name="B", modality_id=uuid4())
+        team_repository.find_teams_by_user_id_with_filters.return_value = [
+            team_in_modality,
+            team_other_modality,
+        ]
+        setup_extra_info_mocks(
+            modality_repository,
+            user_repository,
+            team_member_repository,
+            teams=[team_in_modality],
+        )
+
+        context = make_context(requesting_user_role=UserRole.USER)
+        context.put_property("modality_id", wanted_modality_id)
+
+        result = await adapter.execute(context)
+
+        assert result == [team_in_modality]
+
     async def test_admin_is_treated_as_monitor(self):
         (
             adapter,

@@ -112,6 +112,7 @@ async def list_teams(
     current_user: User = Depends(require_authenticated_user),
     status_filter: Optional[TeamStatus] = Query(default=None, alias="status"),
     season_id: Optional[UUID] = Query(default=None),
+    modality_id: Optional[UUID] = Query(default=None),
 ):
     context = Context()
     context.put_property("requesting_user_id", current_user.id)
@@ -120,6 +121,8 @@ async def list_teams(
         context.put_property("status", status_filter)
     if season_id is not None:
         context.put_property("season_id", season_id)
+    if modality_id is not None:
+        context.put_property("modality_id", modality_id)
 
     teams = await list_teams_port.execute(context)
     team_extra_info = context.get_property("team_extra_info", dict) or {}

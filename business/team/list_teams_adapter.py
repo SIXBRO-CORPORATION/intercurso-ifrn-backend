@@ -36,6 +36,7 @@ class ListTeamsAdapter(ListTeamsPort):
 
         status_filter = context.get_property("status", TeamStatus)
         season_id_filter = context.get_property("season_id", UUID)
+        modality_id_filter = context.get_property("modality_id", UUID)
 
         if is_monitor_operation:
             teams = await self._find_teams_for_monitor(status_filter, season_id_filter)
@@ -47,6 +48,9 @@ class ListTeamsAdapter(ListTeamsPort):
                 teams = [t for t in teams if t.season_id == season_id_filter]
             if status_filter is not None:
                 teams = [t for t in teams if t.status == status_filter]
+
+        if modality_id_filter is not None:
+            teams = [t for t in teams if t.modality_id == modality_id_filter]
 
         team_extra_info = await self._build_extra_info_by_team(teams)
 
