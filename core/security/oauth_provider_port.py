@@ -5,11 +5,11 @@ from domain.user.user import User
 
 class OAuthProviderPort(ABC):
     @abstractmethod
-    def get_authorization_url(self, state: Optional[str] = None) -> str:
+    def get_authorization_url(self, redirect_uri: str, state: Optional[str] = None) -> str:
         pass
 
     @abstractmethod
-    async def exchange_code_for_token(self, code: str) -> str:
+    async def exchange_code_for_token(self, code: str, redirect_uri: str) -> str:
         pass
 
     @abstractmethod
@@ -17,5 +17,5 @@ class OAuthProviderPort(ABC):
         pass
 
     @abstractmethod
-    async def authenticate_with_code(self, code: str) -> User:
+    async def authenticate_with_code(self, code: str, redirect_uri: str) -> User:
         pass

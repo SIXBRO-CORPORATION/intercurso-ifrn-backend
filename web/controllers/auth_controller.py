@@ -53,6 +53,12 @@ def _set_refresh_token_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
+def _redirect_uri(platform: str) -> str:
+    if platform == "mobile":
+        return settings.suap_redirect_uri_mobile
+    return settings.suap_redirect_uri_web
+
+
 def _login_error_redirect(code: str) -> RedirectResponse:
     response = RedirectResponse(
         url=f"{settings.frontend_url}/login?{urlencode({'erro': code})}"
@@ -69,7 +75,9 @@ async def login_with_suap(
     oauth_provider: OAuthProviderPort = Depends(get_oauth_provider),
 ):
     state = generate_oauth_state(platform=platform)
-    authorization_url = oauth_provider.get_authorization_url(state=state)
+    authorization_url = oauth_provider.get_authorization_url(
+        redirect_uri=_redirect_uri(platform), state=state
+    )
 
     response = RedirectResponse(url=authorization_url)
     response.set_cookie(
@@ -99,6 +107,7 @@ async def auth_callback(
 
     context = Context()
     context.put_property("authorization_code", code)
+    context.put_property("redirect_uri", _redirect_uri(platform))
 
     try:
         access_token = await login_with_suap_port.execute(context)

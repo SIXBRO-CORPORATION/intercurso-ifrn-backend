@@ -23,8 +23,10 @@ def _clean_overrides():
 
 def _login_port(refresh="refresh-plain"):
     port = MagicMock()
+    port.redirect_uris = []
 
     async def execute(context):
+        port.redirect_uris.append(context.get_property("redirect_uri", str))
         context.put_property("refresh_token", refresh)
         return MagicMock(access_token="ACCESS-SECRETO")
 
@@ -67,3 +69,21 @@ def test_suap_failure_redirects_without_leaking_details():
     assert r.status_code == 307
     assert r.headers["location"] == f"{settings.frontend_url}/login?erro=login_falhou"
     assert "segredo" not in r.headers["location"]
+
+
+@pytest.mark.parametrize(
+    "platform,expected",
+    [
+        ("web", settings.suap_redirect_uri_web),
+        ("mobile", settings.suap_redirect_uri_mobile),
+    ],
+)
+def test_callback_exchanges_code_with_redirect_uri_of_platform(platform, expected):
+    port = _login_port()
+    state = generate_oauth_state(platform)
+    client = _client(port)
+    client.cookies.set(OAUTH_STATE_COOKIE_NAME, state, path="/api/auth")
+
+    client.get("/api/auth/callback", params={"code": "c", "state": state})
+
+    assert port.redirect_uris == [expected]
