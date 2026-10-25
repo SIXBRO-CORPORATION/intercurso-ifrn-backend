@@ -307,17 +307,30 @@ class TestListTeamsAdapter:
             user_repository,
             modality_repository,
         ) = make_adapter()
+
         wanted_modality_id = uuid4()
+
         team_in_modality = Team(
-            id=uuid4(), name="A", modality_id=wanted_modality_id, owner_id=uuid4()
+            id=uuid4(),
+            name="A",
+            modality_id=wanted_modality_id,
+            owner_id=uuid4(),
+            status=TeamStatus.SUBMITTED,
         )
+
         team_other_modality = Team(
-            id=uuid4(), name="B", modality_id=uuid4(), owner_id=uuid4()
+            id=uuid4(),
+            name="B",
+            modality_id=uuid4(),
+            owner_id=uuid4(),
+            status=TeamStatus.SUBMITTED,
         )
+
         team_repository.find_teams_by_status.return_value = [
             team_in_modality,
             team_other_modality,
         ]
+
         setup_extra_info_mocks(
             modality_repository,
             user_repository,
@@ -332,6 +345,14 @@ class TestListTeamsAdapter:
         result = await adapter.execute(context)
 
         assert result == [team_in_modality]
+
+        team_repository.find_teams_by_status.assert_awaited_once_with(
+            TeamStatus.SUBMITTED
+        )
+        team_repository.find_all.assert_not_called()
+        team_repository.find_by_season_id.assert_not_called()
+        team_repository.find_by_status_and_season_id.assert_not_called()
+
 
     async def test_student_filters_by_modality_too(self):
         (

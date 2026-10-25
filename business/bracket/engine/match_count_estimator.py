@@ -5,7 +5,7 @@ from domain.enums.modality_format import ModalityFormat
 
 
 def _knockout_rounds(bracket_size: int) -> list[int]:
-    
+
     rounds: list[int] = []
     size = bracket_size
     while size > 1:
