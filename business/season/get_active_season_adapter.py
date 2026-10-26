@@ -13,6 +13,9 @@ class GetActiveSeasonAdapter(GetActiveSeasonPort):
         season = await self.season_repository.find_active_season()
 
         if season is None:
-            raise NotFoundException("Nenhuma temporada ativa no momento")
+            season = await self.season_repository.find_last_season()
+
+        if season is None:
+            raise NotFoundException("Nenhuma temporada cadastrada")
 
         return season

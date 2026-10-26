@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 
 from domain.exceptions.business_exception import BusinessException
+from domain.exceptions.conflict_exception import ConflictException
 from domain.exceptions.not_found_exception import NotFoundException
 from web.commons.api_response import ApiResponse
 
@@ -14,6 +15,7 @@ _HTTP_EXCEPTION_CODES = {
     status.HTTP_401_UNAUTHORIZED: "UNAUTHORIZED",
     status.HTTP_403_FORBIDDEN: "FORBIDDEN",
     status.HTTP_404_NOT_FOUND: "NOT_FOUND",
+    status.HTTP_409_CONFLICT: "CONFLICT",
 }
 
 
@@ -41,6 +43,19 @@ def register_exception_handler(app: FastAPI) -> None:
 
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
+            content=response.model_dump(mode="json"),
+        )
+
+    @app.exception_handler(ConflictException)
+    async def conflict_exception_handler(
+        request: Request, exc: ConflictException
+    ) -> JSONResponse:
+        response = ApiResponse.failure(error=str(exc), code="CONFLICT")
+        if exc.field:
+            response.data = {exc.field: str(exc)}
+
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
             content=response.model_dump(mode="json"),
         )
 

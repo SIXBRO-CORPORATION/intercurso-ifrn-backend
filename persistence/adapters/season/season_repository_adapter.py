@@ -50,6 +50,29 @@ class SeasonRepositoryAdapter(SeasonRepositoryPort):
         entity = result.scalar_one_or_none()
         return self.mapper.to_domain(entity) if entity else None
 
+    async def find_last_season(self) -> Optional[Season]:
+        query = (
+            select(SeasonEntity)
+            .where(SeasonEntity.deleted_at.is_(None))
+            .order_by(SeasonEntity.created_at.desc())
+            .limit(1)
+        )
+        result = await self.session.execute(query)
+        entity = result.scalars().first()
+        return self.mapper.to_domain(entity) if entity else None
+
+    async def exists_unfinished_season(self) -> bool:
+        query = (
+            select(SeasonEntity.id)
+            .where(
+                SeasonEntity.status != SeasonStatus.FINISHED.value,
+                SeasonEntity.deleted_at.is_(None),
+            )
+            .limit(1)
+        )
+        result = await self.session.execute(query)
+        return result.first() is not None
+
     async def find_by_status(self, status: SeasonStatus) -> List[Season]:
         query = select(SeasonEntity).where(
             SeasonEntity.status == status.value,
