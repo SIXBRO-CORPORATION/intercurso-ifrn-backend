@@ -21,12 +21,9 @@ def upgrade() -> None:
     """Upgrade schema.
 
     Infraestrutura de Push Notification (UC016, Fluxo Alternativo 2; ADR 0005):
-    tabela de tokens de dispositivo (FCM) usados para o canal pessoal/dirigido
-    de push (ex.: "seu time foi aprovado"), que exige Aluno autenticado com
-    token registrado. Eventos de partida (gol, cartão, início/fim) são
-    broadcast por tópico FCM e não dependem desta tabela (ADR 0005, seção 5).
-    `active=False` cobre tanto opt-out (logout) quanto invalidação do token
-    pelo provedor.
+    tabela de tokens de dispositivo (FCM) usados para envio de push a Alunos
+    autenticados. `active=False` cobre tanto opt-out (logout) quanto
+    invalidação do token pelo provedor.
     """
     op.create_table(
         'device_tokens',
