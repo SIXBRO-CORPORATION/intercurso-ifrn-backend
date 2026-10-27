@@ -14,6 +14,7 @@ from web.dependencies.persistence_dependencies import (
     get_modality_repository,
     get_modality_configuration_repository,
     get_volleyball_modality_configuration_repository,
+    get_device_token_repository,
 )
 
 from web.dependencies.commons_dependencies import (
@@ -108,6 +109,11 @@ from web.dependencies.business.auth_dependencies import (
     get_logout_port,
 )
 
+from web.dependencies.business.messaging_dependencies import (
+    get_register_device_token_port,
+    get_remove_device_token_port,
+)
+
 from web.dependencies.mapper_dependencies import (
     get_user_model_mapper,
     get_modality_model_mapper,
@@ -135,6 +141,7 @@ __all__ = [
     "get_season_repository",
     "get_audit_log_repository",
     "get_broadcaster",
+    "get_device_token_repository",
 
     # Commons Dependencies
     "get_audit_logger",
@@ -216,6 +223,10 @@ __all__ = [
     "get_login_with_suap_port",
     "get_refresh_access_token_port",
     "get_logout_port",
+
+    # Business Dependencies - Messaging
+    "get_register_device_token_port",
+    "get_remove_device_token_port",
 
     # Mapper Dependencies
     "get_user_model_mapper",

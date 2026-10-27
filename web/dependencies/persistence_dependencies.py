@@ -35,6 +35,9 @@ from persistence.adapters.modality.modality_configuration_repository_adapter imp
 from persistence.adapters.audit.audit_log_repository_adapter import (
     AuditLogRepositoryAdapter,
 )
+from persistence.adapters.messaging.device_token_repository_adapter import (
+    DeviceTokenRepositoryAdapter,
+)
 from core.persistence.user.user_repository_port import UserRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
@@ -55,6 +58,9 @@ from core.persistence.modality.modality_configuration_repository_port import (
     ModalityConfigurationRepositoryPort,
 )
 from core.persistence.audit.audit_log_repository_port import AuditLogRepositoryPort
+from core.persistence.messaging.device_token_repository_port import (
+    DeviceTokenRepositoryPort,
+)
 from persistence.adapters.modality.volleyball_modality_configuration_repository_adapter import \
     VolleyballModalityConfigurationRepositoryAdapter
 from persistence.database import get_db
@@ -75,6 +81,7 @@ from persistence.mappers.modality.modality_configuration_mapper import (
     ModalityConfigurationMapper,
 )
 from persistence.mappers.audit.audit_log_mapper import AuditLogMapper
+from persistence.mappers.messaging.device_token_mapper import DeviceTokenMapper
 from persistence.mappers.modality.volleyball_modality_configuration_mapper import VolleyballModalityConfigurationMapper
 
 
@@ -133,6 +140,14 @@ def get_refresh_token_repository(
     mapper = RefreshTokenMapper()
 
     return RefreshTokenRepositoryAdapter(session, mapper)
+
+
+def get_device_token_repository(
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> DeviceTokenRepositoryPort:
+    mapper = DeviceTokenMapper()
+
+    return DeviceTokenRepositoryAdapter(session, mapper)
 
 
 def get_bracket_repository(
