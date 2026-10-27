@@ -9,6 +9,7 @@ from core.context import Context
 from domain.enums.audit_action import AuditAction
 from domain.enums.season_status import SeasonStatus
 from domain.exceptions.business_exception import BusinessException
+from domain.exceptions.conflict_exception import ConflictException
 from domain.modality.modality import Modality
 from domain.season.season import Season
 from domain.season.season_modality import SeasonModality
@@ -16,6 +17,7 @@ from domain.season.season_modality import SeasonModality
 
 def make_adapter():
     season_repository = AsyncMock()
+    season_repository.exists_unfinished_season.return_value = False
     season_modality_repository = AsyncMock()
     modality_repository = AsyncMock()
     user_repository = AsyncMock()
@@ -108,8 +110,7 @@ class TestCreateSeasonAdapter:
         assert result is not None
         season_repository.save.assert_awaited_once()
         season_modality_repository.insert_all.assert_awaited_once()
-        # Abertura não imediata: não deve nem consultar temporada ativa
-        season_repository.find_active_season.assert_not_awaited()
+        season_repository.exists_unfinished_season.assert_awaited_once()
         audit_logger.log.assert_awaited_once()
         assert (
                 audit_logger.log.await_args.kwargs["action"] == AuditAction.SEASON_CREATED
@@ -139,35 +140,24 @@ class TestCreateSeasonAdapter:
         assert saved.active is False
         assert saved.status == SeasonStatus.DRAFT
 
-    async def test_open_immediately_is_blocked_when_another_season_is_active(self):
-        (
-            adapter,
-            season_repository,
-            season_modality_repository,
-            modality_repository,
-            user_repository,
-            audit_logger,
-        ) = make_adapter()
-        modality_id = uuid4()
-        modality_repository.find_by_ids.return_value = [
-            Modality(id=modality_id, name="Futsal", min_members=5, max_members=10, active=True)
-        ]
-        season_repository.find_active_season.return_value = Season(
-            id=uuid4(), name="Atual", active=True, status=SeasonStatus.IN_PROGRESS
-        )
+    @pytest.mark.parametrize("open_immediately", [False, True])
+    async def test_creation_is_blocked_when_there_is_an_unfinished_season(
+        self, open_immediately
+    ):
+        adapter, season_repository, *_ = make_adapter()
+        season_repository.exists_unfinished_season.return_value = True
 
-        with pytest.raises(BusinessException, match="Finalize a temporada atual"):
+        with pytest.raises(ConflictException, match="Finalize a temporada atual"):
             await adapter.execute(
                 make_context(
-                    modality_ids=[modality_id],
-                    registration_start_date=None,
-                    open_immediately=True,
+                    modality_ids=[uuid4()],
+                    open_immediately=open_immediately,
                 )
             )
 
         season_repository.save.assert_not_awaited()
 
-    async def test_open_immediately_creates_season_active_when_none_is_active(self):
+    async def test_open_immediately_creates_season_active_when_all_are_finished(self):
         (
             adapter,
             season_repository,
@@ -180,7 +170,6 @@ class TestCreateSeasonAdapter:
         modality_repository.find_by_ids.return_value = [
             Modality(id=modality_id, name="Futsal", min_members=5, max_members=10, active=True)
         ]
-        season_repository.find_active_season.return_value = None
         season_repository.save.side_effect = lambda s: s
         season_modality_repository.save.return_value = SeasonModality(
             id=uuid4(), modality_id=modality_id
@@ -351,12 +340,9 @@ class TestCreateSeasonRulesDocument:
     async def test_business_rejection_does_not_upload(self):
         parts = make_adapter()
         adapter, season_repository, context = arrange_valid_flow(parts, PDF)
-        season_repository.find_active_season.return_value = Season(
-            id=uuid4(), name="Atual", active=True, status=SeasonStatus.IN_PROGRESS
-        )
-        context.put_property("open_immediately", True)
+        season_repository.exists_unfinished_season.return_value = True
 
-        with pytest.raises(BusinessException, match="Finalize a temporada atual"):
+        with pytest.raises(ConflictException, match="Finalize a temporada atual"):
             await adapter.execute(context)
 
         adapter.file_storage.upload.assert_not_awaited()

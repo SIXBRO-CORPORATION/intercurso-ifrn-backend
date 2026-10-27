@@ -13,6 +13,14 @@ class SeasonRepositoryPort(BaseRepositoryPort[Season]):
         pass
 
     @abstractmethod
+    async def find_last_season(self) -> Optional[Season]:
+        pass
+
+    @abstractmethod
+    async def exists_unfinished_season(self) -> bool:
+        pass
+
+    @abstractmethod
     async def find_by_status(self, status: SeasonStatus) -> List[Season]:
         pass
 
