@@ -1,4 +1,3 @@
-import asyncio
 from typing import Annotated, List, Optional, Sequence
 from uuid import UUID
 
@@ -19,10 +18,11 @@ from core.business.match.register_penalty_kick_port import RegisterPenaltyKickPo
 from core.business.match.end_penalty_shootout_port import EndPenaltyShootoutPort
 from core.business.match.undo_last_event_port import UndoLastEventPort
 from core.business.match.delete_event_port import DeleteEventPort
+from messaging.services.match_event_publisher import (
+    MatchEventPublisher,
+    MatchTeamSnapshot,
+)
 from core.context import Context
-from core.messaging.push_sender_port import PushSenderPort
-from core.persistence.bracket.bracket_repository_port import BracketRepositoryPort
-from core.realtime.broadcaster import Broadcaster
 from domain.match.match import Match
 from domain.match.match_set import MatchSet
 from domain.modality.modality import Modality
@@ -32,20 +32,17 @@ from domain.modality.volleyball_modality_configuration import (
 )
 from domain.enums.card_type import CardType
 from domain.match.match_event import MatchEvent
-from messaging.match_broadcast_content import BROADCAST_TOPIC, broadcast_push_content
 from domain.team.team import Team
 from domain.user.user import User
 from web.commons.api_response import ApiResponse
 from web.dependencies import (
-    get_bracket_repository,
-    get_broadcaster,
     get_end_period_port,
     get_end_set_port,
     get_end_penalty_shootout_port,
     get_finish_match_port,
+    get_match_event_publisher,
     get_match_model_mapper,
     get_pause_clock_port,
-    get_push_sender,
     get_register_card_port,
     get_register_goal_port,
     get_register_penalty_kick_port,
@@ -67,65 +64,26 @@ from web.models.response.match.match_public_response import MatchPublicResponse
 router = APIRouter(prefix="/api/match", tags=["match"])
 
 async def _publish_match_event(
-    broadcaster: Broadcaster,
-    push_sender: PushSenderPort,
-    bracket_repository: BracketRepositoryPort,
+    match_event_publisher: MatchEventPublisher,
     match: Match,
     event_types: str | Sequence[str],
     response: ApiResponse[MatchManagementResponse],
     card_type: Optional[CardType] = None,
 ) -> None:
-    if isinstance(event_types, str):
-        event_types = (event_types,)
 
     public_match = (
         MatchPublicResponse.model_validate(response.data) if response.data else None
     )
-    payload = {
-        "match_id": str(match.id),
-        "match": public_match.model_dump(mode="json") if public_match else None,
-    }
+    match_payload = public_match.model_dump(mode="json") if public_match else None
 
-    for event_type in event_types:
-        await broadcaster.publish(
-            Broadcaster.match_channel(match.id),
-            event_type,
-            {**payload, "event": event_type},
-        )
-
+    team1 = team2 = None
     if public_match is not None and public_match.team1 and public_match.team2:
-        push_content = broadcast_push_content(
-            event_types,
-            public_match.team1.name,
-            public_match.team2.name,
-            public_match.team1.score,
-            public_match.team2.score,
-            card_type,
-        )
-        if push_content is not None:
-            title, body = push_content
-            asyncio.create_task(
-                push_sender.send_to_topic(
-                    BROADCAST_TOPIC,
-                    title,
-                    body,
-                    {"match_id": str(match.id), "event": event_types[0]},
-                )
-            )
+        team1 = MatchTeamSnapshot(public_match.team1.name, public_match.team1.score)
+        team2 = MatchTeamSnapshot(public_match.team2.name, public_match.team2.score)
 
-    if match.bracket_id is None:
-        return
-
-    bracket = await bracket_repository.get(match.bracket_id)
-    if bracket is None or bracket.season_id is None:
-        return
-
-    for event_type in event_types:
-        await broadcaster.publish(
-            Broadcaster.season_channel(bracket.season_id),
-            event_type,
-            {**payload, "event": event_type},
-        )
+    await match_event_publisher.publish(
+        match, event_types, match_payload, team1, team2, card_type
+    )
 
 
 def _build_response(
@@ -181,9 +139,9 @@ async def start_match(
     match_id: UUID,
     start_match_port: Annotated[StartMatchPort, Depends(get_start_match_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -198,7 +156,9 @@ async def start_match(
         context.put_property("timeline_events", existing_timeline + [match_start_event])
 
     response = _build_response(context, mapper, started_match, "Partida iniciada com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, started_match, "match_started", response)
+    await _publish_match_event(
+        match_event_publisher, started_match, "match_started", response
+    )
     return response
 
 
@@ -212,9 +172,9 @@ async def register_goal(
     request: MatchGoalRequest,
     register_goal_port: Annotated[RegisterGoalPort, Depends(get_register_goal_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -227,7 +187,7 @@ async def register_goal(
 
     response = _build_response(context, mapper, match, "Gol/ponto registrado com sucesso!")
     await _publish_match_event(
-        broadcaster, push_sender, bracket_repository, match, ("score_update", "goal_scored"), response
+        match_event_publisher, match, ("score_update", "goal_scored"), response
     )
     return response
 
@@ -242,9 +202,9 @@ async def register_card(
     request: MatchCardRequest,
     register_card_port: Annotated[RegisterCardPort, Depends(get_register_card_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -258,9 +218,7 @@ async def register_card(
 
     response = _build_response(context, mapper, match, "Cartão registrado com sucesso!")
     await _publish_match_event(
-        broadcaster,
-        push_sender,
-        bracket_repository,
+        match_event_publisher,
         match,
         "card_issued",
         response,
@@ -278,9 +236,9 @@ async def pause_clock(
     match_id: UUID,
     pause_clock_port: Annotated[PauseClockPort, Depends(get_pause_clock_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -290,7 +248,7 @@ async def pause_clock(
     match = await pause_clock_port.execute(context)
 
     response = _build_response(context, mapper, match, "Cronômetro pausado com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "clock_update", response)
+    await _publish_match_event(match_event_publisher, match, "clock_update", response)
     return response
 
 
@@ -303,9 +261,9 @@ async def resume_clock(
     match_id: UUID,
     resume_clock_port: Annotated[ResumeClockPort, Depends(get_resume_clock_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -315,7 +273,7 @@ async def resume_clock(
     match = await resume_clock_port.execute(context)
 
     response = _build_response(context, mapper, match, "Cronômetro retomado com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "clock_update", response)
+    await _publish_match_event(match_event_publisher, match, "clock_update", response)
     return response
 
 
@@ -328,9 +286,9 @@ async def end_period(
     match_id: UUID,
     end_period_port: Annotated[EndPeriodPort, Depends(get_end_period_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -340,7 +298,7 @@ async def end_period(
     match = await end_period_port.execute(context)
 
     response = _build_response(context, mapper, match, "Período encerrado com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "period_ended", response)
+    await _publish_match_event(match_event_publisher, match, "period_ended", response)
     return response
 
 
@@ -353,9 +311,9 @@ async def start_period(
     match_id: UUID,
     start_period_port: Annotated[StartPeriodPort, Depends(get_start_period_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -365,7 +323,7 @@ async def start_period(
     match = await start_period_port.execute(context)
 
     response = _build_response(context, mapper, match, "Próximo período iniciado com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "period_started", response)
+    await _publish_match_event(match_event_publisher, match, "period_started", response)
     return response
 
 
@@ -378,9 +336,9 @@ async def end_set(
     match_id: UUID,
     end_set_port: Annotated[EndSetPort, Depends(get_end_set_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -390,7 +348,7 @@ async def end_set(
     match = await end_set_port.execute(context)
 
     response = _build_response(context, mapper, match, "Set finalizado com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "set_finished", response)
+    await _publish_match_event(match_event_publisher, match, "set_finished", response)
     return response
 
 
@@ -403,9 +361,9 @@ async def finish_match(
     match_id: UUID,
     finish_match_port: Annotated[FinishMatchPort, Depends(get_finish_match_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -415,7 +373,7 @@ async def finish_match(
     match = await finish_match_port.execute(context)
 
     response = _build_response(context, mapper, match, "Partida finalizada com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "match_finished", response)
+    await _publish_match_event(match_event_publisher, match, "match_finished", response)
     return response
 
 
@@ -430,9 +388,9 @@ async def start_penalty_shootout(
         StartPenaltyShootoutPort, Depends(get_start_penalty_shootout_port)
     ],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -442,7 +400,7 @@ async def start_penalty_shootout(
     match = await start_penalty_shootout_port.execute(context)
 
     response = _build_response(context, mapper, match, "Disputa de pênaltis iniciada com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "score_update", response)
+    await _publish_match_event(match_event_publisher, match, "score_update", response)
     return response
 
 
@@ -458,9 +416,9 @@ async def register_penalty_kick(
         RegisterPenaltyKickPort, Depends(get_register_penalty_kick_port)
     ],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -473,7 +431,7 @@ async def register_penalty_kick(
     match = await register_penalty_kick_port.execute(context)
 
     response = _build_response(context, mapper, match, "Cobrança de pênalti registrada!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "score_update", response)
+    await _publish_match_event(match_event_publisher, match, "score_update", response)
     return response
 
 
@@ -488,9 +446,9 @@ async def end_penalty_shootout(
         EndPenaltyShootoutPort, Depends(get_end_penalty_shootout_port)
     ],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -500,7 +458,7 @@ async def end_penalty_shootout(
     match = await end_penalty_shootout_port.execute(context)
 
     response = _build_response(context, mapper, match, "Disputa de pênaltis encerrada. Partida finalizada!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "match_finished", response)
+    await _publish_match_event(match_event_publisher, match, "match_finished", response)
     return response
 
 
@@ -515,9 +473,9 @@ async def undo_last_event(
         UndoLastEventPort, Depends(get_undo_last_event_port)
     ],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -530,7 +488,7 @@ async def undo_last_event(
         context, mapper, match, "Último evento desfeito com sucesso!"
     )
     await _publish_match_event(
-        broadcaster, push_sender, bracket_repository, match, "event_deleted", response
+        match_event_publisher, match, "event_deleted", response
     )
     return response
 
@@ -545,9 +503,9 @@ async def delete_event(
     event_id: UUID,
     delete_event_port: Annotated[DeleteEventPort, Depends(get_delete_event_port)],
     mapper: Annotated[MatchModelMapper, Depends(get_match_model_mapper)],
-    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
-    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
-    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+    match_event_publisher: Annotated[
+        MatchEventPublisher, Depends(get_match_event_publisher)
+    ],
     current_user: User = Depends(require_monitor),
 ):
     context = Context()
@@ -558,5 +516,5 @@ async def delete_event(
     match = await delete_event_port.execute(context)
 
     response = _build_response(context, mapper, match, "Evento deletado com sucesso!")
-    await _publish_match_event(broadcaster, push_sender, bracket_repository, match, "event_deleted", response)
+    await _publish_match_event(match_event_publisher, match, "event_deleted", response)
     return response

@@ -3,6 +3,7 @@ from fastapi import Depends
 
 from core.business.audit.audit_logger import AuditLogger
 from core.business.match.list_public_matches_port import ListPublicMatchesPort
+from messaging.services.match_event_publisher import MatchEventPublisher
 from core.business.match.start_match_port import StartMatchPort
 from business.match.list_public_matches_adapter import ListPublicMatchesAdapter
 from core.persistence.bracket.bracket_group_repository_port import (
@@ -49,9 +50,12 @@ from business.match.register_penalty_kick_adapter import RegisterPenaltyKickAdap
 from business.match.end_penalty_shootout_adapter import EndPenaltyShootoutAdapter
 from business.match.undo_last_event_adapter import UndoLastEventAdapter
 from business.match.delete_event_adapter import DeleteEventAdapter
+from core.messaging.push_sender_port import PushSenderPort
+from core.realtime.broadcaster import Broadcaster
 from core.persistence.modality.volleyball_modality_configuration_repository_port import \
     VolleyballModalityConfigurationRepositoryPort
-from web.dependencies.commons_dependencies import get_audit_logger
+from web.dependencies.commons_dependencies import get_audit_logger, get_broadcaster
+from web.dependencies.business.messaging_dependencies import get_push_sender
 from web.dependencies.persistence_dependencies import (
     get_bracket_group_repository,
     get_bracket_group_team_repository,
@@ -66,6 +70,18 @@ from web.dependencies.persistence_dependencies import (
     get_user_repository,
     get_volleyball_modality_configuration_repository,
 )
+
+
+def get_match_event_publisher(
+    broadcaster: Annotated[Broadcaster, Depends(get_broadcaster)],
+    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
+    bracket_repository: Annotated[BracketRepositoryPort, Depends(get_bracket_repository)],
+) -> MatchEventPublisher:
+    return MatchEventPublisher(
+        broadcaster=broadcaster,
+        push_sender=push_sender,
+        bracket_repository=bracket_repository,
+    )
 
 
 def get_start_match_port(

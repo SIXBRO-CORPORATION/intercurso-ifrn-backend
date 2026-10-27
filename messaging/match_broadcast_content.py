@@ -13,7 +13,7 @@ def broadcast_push_content(
     team2_score: int,
     card_type: Optional[CardType] = None,
 ) -> Optional[Tuple[str, str]]:
-    
+
     score = f"{team1_score} x {team2_score}"
 
     if "match_started" in event_types:
