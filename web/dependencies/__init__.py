@@ -110,6 +110,7 @@ from web.dependencies.business.auth_dependencies import (
 )
 
 from web.dependencies.business.messaging_dependencies import (
+    get_push_sender,
     get_register_device_token_port,
     get_remove_device_token_port,
 )
@@ -227,6 +228,7 @@ __all__ = [
     # Business Dependencies - Messaging
     "get_register_device_token_port",
     "get_remove_device_token_port",
+    "get_push_sender",
 
     # Mapper Dependencies
     "get_user_model_mapper",
