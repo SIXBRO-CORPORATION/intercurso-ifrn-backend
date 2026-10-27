@@ -100,6 +100,7 @@ from web.dependencies.business.match_dependencies import (
     get_end_penalty_shootout_port,
     get_undo_last_event_port,
     get_delete_event_port,
+    get_match_event_publisher,
 )
 
 from web.dependencies.business.auth_dependencies import (
@@ -218,6 +219,7 @@ __all__ = [
     "get_end_penalty_shootout_port",
     "get_undo_last_event_port",
     "get_delete_event_port",
+    "get_match_event_publisher",
 
     # Business Dependencies - Auth
     "get_oauth_provider",
