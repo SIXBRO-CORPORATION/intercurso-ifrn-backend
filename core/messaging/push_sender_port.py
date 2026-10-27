@@ -15,3 +15,13 @@ class PushSenderPort(ABC):
         data: Optional[Dict[str, str]] = None,
     ) -> PushSendResult:
         pass
+
+    @abstractmethod
+    async def send_to_topic(
+        self,
+        topic: str,
+        title: str,
+        body: str,
+        data: Optional[Dict[str, str]] = None,
+    ) -> None:
+        pass

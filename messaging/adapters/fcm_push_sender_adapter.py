@@ -83,3 +83,21 @@ class FCMPushSenderAdapter(PushSenderPort):
             failure_count=response.failure_count,
             invalid_tokens=invalid_tokens,
         )
+
+    async def send_to_topic(
+        self,
+        topic: str,
+        title: str,
+        body: str,
+        data: Optional[Dict[str, str]] = None,
+    ) -> None:
+        message = messaging.Message(
+            notification=messaging.Notification(title=title, body=body),
+            data=data or {},
+            topic=topic,
+        )
+
+        try:
+            await messaging.send_async(message, app=self._app)
+        except exceptions.FirebaseError as e:
+            logger.error("Falha ao enviar push de broadcast (tópico %s): %s", topic, e)
