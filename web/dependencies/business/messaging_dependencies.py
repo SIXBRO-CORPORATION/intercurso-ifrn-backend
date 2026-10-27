@@ -9,6 +9,7 @@ from business.messaging.remove_device_token_adapter import RemoveDeviceTokenAdap
 from core.business.messaging.register_device_token_port import RegisterDeviceTokenPort
 from core.business.messaging.remove_device_token_port import RemoveDeviceTokenPort
 from core.messaging.push_sender_port import PushSenderPort
+from messaging.services.personal_notifier import PersonalNotifier
 from core.persistence.messaging.device_token_repository_port import (
     DeviceTokenRepositoryPort,
 )
@@ -34,3 +35,15 @@ def get_remove_device_token_port(
     ],
 ) -> RemoveDeviceTokenPort:
     return RemoveDeviceTokenAdapter(device_token_repository)
+
+
+def get_personal_notifier(
+    device_token_repository: Annotated[
+        DeviceTokenRepositoryPort, Depends(get_device_token_repository)
+    ],
+    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
+) -> PersonalNotifier:
+    return PersonalNotifier(
+        device_token_repository=device_token_repository,
+        push_sender=push_sender,
+    )

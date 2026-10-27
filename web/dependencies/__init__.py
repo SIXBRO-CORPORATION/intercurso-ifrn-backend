@@ -114,6 +114,7 @@ from web.dependencies.business.messaging_dependencies import (
     get_push_sender,
     get_register_device_token_port,
     get_remove_device_token_port,
+    get_personal_notifier,
 )
 
 from web.dependencies.mapper_dependencies import (
@@ -230,6 +231,7 @@ __all__ = [
     # Business Dependencies - Messaging
     "get_register_device_token_port",
     "get_remove_device_token_port",
+    "get_personal_notifier",
     "get_push_sender",
 
     # Mapper Dependencies
