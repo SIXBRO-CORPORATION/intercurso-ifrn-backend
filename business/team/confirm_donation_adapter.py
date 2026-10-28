@@ -3,6 +3,7 @@ from uuid import UUID
 
 from core.business.audit.audit_logger import AuditLogger
 from core.business.team.confirm_donation_port import ConfirmDonationPort
+from core.messaging.team_notification_port import TeamNotificationPort
 from core.context import Context
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
@@ -21,11 +22,13 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
         team_member_repository: TeamMemberRepositoryPort,
         user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
+        team_notification: TeamNotificationPort,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
         self.user_repository = user_repository
         self.audit_logger = audit_logger
+        self.team_notification = team_notification
 
     async def execute(self, context: Context) -> TeamMember:
         team_id = context.get_property("team_id", UUID)
@@ -73,5 +76,7 @@ class ConfirmDonationAdapter(ConfirmDonationPort):
             ),
             actor_id=confirmed_by_user_id,
         )
+
+        await self.team_notification.donation_confirmed(team, target_user_id)
 
         return updated_member

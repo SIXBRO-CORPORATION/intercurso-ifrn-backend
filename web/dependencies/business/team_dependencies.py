@@ -44,7 +44,11 @@ from business.team.delete_team_adapter import DeleteTeamAdapter
 from business.team.reject_team_adapter import RejectTeamAdapter
 from business.team.return_team_to_draft_adapter import ReturnTeamToDraftAdapter
 from business.team.regenerate_invite_adapter import RegenerateInviteAdapter
+from core.messaging.team_notification_port import TeamNotificationPort
 from core.storage.file_storage_port import FileStoragePort
+from web.dependencies.business.messaging_dependencies import (
+    get_team_notification_port,
+)
 from web.dependencies.business.storage_dependencies import get_file_storage
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
@@ -97,6 +101,9 @@ def get_approve_team_port(
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    team_notification: Annotated[
+        TeamNotificationPort, Depends(get_team_notification_port)
+    ],
 ) -> ApproveTeamPort:
     return ApproveTeamAdapter(
         team_repository,
@@ -104,6 +111,7 @@ def get_approve_team_port(
         user_repository,
         modality_repository,
         audit_logger,
+        team_notification,
     )
 
 
@@ -114,9 +122,16 @@ def get_confirm_donation_team_port(
     ],
     user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    team_notification: Annotated[
+        TeamNotificationPort, Depends(get_team_notification_port)
+    ],
 ) -> ConfirmDonationPort:
     return ConfirmDonationAdapter(
-        team_repository, team_member_repository, user_repository, audit_logger
+        team_repository,
+        team_member_repository,
+        user_repository,
+        audit_logger,
+        team_notification,
     )
 
 
@@ -151,6 +166,9 @@ def get_join_team_via_invite_port(
         ModalityRepositoryPort, Depends(get_modality_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    team_notification: Annotated[
+        TeamNotificationPort, Depends(get_team_notification_port)
+    ],
 ) -> JoinTeamViaInvitePort:
     return JoinTeamViaInviteAdapter(
         team_repository,
@@ -159,6 +177,7 @@ def get_join_team_via_invite_port(
         season_repository,
         modality_repository,
         audit_logger,
+        team_notification,
     )
 
 
@@ -169,9 +188,16 @@ def get_select_captain_port(
     ],
     user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    team_notification: Annotated[
+        TeamNotificationPort, Depends(get_team_notification_port)
+    ],
 ) -> SelectCaptainPort:
     return SelectCaptainAdapter(
-        team_repository, team_member_repository, user_repository, audit_logger
+        team_repository,
+        team_member_repository,
+        user_repository,
+        audit_logger,
+        team_notification,
     )
 
 
@@ -182,9 +208,16 @@ def get_remove_member_port(
     ],
     user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    team_notification: Annotated[
+        TeamNotificationPort, Depends(get_team_notification_port)
+    ],
 ) -> RemoveMemberPort:
     return RemoveMemberAdapter(
-        team_repository, team_member_repository, user_repository, audit_logger
+        team_repository,
+        team_member_repository,
+        user_repository,
+        audit_logger,
+        team_notification,
     )
 
 
@@ -195,9 +228,16 @@ def get_leave_team_port(
     ],
     user_repository: Annotated[UserRepositoryPort, Depends(get_user_repository)],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    team_notification: Annotated[
+        TeamNotificationPort, Depends(get_team_notification_port)
+    ],
 ) -> LeaveTeamPort:
     return LeaveTeamAdapter(
-        team_repository, team_member_repository, user_repository, audit_logger
+        team_repository,
+        team_member_repository,
+        user_repository,
+        audit_logger,
+        team_notification,
     )
 
 
@@ -282,9 +322,20 @@ def get_delete_team_port(
 
 def get_reject_team_port(
     team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
+    team_member_repository: Annotated[
+        TeamMemberRepositoryPort, Depends(get_team_member_repository)
+    ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    team_notification: Annotated[
+        TeamNotificationPort, Depends(get_team_notification_port)
+    ],
 ) -> RejectTeamPort:
-    return RejectTeamAdapter(team_repository, audit_logger)
+    return RejectTeamAdapter(
+        team_repository,
+        audit_logger,
+        team_member_repository,
+        team_notification,
+    )
 
 
 def get_return_team_to_draft_port(

@@ -2,6 +2,7 @@ from uuid import UUID
 
 from core.business.audit.audit_logger import AuditLogger
 from core.business.team.leave_team_port import LeaveTeamPort
+from core.messaging.team_notification_port import TeamNotificationPort
 from core.context import Context
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
@@ -19,11 +20,13 @@ class LeaveTeamAdapter(LeaveTeamPort):
         team_member_repository: TeamMemberRepositoryPort,
         user_repository: UserRepositoryPort,
         audit_logger: AuditLogger,
+        team_notification: TeamNotificationPort,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
         self.user_repository = user_repository
         self.audit_logger = audit_logger
+        self.team_notification = team_notification
 
     async def execute(self, context: Context) -> TeamMember:
         team_id = context.get_property("team_id", UUID)
@@ -78,6 +81,10 @@ class LeaveTeamAdapter(LeaveTeamPort):
             description=f"Usuário saiu do time '{team.name}'",
             actor_id=requesting_user_id,
             actor=requesting_user,
+        )
+
+        await self.team_notification.member_left(
+            team, requesting_user.name if requesting_user else ""
         )
 
         return member

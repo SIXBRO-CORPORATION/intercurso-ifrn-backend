@@ -35,6 +35,7 @@ def make_adapter():
         season_repository,
         modality_repository,
         audit_logger,
+        AsyncMock(),
     )
     return (
         adapter,

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, Set
 from uuid import UUID
 
 from core.messaging.push_sender_port import PushSenderPort
@@ -20,6 +20,7 @@ class PersonalNotifier:
     ):
         self._device_token_repository = device_token_repository
         self._push_sender = push_sender
+        self._pending_tasks: Set[asyncio.Task] = set()
 
     async def notify_user(
         self,
@@ -41,9 +42,11 @@ class PersonalNotifier:
         if not resolved_user_ids:
             return
 
-        asyncio.create_task(
+        task = asyncio.create_task(
             self._dispatch(resolved_user_ids, title, body, data)
         )
+        self._pending_tasks.add(task)
+        task.add_done_callback(self._pending_tasks.discard)
 
     async def _dispatch(
         self,

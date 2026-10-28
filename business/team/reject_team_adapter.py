@@ -3,6 +3,8 @@ from uuid import UUID
 
 from core.business.audit.audit_logger import AuditLogger
 from core.business.team.reject_team_port import RejectTeamPort
+from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
+from core.messaging.team_notification_port import TeamNotificationPort
 from core.context import Context
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from domain.enums.audit_action import AuditAction
@@ -14,9 +16,17 @@ from domain.team.team import Team
 
 class RejectTeamAdapter(RejectTeamPort):
 
-    def __init__(self, team_repository: TeamRepositoryPort, audit_logger: AuditLogger):
+    def __init__(
+        self,
+        team_repository: TeamRepositoryPort,
+        audit_logger: AuditLogger,
+        team_member_repository: TeamMemberRepositoryPort,
+        team_notification: TeamNotificationPort,
+    ):
         self.team_repository = team_repository
         self.audit_logger = audit_logger
+        self.team_member_repository = team_member_repository
+        self.team_notification = team_notification
 
     async def execute(self, context: Context) -> Team:
         team_id = context.get_property("team_id", UUID)
@@ -49,6 +59,11 @@ class RejectTeamAdapter(RejectTeamPort):
             action=AuditAction.TEAM_REJECTED,
             description=f"Time '{saved_team.name}' rejeitado",
             actor_id=rejected_by_user_id,
+        )
+
+        members = await self.team_member_repository.find_members_by_team_id(team_id)
+        await self.team_notification.team_rejected(
+            saved_team, [member.user_id for member in members], reason
         )
 
         return saved_team

@@ -103,7 +103,9 @@ class TestRejectTeamAdapter:
         team_repository.get.return_value = team
         team_repository.save.side_effect = lambda t: t
 
-        adapter = RejectTeamAdapter(team_repository, audit)
+        adapter = RejectTeamAdapter(
+            team_repository, audit, AsyncMock(), AsyncMock()
+        )
         result = await adapter.execute(make_context(
             team_id=team.id, rejection_reason="  Falta foto  ", rejected_by_user_id=monitor_id,
         ))
@@ -119,7 +121,7 @@ class TestRejectTeamAdapter:
         assert audit.log.await_args.kwargs["action"] == AuditAction.TEAM_REJECTED
 
     async def test_blocks_empty_reason(self):
-        adapter = RejectTeamAdapter(AsyncMock(), AsyncMock())
+        adapter = RejectTeamAdapter(AsyncMock(), AsyncMock(), AsyncMock(), AsyncMock())
         with pytest.raises(BusinessException):
             await adapter.execute(make_context(
                 team_id=uuid4(), rejection_reason="   ", rejected_by_user_id=uuid4(),
@@ -130,7 +132,9 @@ class TestRejectTeamAdapter:
         team = Team(id=uuid4(), status=TeamStatus.DRAFT)
         team_repository.get.return_value = team
 
-        adapter = RejectTeamAdapter(team_repository, AsyncMock())
+        adapter = RejectTeamAdapter(
+            team_repository, AsyncMock(), AsyncMock(), AsyncMock()
+        )
         with pytest.raises(BusinessException):
             await adapter.execute(make_context(
                 team_id=team.id, rejection_reason="motivo", rejected_by_user_id=uuid4(),

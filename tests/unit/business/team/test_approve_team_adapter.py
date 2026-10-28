@@ -27,6 +27,7 @@ def make_adapter():
         user_repository,
         modality_repository,
         audit_logger,
+        AsyncMock(),
     )
     adapter.user_repository = user_repository
     return adapter, team_repository, team_member_repository

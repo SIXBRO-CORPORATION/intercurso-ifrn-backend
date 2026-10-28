@@ -4,6 +4,7 @@ from uuid import UUID
 from business.team._shared import evaluate_approve_eligibility
 from core.business.audit.audit_logger import AuditLogger
 from core.business.team.approve_team_port import ApproveTeamPort
+from core.messaging.team_notification_port import TeamNotificationPort
 from core.context import Context
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
 from core.persistence.team.team_member_repository_port import TeamMemberRepositoryPort
@@ -23,12 +24,14 @@ class ApproveTeamAdapter(ApproveTeamPort):
         user_repository: UserRepositoryPort,
         modality_repository: ModalityRepositoryPort,
         audit_logger: AuditLogger,
+        team_notification: TeamNotificationPort,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
         self.user_repository = user_repository
         self.modality_repository = modality_repository
         self.audit_logger = audit_logger
+        self.team_notification = team_notification
 
     async def execute(self, context: Context) -> Team:
         team_id = context.get_property("team_id", UUID)
@@ -66,6 +69,10 @@ class ApproveTeamAdapter(ApproveTeamPort):
             action=AuditAction.TEAM_APPROVED,
             description=f"Time '{saved_team.name}' aprovado",
             actor_id=approved_by_user_id,
+        )
+
+        await self.team_notification.team_approved(
+            saved_team, [member.user_id for member in members]
         )
 
         return saved_team
