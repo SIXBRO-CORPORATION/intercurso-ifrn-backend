@@ -19,6 +19,7 @@ from core.business.season.get_season_details_port import GetSeasonDetailsPort
 from core.business.season.list_seasons_port import ListSeasonsPort
 from core.business.season.manage_season_port import ManageSeasonPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
+from core.messaging.season_broadcast_port import SeasonBroadcastPort
 from core.persistence.match.match_repository_port import MatchRepositoryPort
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
 from core.persistence.season.season_modality_repository_port import (
@@ -27,6 +28,9 @@ from core.persistence.season.season_modality_repository_port import (
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
 from core.persistence.team.team_repository_port import TeamRepositoryPort
 from core.storage.file_storage_port import FileStoragePort
+from web.dependencies.business.messaging_dependencies import (
+    get_season_broadcast_notifier,
+)
 from web.dependencies.business.storage_dependencies import get_file_storage
 from web.dependencies.commons_dependencies import get_audit_logger
 from web.dependencies.persistence_dependencies import (
@@ -50,6 +54,9 @@ def get_create_season_port(
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
     file_storage: Annotated[FileStoragePort, Depends(get_file_storage)],
+    season_broadcast: Annotated[
+        SeasonBroadcastPort, Depends(get_season_broadcast_notifier)
+    ],
 ) -> CreateSeasonPort:
     return CreateSeasonAdapter(
         season_repository,
@@ -57,6 +64,7 @@ def get_create_season_port(
         modality_repository,
         audit_logger,
         file_storage,
+        season_broadcast,
     )
 
 
@@ -74,8 +82,11 @@ def get_close_registration_port(
         SeasonRepositoryPort, Depends(get_season_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    season_broadcast: Annotated[
+        SeasonBroadcastPort, Depends(get_season_broadcast_notifier)
+    ],
 ) -> CloseRegistrationPort:
-    return CloseRegistrationAdapter(season_repository, audit_logger)
+    return CloseRegistrationAdapter(season_repository, audit_logger, season_broadcast)
 
 
 def get_reopen_registration_port(
@@ -83,8 +94,11 @@ def get_reopen_registration_port(
         SeasonRepositoryPort, Depends(get_season_repository)
     ],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    season_broadcast: Annotated[
+        SeasonBroadcastPort, Depends(get_season_broadcast_notifier)
+    ],
 ) -> ReopenRegistrationPort:
-    return ReopenRegistrationAdapter(season_repository, audit_logger)
+    return ReopenRegistrationAdapter(season_repository, audit_logger, season_broadcast)
 
 
 def get_finish_season_port(
@@ -94,9 +108,16 @@ def get_finish_season_port(
     team_repository: Annotated[TeamRepositoryPort, Depends(get_team_repository)],
     match_repository: Annotated[MatchRepositoryPort, Depends(get_match_repository)],
     audit_logger: Annotated[AuditLogger, Depends(get_audit_logger)],
+    season_broadcast: Annotated[
+        SeasonBroadcastPort, Depends(get_season_broadcast_notifier)
+    ],
 ) -> FinishSeasonPort:
     return FinishSeasonAdapter(
-        season_repository, team_repository, match_repository, audit_logger
+        season_repository,
+        team_repository,
+        match_repository,
+        audit_logger,
+        season_broadcast,
     )
 
 

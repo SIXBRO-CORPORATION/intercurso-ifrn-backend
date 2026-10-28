@@ -19,8 +19,13 @@ def make_adapter():
     match_repository = AsyncMock()
     match_repository.find_unfinished_by_season.return_value = []
     audit_logger = AsyncMock()
+    season_broadcast = AsyncMock()
     adapter = FinishSeasonAdapter(
-        season_repository, team_repository, match_repository, audit_logger
+        season_repository,
+        team_repository,
+        match_repository,
+        audit_logger,
+        season_broadcast,
     )
     return adapter, season_repository, team_repository, match_repository, audit_logger
 
@@ -153,3 +158,18 @@ class TestFinishSeasonAdapter:
             await adapter.execute(context)
 
         season_repository.get.assert_not_awaited()
+
+    async def test_notifies_season_finished(self):
+        adapter, season_repository, *_ = make_adapter()
+        season = Season(
+            id=uuid4(),
+            name="Intercurso 2026",
+            status=SeasonStatus.IN_PROGRESS,
+            active=True,
+        )
+        season_repository.get.return_value = season
+        season_repository.save.return_value = season
+
+        await adapter.execute(make_context(season.id))
+
+        adapter.season_broadcast.season_finished.assert_awaited_once()

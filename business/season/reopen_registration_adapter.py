@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from core.business.audit.audit_logger import AuditLogger
+from core.messaging.season_broadcast_port import SeasonBroadcastPort
 from core.business.season.reopen_registration_port import ReopenRegistrationPort
 from core.context import Context
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
@@ -16,9 +17,11 @@ class ReopenRegistrationAdapter(ReopenRegistrationPort):
         self,
         season_repository: SeasonRepositoryPort,
         audit_logger: AuditLogger,
+        season_broadcast: SeasonBroadcastPort,
     ):
         self.season_repository = season_repository
         self.audit_logger = audit_logger
+        self.season_broadcast = season_broadcast
 
     async def execute(self, context: Context) -> Season:
         season_id = context.get_property("season_id", UUID)
@@ -70,5 +73,7 @@ class ReopenRegistrationAdapter(ReopenRegistrationPort):
             ),
             actor_id=reopened_by,
         )
+
+        await self.season_broadcast.registration_reopened(updated_season)
 
         return updated_season
