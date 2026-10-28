@@ -46,7 +46,7 @@ def _get_firebase_app() -> firebase_admin.App:
 class FCMPushSenderAdapter(PushSenderPort):
 
     def __init__(self):
-        self._app = _get_firebase_app()
+        self._app: Optional[firebase_admin.App] = None
 
     async def send(
         self,
@@ -63,6 +63,9 @@ class FCMPushSenderAdapter(PushSenderPort):
             data=data or {},
             tokens=tokens,
         )
+
+        if self._app is None:
+            self._app = _get_firebase_app()
 
         try:
             response = await messaging.send_each_for_multicast_async(

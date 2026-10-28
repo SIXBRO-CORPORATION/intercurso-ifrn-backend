@@ -3,6 +3,7 @@ from uuid import UUID
 
 from core.business.audit.audit_logger import AuditLogger
 from core.business.team.join_team_via_invite_port import JoinTeamViaInvitePort
+from core.messaging.team_notification_port import TeamNotificationPort
 from core.context import Context
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
 from core.persistence.season.season_repository_port import SeasonRepositoryPort
@@ -28,6 +29,7 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
         season_repository: SeasonRepositoryPort,
         modality_repository: ModalityRepositoryPort,
         audit_logger: AuditLogger,
+        team_notification: TeamNotificationPort,
     ):
         self.team_repository = team_repository
         self.team_member_repository = team_member_repository
@@ -35,6 +37,7 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
         self.season_repository = season_repository
         self.modality_repository = modality_repository
         self.audit_logger = audit_logger
+        self.team_notification = team_notification
 
     async def execute(self, context: Context) -> TeamMember:
         invite_token = context.get_property("invite_token", str)
@@ -120,6 +123,10 @@ class JoinTeamViaInviteAdapter(JoinTeamViaInvitePort):
             description=f"Aluno entrou no time '{team.name}' via convite",
             actor_id=requesting_user_id,
             actor=requesting_user,
+        )
+
+        await self.team_notification.member_joined(
+            team, requesting_user.name if requesting_user else ""
         )
 
         context.put_property("team", team)

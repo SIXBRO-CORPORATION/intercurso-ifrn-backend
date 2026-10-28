@@ -19,7 +19,8 @@ def make_adapter():
     user_repository = AsyncMock()
     audit_logger = AsyncMock()
     adapter = ConfirmDonationAdapter(
-        team_repository, team_member_repository, user_repository, audit_logger
+        team_repository, team_member_repository, user_repository, audit_logger,
+        AsyncMock(),
     )
     return adapter, team_repository, team_member_repository, user_repository, audit_logger
 
