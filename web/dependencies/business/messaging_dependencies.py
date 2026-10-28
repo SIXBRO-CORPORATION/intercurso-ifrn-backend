@@ -9,7 +9,9 @@ from business.messaging.remove_device_token_adapter import RemoveDeviceTokenAdap
 from core.business.messaging.register_device_token_port import RegisterDeviceTokenPort
 from core.business.messaging.remove_device_token_port import RemoveDeviceTokenPort
 from core.messaging.push_sender_port import PushSenderPort
+from core.messaging.season_broadcast_port import SeasonBroadcastPort
 from messaging.services.personal_notifier import PersonalNotifier
+from messaging.services.season_broadcast_notifier import SeasonBroadcastNotifier
 from core.persistence.messaging.device_token_repository_port import (
     DeviceTokenRepositoryPort,
 )
@@ -47,3 +49,9 @@ def get_personal_notifier(
         device_token_repository=device_token_repository,
         push_sender=push_sender,
     )
+
+
+def get_season_broadcast_notifier(
+    push_sender: Annotated[PushSenderPort, Depends(get_push_sender)],
+) -> SeasonBroadcastPort:
+    return SeasonBroadcastNotifier(push_sender=push_sender)

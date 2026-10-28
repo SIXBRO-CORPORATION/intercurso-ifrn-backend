@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from core.business.audit.audit_logger import AuditLogger
+from core.messaging.season_broadcast_port import SeasonBroadcastPort
 from core.business.season.finish_season_port import FinishSeasonPort
 from core.context import Context
 from core.persistence.match.match_repository_port import MatchRepositoryPort
@@ -20,11 +21,13 @@ class FinishSeasonAdapter(FinishSeasonPort):
         team_repository: TeamRepositoryPort,
         match_repository: MatchRepositoryPort,
         audit_logger: AuditLogger,
+        season_broadcast: SeasonBroadcastPort,
     ):
         self.season_repository = season_repository
         self.team_repository = team_repository
         self.match_repository = match_repository
         self.audit_logger = audit_logger
+        self.season_broadcast = season_broadcast
 
     async def execute(self, context: Context) -> Season:
         season_id = context.get_property("season_id", UUID)
@@ -77,5 +80,7 @@ class FinishSeasonAdapter(FinishSeasonPort):
             description=f"Temporada '{updated_season.name}' finalizada",
             actor_id=finished_by,
         )
+
+        await self.season_broadcast.season_finished(updated_season)
 
         return updated_season

@@ -15,7 +15,8 @@ from domain.season.season import Season
 def make_adapter():
     season_repository = AsyncMock()
     audit_logger = AsyncMock()
-    adapter = CloseRegistrationAdapter(season_repository, audit_logger)
+    season_broadcast = AsyncMock()
+    adapter = CloseRegistrationAdapter(season_repository, audit_logger, season_broadcast)
     return adapter, season_repository, audit_logger
 
 
@@ -72,3 +73,17 @@ class TestCloseRegistrationAdapter:
 
         with pytest.raises(BusinessException):
             await adapter.execute(make_context())
+
+    async def test_notifies_registration_closed(self):
+        adapter, season_repository, _audit_logger = make_adapter()
+        season = Season(
+            id=uuid4(),
+            name="Intercurso 2026",
+            status=SeasonStatus.REGISTRATION_OPEN,
+        )
+        season_repository.get.return_value = season
+        season_repository.save.return_value = season
+
+        await adapter.execute(make_context(season.id))
+
+        adapter.season_broadcast.registration_closed.assert_awaited_once()

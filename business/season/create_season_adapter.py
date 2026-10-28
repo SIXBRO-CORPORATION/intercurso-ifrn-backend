@@ -5,6 +5,7 @@ from typing import List
 from uuid import UUID
 
 from core.business.audit.audit_logger import AuditLogger
+from core.messaging.season_broadcast_port import SeasonBroadcastPort
 from core.business.season.create_season_port import CreateSeasonPort
 from core.context import Context
 from core.persistence.modality.modality_repository_port import ModalityRepositoryPort
@@ -34,12 +35,14 @@ class CreateSeasonAdapter(CreateSeasonPort):
         modality_repository: ModalityRepositoryPort,
         audit_logger: AuditLogger,
         file_storage: FileStoragePort,
+        season_broadcast: SeasonBroadcastPort,
     ):
         self.season_repository = season_repository
         self.season_modality_repository = season_modality_repository
         self.modality_repository = modality_repository
         self.audit_logger = audit_logger
         self.file_storage = file_storage
+        self.season_broadcast = season_broadcast
 
     async def execute(self, context: Context) -> Season:
         season = context.get_data(Season)
@@ -177,5 +180,8 @@ class CreateSeasonAdapter(CreateSeasonPort):
             ),
             actor_id=created_by,
         )
+
+        if open_immediately:
+            await self.season_broadcast.registration_opened(saved_season)
 
         return saved_season

@@ -24,6 +24,7 @@ def make_adapter():
     audit_logger = AsyncMock()
     file_storage = AsyncMock()
     file_storage.upload.side_effect = lambda **kw: kw["object_key"]
+    season_broadcast = AsyncMock()
 
     adapter = CreateSeasonAdapter(
         season_repository,
@@ -31,6 +32,7 @@ def make_adapter():
         modality_repository,
         audit_logger,
         file_storage,
+        season_broadcast,
     )
     return (
         adapter,
@@ -356,3 +358,45 @@ class TestCreateSeasonRulesDocument:
 
         key = adapter.file_storage.upload.await_args.kwargs["object_key"]
         adapter.file_storage.delete.assert_awaited_once_with(key)
+
+    async def test_open_immediately_notifies_registration_opened(self):
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            _user_repository,
+            _audit_logger,
+        ) = make_adapter()
+        modality_id = uuid4()
+        modality_repository.find_by_ids.return_value = [
+            Modality(id=modality_id, name="Futsal", min_members=5, max_members=10, active=True)
+        ]
+        season_repository.save.side_effect = lambda season: season
+        season_modality_repository.insert_all.side_effect = lambda models: models
+
+        await adapter.execute(
+            make_context(modality_ids=[modality_id], open_immediately=True)
+        )
+
+        adapter.season_broadcast.registration_opened.assert_awaited_once()
+
+    async def test_draft_creation_does_not_notify(self):
+        (
+            adapter,
+            season_repository,
+            season_modality_repository,
+            modality_repository,
+            _user_repository,
+            _audit_logger,
+        ) = make_adapter()
+        modality_id = uuid4()
+        modality_repository.find_by_ids.return_value = [
+            Modality(id=modality_id, name="Futsal", min_members=5, max_members=10, active=True)
+        ]
+        season_repository.save.side_effect = lambda season: season
+        season_modality_repository.insert_all.side_effect = lambda models: models
+
+        await adapter.execute(make_context(modality_ids=[modality_id]))
+
+        adapter.season_broadcast.registration_opened.assert_not_awaited()
