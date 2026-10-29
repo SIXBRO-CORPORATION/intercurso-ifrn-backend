@@ -101,6 +101,6 @@ class FCMPushSenderAdapter(PushSenderPort):
         )
 
         try:
-            await messaging.send_async(message, app=self._app)
+            await messaging.send_each_async([message], app=self._app)
         except exceptions.FirebaseError as e:
             logger.error("Falha ao enviar push de broadcast (tópico %s): %s", topic, e)
