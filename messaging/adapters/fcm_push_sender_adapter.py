@@ -100,6 +100,9 @@ class FCMPushSenderAdapter(PushSenderPort):
             topic=topic,
         )
 
+        if self._app is None:
+            self._app = _get_firebase_app()
+
         try:
             await messaging.send_each_async([message], app=self._app)
         except exceptions.FirebaseError as e:
