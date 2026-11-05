@@ -47,6 +47,7 @@ class SeasonModelMapper:
             active=season.active,
             registration_start_date=season.registration_start_date,
             registration_end_date=season.registration_end_date,
+            rules_document=self._resolve_rules_document_url(season.rules_document)
         )
 
     def to_status_response(self, season: Season, message: str) -> SeasonStatusResponse:

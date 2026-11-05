@@ -17,3 +17,4 @@ class SeasonSummaryResponse(BaseModel):
     active: bool = Field()
     registration_start_date: Optional[datetime] = Field(default=None)
     registration_end_date: Optional[datetime] = Field(default=None)
+    rules_document: Optional[str] = Field(default=None)
