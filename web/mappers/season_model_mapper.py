@@ -84,6 +84,7 @@ class SeasonModelMapper:
             registration_end_date=season.registration_end_date,
             registration_opened_at=season.registration_opened_at,
             registration_closed_at=season.registration_closed_at,
+            rules_document=self._resolve_rules_document_url(season.rules_document),
             total_teams_created=total_teams_created,
             total_teams_submitted=total_teams_submitted,
             total_teams_approved=total_teams_approved,

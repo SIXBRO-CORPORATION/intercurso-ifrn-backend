@@ -20,6 +20,7 @@ class SeasonDetailsResponse(BaseModel):
     registration_end_date: Optional[datetime] = Field(default=None)
     registration_opened_at: Optional[datetime] = Field(default=None)
     registration_closed_at: Optional[datetime] = Field(default=None)
+    rules_document: Optional[str] = Field(default=None)
     total_teams_created: int = Field(default=0)
     total_teams_submitted: int = Field(default=0)
     total_teams_approved: int = Field(default=0)
