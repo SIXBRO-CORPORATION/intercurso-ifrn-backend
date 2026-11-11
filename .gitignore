@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 /credentials
-/graphify-out/graph.html
+.claude/settings.local.json
 
 # C extensions
 *.so
