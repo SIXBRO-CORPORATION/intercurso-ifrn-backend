@@ -129,6 +129,20 @@ async def _reverse_expulsion_if_needed(
 ) -> Optional[UUID]:
 
     if target_event.event_type == EventType.EXPULSION:
+        card_type = (
+            EventType.CARD_YELLOW
+            if (target_event.metadata_json or {}).get("triggered_by") == "second_yellow"
+            else EventType.CARD_RED
+        )
+        cards = [
+            c
+            for c in await match_event_repository.find_by_match_and_type(
+                target_event.match_id, card_type
+            )
+            if c.player_id == target_event.player_id
+        ]
+        if cards:
+            await match_event_repository.soft_delete_event(cards[-1].id)
         return target_event.player_id
 
     triggers_expulsion_removal = target_event.event_type == EventType.CARD_RED or (

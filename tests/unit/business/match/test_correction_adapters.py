@@ -361,6 +361,8 @@ class TestExpulsionReversal:
         )
         mocks["match_event_repository"].get.return_value = expulsion_event
         mocks["match_event_repository"].find_by_match.return_value = []
+        red_card = make_event(match.id, EventType.CARD_RED, player_id=player_id)
+        mocks["match_event_repository"].find_by_match_and_type.return_value = [red_card]
 
         context = make_delete_context(match.id, monitor_id, expulsion_event.id)
         await adapter.execute(context)
@@ -368,9 +370,10 @@ class TestExpulsionReversal:
         assert context.get_property("reactivated_player_id", type(player_id)) == (
             player_id
         )
-        mocks["match_event_repository"].soft_delete_event.assert_awaited_once_with(
-            expulsion_event.id
-        )
+        deleted = [
+            c.args for c in mocks["match_event_repository"].soft_delete_event.await_args_list
+        ]
+        assert deleted == [(expulsion_event.id,), (red_card.id,)]
 
     @pytest.mark.asyncio
     async def test_deleting_second_yellow_card_also_removes_linked_expulsion(self):
