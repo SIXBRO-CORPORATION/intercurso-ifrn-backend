@@ -200,5 +200,5 @@ registrada como pendência na Fase 6 do planejamento.
 - [ADR 0001 - Estratégia do Cronômetro da Partida](ADR001_Cronometro.md) — fonte do cálculo de
   `clock_seconds` usado tanto nos eventos SSE (`clock_update`) quanto no `GET` de reconciliação.
 - [ADR 0002 - Normalização de Configuração por Modalidade e Histórico de Sets](ADR002_NormalizacaoModalidade.md)
-- `docs/ai/planejamento.md` (Fase 6 — Tempo Real, e débito técnico de endpoints `GET` de consulta
+- `docs/planning/ai/planejamento.md` (Fase 6 — Tempo Real, e débito técnico de endpoints `GET` de consulta
   registrado nas Fases 4/5, reaproveitado aqui como endpoint de reconciliação)

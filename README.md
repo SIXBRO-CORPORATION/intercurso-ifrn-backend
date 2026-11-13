@@ -33,12 +33,12 @@ persistence/  → mappers, models de banco e adapters de repositório
 security/     → autenticação, JWT, integração OAuth2 com o SUAP
 scheduling/   → jobs agendados (APScheduler)
 alembic/      → migrations do banco de dados
-docs/         → especificações de casos de uso (docs/spec), ADRs (docs/adr) e planejamento
+docs/         → especificações de casos de uso (docs/planning/spec), ADRs (docs/planning/adr) e planejamento
 tests/        → tests/unit, tests/integration, tests/e2e
 ```
 
 Cada módulo de negócio (`business/*`) expõe *adapters* que implementam os casos de uso descritos
-em `docs/spec`, seguindo as regras de negócio documentadas ali.
+em `docs/planning/spec`, seguindo as regras de negócio documentadas ali.
 
 ## Principais funcionalidades
 
@@ -55,7 +55,7 @@ em `docs/spec`, seguindo as regras de negócio documentadas ali.
 
 ## Modelo de acesso
 
-Regra geral: **leitura pública, ação autenticada** ([ADR 0004](docs/adr/ADR004_ModeloDeAcesso.md)).
+Regra geral: **leitura pública, ação autenticada** ([ADR 0004](docs/planning/adr/ADR004_ModeloDeAcesso.md)).
 Qualquer pessoa abre o app e acompanha o Intercurso sem login; o login só é pedido quando a
 pessoa tenta uma ação que depende de identidade (criar equipe, denunciar, gerir partidas).
 
@@ -73,13 +73,13 @@ pessoa tenta uma ação que depende de identidade (criar equipe, denunciar, geri
 Rotas públicas de leitura hoje: `GET /api/season/active`, `GET /api/modality/`,
 `GET /api/match/` (paginada, com filtros), `GET /api/match/{id}` e os canais SSE. Classificação,
 chaveamento e lista de temporadas ainda são restritos a monitor. Detalhes em
-[Estado de implementação](docs/adr/ADR004_ModeloDeAcesso.md#estado-de-implementação).
+[Estado de implementação](docs/planning/adr/ADR004_ModeloDeAcesso.md#estado-de-implementação).
 
 ## Comunicação em tempo real
 
 O acompanhamento ao vivo usa **Server-Sent Events (SSE)** com broadcaster em memória por processo
-([ADR 0003](docs/adr/ADR003_EnvioDeEventos.md)). O cronômetro é sempre calculado no servidor
-([ADR 0001](docs/adr/ADR001_Cronometro.md)).
+([ADR 0003](docs/planning/adr/ADR003_EnvioDeEventos.md)). O cronômetro é sempre calculado no servidor
+([ADR 0001](docs/planning/adr/ADR001_Cronometro.md)).
 
 1. O cliente pede um ticket de 30 s em `POST /api/realtime/ticket` (com ou sem login; visitantes
    têm limite de taxa por IP).
@@ -206,10 +206,10 @@ uv run task coverage           # com cobertura (core, domain, business, auth, pe
 
 ## Documentação
 
-- [`docs/spec`](docs/spec) — especificações de casos de uso (UC001–UC018), com regras de negócio
+- [`docs/planning/spec`](docs/planning/spec) — especificações de casos de uso (UC001–UC018), com regras de negócio
   detalhadas
-- [`docs/adr`](docs/adr) — Architecture Decision Records
-- [`docs/ai/planejamento.md`](docs/ai/planejamento.md) — planejamento do projeto
+- [`docs/planning/adr`](docs/planning/adr) — Architecture Decision Records
+- [`docs/planning/ai/planejamento.md`](docs/planning/ai/planejamento.md) — planejamento do projeto
 
 ## Docker
 

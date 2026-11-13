@@ -24,7 +24,7 @@ def upgrade() -> None:
     UC015 (Finalizar Partida) - avanço automático no chaveamento: adiciona a
     coluna auto-referenciada `next_match_id`, que aponta para a partida da
     próxima fase que deve receber o time vencedor (estratégia com
-    persistência, decidida para a Fase 5 - ver docs/ai/planejamento.md).
+    persistência, decidida para a Fase 5 - ver docs/planning/ai/planejamento.md).
     """
     op.add_column('matches', sa.Column('next_match_id', sa.UUID(), nullable=True))
     op.create_foreign_key(

@@ -231,4 +231,4 @@ existe em `device_tokens`.
   esta pendência.
 - [ADR 0004 - Modelo de Acesso](ADR004_ModeloDeAcesso.md) — precedente de leitura pública sem
   autenticação, mesmo raciocínio aplicado aqui ao canal de broadcast.
-- `docs/ai/planejamento.md` (Fase 6 — Push Notifications).
+- `docs/planning/ai/planejamento.md` (Fase 6 — Push Notifications).
