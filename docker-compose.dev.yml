@@ -20,7 +20,9 @@ services:
       - intercurso
 
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     container_name: api-intercurso
     restart: unless-stopped
     env_file:
@@ -30,6 +32,18 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
+    volumes:
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+      - ./business:/app/business
+      - ./core:/app/core
+      - ./domain:/app/domain
+      - ./messaging:/app/messaging
+      - ./persistence:/app/persistence
+      - ./scheduling:/app/scheduling
+      - ./security:/app/security
+      - ./storage:/app/storage
+      - ./web:/app/web
     networks:
       - intercurso
 
